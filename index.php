@@ -59,6 +59,9 @@ switch ($page) {
     case 'market':
         require __DIR__ . '/pages/market.php';
         break;
+    case 'haul':
+        require __DIR__ . '/pages/haul.php';
+        break;
     case 'register':
         require __DIR__ . '/pages/register.php';
         break;

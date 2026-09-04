@@ -22,6 +22,8 @@ function render_layout($title, $active, $content) {
             <a href="/kills" class="<?= $active==='kills'?'active':'' ?>">Killboard</a>
             <a href="/players" class="<?= $active==='players'?'active':'' ?>">Players</a>
             <a href="/systems" class="<?= $active==='systems'?'active':'' ?>">Systems</a>
+            <a href="/market" class="<?= $active==='market'?'active':'' ?>">Market</a>
+            <a href="/haul" class="<?= $active==='haul'?'active':'' ?>">Haul</a>
             <?php if ($user): ?>
                 <a href="/characters" class="<?= $active==='chars'?'active':'' ?>">My Characters</a>
                 <?php if ($user['role'] & (ROLE_ADMIN|ROLE_GMH|ROLE_GML)): ?>
