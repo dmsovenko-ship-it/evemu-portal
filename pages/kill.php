@@ -233,5 +233,53 @@ ob_start();
 </div>
 
 <?php
+// EFT Fitting export
+$eftLines = [];
+foreach ($slots as $slotName => $slotItems) {
+    foreach ($slotItems as $si) {
+        $item = $si['item'];
+        $name = $itemNames[$item['t']] ?? null;
+        if ($name && $item['t'] != $k['victimshiptypeid']) {
+            $qty = max(1, $item['q']);
+            $eftLines[] = $name . ($qty > 1 ? ' x' . $qty : '');
+        }
+    }
+}
+$eftFitting = '[' . e($k['victimshipname']) . ', ' . e($k['victimname']) . "'s " . e($k['victimshipname']) . ']' . "\n" . implode("\n", $eftLines);
+?>
+<div style="margin-top:16px;display:flex;gap:12px;flex-wrap:wrap">
+    <details style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:12px;flex:1;min-width:300px">
+        <summary style="cursor:pointer;color:var(--text-bright);font-size:13px;font-weight:600">EFT Fitting</summary>
+        <pre style="margin-top:8px;padding:8px;background:#0d1117;border-radius:4px;font-size:11px;color:var(--text);overflow-x:auto;white-space:pre-wrap"><?= e($eftFitting) ?></pre>
+    </details>
+</div>
+
+<?php
+// Related kills
+$relatedKills = [];
+$relXml = api_get('/char/RelatedKills.xml.aspx?killid=' . $killID);
+if ($relXml && $relXml->result && $relXml->result->related)
+    foreach ($relXml->result->related->row as $r) $relatedKills[] = $r;
+?>
+<?php if (!empty($relatedKills)): ?>
+<div class="section-title">Related Kills (same system, ±24h)</div>
+<table class="kill-table" style="font-size:12px">
+    <thead><tr><th>#</th><th>Victim</th><th>Ship</th><th>Damage</th><th>Final Blow</th><th>Ship</th></tr></thead>
+    <tbody>
+    <?php foreach ($relatedKills as $rk): ?>
+    <tr class="kill-row" onclick="location.href='/kill/<?= $rk['killid'] ?>'">
+        <td><?= $rk['killid'] ?></td>
+        <td><a href="/character/<?= $rk['victimid'] ?>"><?= e($rk['victimname'] ?: 'Unknown') ?></a></td>
+        <td><?= e($rk['victimshipname']) ?></td>
+        <td><?= number_format((int)$rk['victimdamagetaken']) ?></td>
+        <td><a href="/character/<?= $rk['finalid'] ?>"><?= e($rk['finalname'] ?: 'Unknown') ?></a></td>
+        <td><?= e($rk['finalshipname']) ?></td>
+    </tr>
+    <?php endforeach; ?>
+    </tbody>
+</table>
+<?php endif; ?>
+
+<?php
 $content = ob_get_clean();
 render_layout($k['victimshipname'] . ' | ' . $k['victimname'] . ' | Killmail', 'kills', $content);
