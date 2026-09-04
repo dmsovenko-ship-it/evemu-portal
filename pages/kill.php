@@ -220,52 +220,41 @@ ob_start();
 <div class="kill-layout">
   <div class="kill-main">
     <?php if (!empty($slots) || $hullValue > 0): ?>
-    <div class="fit-arena">
-        <div class="fit-ship-center">
-            <img src="<?= ship_icon($k['victimshiptypeid'], 256) ?>" alt="<?= e($k['victimshipname']) ?>" onerror="this.style.display='none'">
+    <div class="fit-layout">
+        <!-- ship column (zkillboard style) -->
+        <div class="fit-ship-col">
+            <div class="fit-ship-render">
+                <img src="<?= ship_icon($k['victimshiptypeid'], 256) ?>" alt="<?= e($k['victimshipname']) ?>" onerror="this.style.display='none'">
+            </div>
+            <div class="fit-ship-name"><?= e($k['victimshipname']) ?></div>
         </div>
+        <!-- module columns by slot group -->
+        <div class="fit-groups">
         <?php
-        // overlay bands, EVE-fitting style: High above, Mid middle, Low lower,
-        // Rig/Sub/Drone at the bottom. Cargo is not "fitted" — table only.
-        $fitBands = ['High','Mid','Low'];
-        $bandKeys = ['High'=>'band-high','Mid'=>'band-mid','Low'=>'band-low'];
-        foreach ($fitBands as $bt):
+        $groupOrder = ['High','Mid','Low','Rig','Subsystem','Drone Bay','Cargo'];
+        foreach ($groupOrder as $bt):
             if (empty($slots[$bt])) continue; ?>
-        <div class="fit-band <?= $bandKeys[$bt] ?>">
-            <span class="fit-band-label"><?= $bt ?></span>
-            <div class="fit-band-icons">
-            <?php foreach ($slots[$bt] as $it):
-                $nm = $itemNames[$it['t']] ?? 'Unknown';
-                $cls = ($it['d'] > 0 && $it['x'] == 0) ? 'dropped' : (($it['d'] > 0) ? 'partial' : 'destroyed');
-                $qtyNote = ($it['d'] > 0 && $it['x'] > 0) ? ' (D'.$it['d'].'/X'.$it['x'].')' : ($it['q'] > 1 ? ' x'.$it['q'] : '');
-                ?>
-                <div class="fit-slot <?= $cls ?>" title="<?= e($nm . $qtyNote) ?>">
-                    <img src="<?= ship_type_icon($it['t'], 32) ?>" width="32" height="32" onerror="this.style.display='none'">
+            <div class="fit-group">
+                <div class="fit-group-label"><?= $bt ?> Slots</div>
+                <div class="fit-group-modules">
+                <?php foreach ($slots[$bt] as $it):
+                    $nm = $itemNames[$it['t']] ?? 'Unknown';
+                    $cls = ($it['d'] > 0 && $it['x'] == 0) ? 'dropped' : (($it['d'] > 0) ? 'partial' : 'destroyed');
+                    $cnt = max($it['d'], $it['x'], 1);
+                    ?>
+                    <div class="fit-module <?= $cls ?>" title="<?= e($nm) ?><?= $it['q']>1?' x'.$it['q']:'' ?><?= ($it['d']>0&&$it['x']>0)?' (D'.$it['d'].'/X'.$it['x'].')':'' ?>">
+                        <img src="<?= ship_type_icon($it['t'], 32) ?>" width="32" height="32" onerror="this.style.display='none'">
+                        <?php if ($cnt > 1): ?><span class="fit-module-qty"><?= $cnt ?></span><?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
                 </div>
-            <?php endforeach; ?>
             </div>
-        </div>
         <?php endforeach; ?>
-        <?php
-        // bottom row: rigs, subsystems, drones (if any)
-        $bottom = [];
-        foreach (['Rig','Subsystem','Drone Bay'] as $bt)
-            if (!empty($slots[$bt])) foreach ($slots[$bt] as $it) $bottom[] = [$bt, $it];
-        if ($bottom): ?>
-        <div class="fit-band band-bottom">
-            <span class="fit-band-label">Rig/Sub/Drone</span>
-            <div class="fit-band-icons">
-            <?php foreach ($bottom as [$bt, $it]):
-                $nm = $itemNames[$it['t']] ?? 'Unknown';
-                $cls = ($it['d'] > 0 && $it['x'] == 0) ? 'dropped' : (($it['d'] > 0) ? 'partial' : 'destroyed');
-                ?>
-                <div class="fit-slot <?= $cls ?>" title="<?= e($bt . ': ' . $nm) ?>">
-                    <img src="<?= ship_type_icon($it['t'], 32) ?>" width="32" height="32" onerror="this.style.display='none'">
-                </div>
-            <?php endforeach; ?>
-            </div>
         </div>
-        <?php endif; ?>
+    </div>
+    <div class="fit-caption">
+        <span class="dot dropped"></span> Dropped &nbsp;
+        <span class="dot destroyed"></span> Destroyed
     </div>
 
     <div class="section-title">Items</div>

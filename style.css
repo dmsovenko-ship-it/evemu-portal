@@ -366,100 +366,118 @@ img { max-width: 100%; }
 .stat-value { color: var(--text-bright); font-weight: 600; }
 .stat-value.isk { color: var(--gold); }
 
-/* ── Ship fit schematic (kill detail) ────────────────────
-   EVE-fitting-window style: transparent ship render centered on a dark
-   canvas, module icons laid out in slot bands around it.
-   High band sits above the hull, Mid across the middle, Low below,
-   Rig/Sub/Drone strip along the bottom edge. Cargo is table-only.        */
-.fit-arena {
-    position: relative;
-    width: 100%;
-    max-width: 620px;
-    margin: 0 auto;
-    height: 460px;
+/* ── Fit layout (zkillboard style) ───────────────────────
+   Ship render on the left, module groups stacked on the right
+   (High/Mid/Low/Rig/Subsystem/Drone Bay/Cargo). Each group is a
+   labelled row of module icons; dropped/destroyed shown by border. */
+.fit-layout {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,.1);
+}
+.fit-ship-col {
+    flex: 0 0 180px;
+    text-align: center;
+}
+.fit-ship-render {
+    width: 180px;
+    height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border: 1px solid var(--border);
     border-radius: 6px;
     background:
         radial-gradient(ellipse at center, #101820 0%, #0b1017 70%);
-    overflow: hidden;
-    user-select: none;
 }
-.fit-arena .fit-ship-center {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 0;
-    pointer-events: none;
-}
-.fit-arena .fit-ship-center img {
-    max-width: 70%;
-    max-height: 70%;
+.fit-ship-render img {
+    max-width: 160px;
+    max-height: 160px;
     object-fit: contain;
-    filter: drop-shadow(0 0 18px rgba(0,0,0,.9));
-    opacity: .92;
 }
-/* absolute slot bands */
-.fit-arena .fit-band {
-    position: absolute;
-    left: 0;
-    right: 0;
+.fit-ship-name {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-bright);
+    font-weight: 600;
+}
+.fit-groups {
+    flex: 1;
+    min-width: 0;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 5px;
-    padding: 2px 6px;
-    z-index: 2;
+    flex-direction: column;
+    gap: 10px;
 }
-.fit-arena .band-high    { top: 6px; }
-.fit-arena .band-mid     { top: 50%; transform: translateY(-50%); }
-.fit-arena .band-low     { bottom: 40px; }
-.fit-arena .band-bottom  { bottom: 2px; }
-.fit-arena .fit-band-label {
-    font-size: 9px;
+.fit-group-label {
+    font-size: 10px;
     color: var(--text-dim);
     text-transform: uppercase;
     letter-spacing: .4px;
-    background: rgba(10,14,20,.75);
-    border-radius: 2px;
-    padding: 1px 4px;
-    white-space: nowrap;
+    margin-bottom: 4px;
+    border-bottom: 1px solid rgba(26,32,48,.6);
+    padding-bottom: 2px;
 }
-.fit-arena .fit-band-icons {
+.fit-group-modules {
     display: flex;
-    gap: 4px;
+    gap: 5px;
     flex-wrap: wrap;
-    justify-content: center;
 }
-/* slot cell (module icon in a dark tile) */
-.fit-arena .fit-slot {
-    width: 34px;
-    height: 34px;
+.fit-module {
+    position: relative;
+    width: 40px;
+    height: 40px;
     border-radius: 3px;
-    background: rgba(13,17,23,.82);
-    border: 1px solid var(--border);
+    background: var(--bg-input);
+    border: 2px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: default;
-    box-shadow: 0 0 6px rgba(0,0,0,.6);
     transition: border-color .1s, transform .1s;
 }
-.fit-arena .fit-slot:hover {
+.fit-module:hover {
     border-color: var(--accent2);
-    transform: scale(1.06);
+    transform: scale(1.08);
+    z-index: 2;
 }
-.fit-arena .fit-slot img {
-    width: 30px;
-    height: 30px;
-    border-radius: 2px;
+.fit-module img { width: 32px; height: 32px; border-radius: 2px; }
+.fit-module.destroyed { border-color: var(--danger); }
+.fit-module.dropped   { border-color: var(--accent); }
+.fit-module.partial   { border-color: var(--warn); }
+.fit-module-qty {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 9px;
+    line-height: 1;
+    padding: 1px 3px;
+    color: var(--text-bright);
+    z-index: 3;
 }
-.fit-arena .fit-slot.destroyed { border-color: var(--danger); }
-.fit-arena .fit-slot.dropped   { border-color: var(--accent); }
-.fit-arena .fit-slot.partial   { border-color: var(--warn); }
+.fit-caption {
+    padding: 6px 16px;
+    font-size: 11px;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+}
+.dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    vertical-align: baseline;
+    margin-right: 2px;
+}
+.dot.dropped { background: var(--accent); }
+.dot.destroyed { background: var(--danger); }
 
-/* keep the old fit-slot tile styling usable outside the arena too */
+/* legacy tile (unused now, kept harmless) */
 .fit-slot.destroyed { border-color: var(--danger); }
 .fit-slot.dropped   { border-color: var(--accent); }
 
