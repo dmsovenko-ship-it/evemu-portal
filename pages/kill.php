@@ -153,7 +153,7 @@ ob_start();
 
 <?php if (!empty($slots)): ?>
 <div class="fit-visual">
-    <?php foreach (['High', 'Mid', 'Low', 'Rig'] as $slotType): ?>
+    <?php foreach (['High', 'Mid', 'Low', 'Rig', 'Cargo', 'Drone Bay', 'Other'] as $slotType): ?>
         <?php if (!empty($slots[$slotType])): ?>
         <div class="fit-slot-row">
             <div class="fit-slot-label"><?= $slotType ?></div>
