@@ -48,15 +48,18 @@ function has_role($bit) {
     return $u && ($u['role'] & $bit);
 }
 
+// CCP account role bits (see eve-common/EVE_Roles.h Acct::Role)
 define('ROLE_PLAYER',       0);
-define('ROLE_GML',          1 << 0);
-define('ROLE_GMH',          1 << 1);
-define('ROLE_CHTADMIN',     1 << 2);
-define('ROLE_ADMIN',        1 << 3);
-define('ROLE_QA',           1 << 4);
-define('ROLE_WORLDMOD',     1 << 5);
-define('ROLE_CENTURION',    1 << 6);
-define('ROLE_LEGIONEER',    1 << 7);
+define('ROLE_GML',          18014398509481984);   // 0x40000000000000
+define('ROLE_GMH',          9007199254740992);    // 0x20000000000000
+define('ROLE_QA',           4503599627370496);    // 0x10000000000000
+define('ROLE_WORLDMOD',     4096);
+define('ROLE_CENTURION',    2048);
+define('ROLE_ADMIN',        72057594037927936);   // 0x0100000000000000
+define('ROLE_VIPLOGIN',     144115188075855872);  // 0x0200000000000000
+define('ROLE_CONTENT',      36028797018963968);   // 0x0080000000000000
+define('ROLE_CHTADMIN',     2097152);             // 0x200000
+define('ROLE_LEGIONEER',    262144);              // 0x40000
 
 function role_name($role) {
     $names = [];
