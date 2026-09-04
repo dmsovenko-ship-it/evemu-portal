@@ -22,9 +22,9 @@ $onlinePlayers = 0;
 $totalAccounts = 0;
 $totalCharacters = 0;
 if ($serverStatus && $serverStatus->result) {
-    $onlinePlayers = (int)($serverStatus->result->playersOnline ?? 0);
-    $totalAccounts = (int)($serverStatus->result->accounts ?? 0);
-    $totalCharacters = (int)($serverStatus->result->characters ?? 0);
+    $onlinePlayers = (int)($serverStatus->result->onlineplayers ?? 0);
+    $totalAccounts = (int)($serverStatus->result->accountcount ?? 0);
+    $totalCharacters = (int)($serverStatus->result->charactercount ?? 0);
 }
 
 ob_start();

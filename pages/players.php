@@ -11,7 +11,7 @@ if ($xml && $xml->result) {
     if (!empty($xml->result->characters))
         foreach ($xml->result->characters->row as $r) $chars[] = $r;
     $total = (int)($xml->result->total ?? count($chars));
-    $perPage = (int)($xml->result->perPage ?? 50);
+    $perPage = (int)($xml->result->perpage ?? 50);
 }
 
 usort($chars, function ($a, $b) {
