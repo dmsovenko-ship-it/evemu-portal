@@ -18,6 +18,7 @@ if (is_numeric($page)) {
 
 switch ($page) {
     case 'kill':
+        $id = $sub;
         require __DIR__ . '/pages/kill.php';
         break;
     case 'kills':
@@ -27,12 +28,15 @@ switch ($page) {
         require __DIR__ . '/pages/search.php';
         break;
     case 'character':
+        $id = $sub;
         require __DIR__ . '/pages/char_kills.php';
         break;
     case 'corporation':
+        $id = $sub;
         require __DIR__ . '/pages/corp_kills.php';
         break;
     case 'system':
+        $id = $sub;
         require __DIR__ . '/pages/system_kills.php';
         break;
     case 'stats':
