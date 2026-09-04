@@ -27,9 +27,16 @@ ob_start();
 </div>
 
 <?php if (!empty($orders)): ?>
+<div class="filter-bar" id="filterBar">
+    <div class="form-group filter-search">
+        <label for="searchItem">Предмет</label>
+        <input type="text" id="searchItem" placeholder="Фильтр по названию...">
+    </div>
+</div>
+
 <div class="section">
     <h2>Топ товаров по объёму</h2>
-    <table class="data-table">
+    <table class="data-table" id="marketTable">
         <thead><tr>
             <th></th><th>Предмет</th><th>Объём</th><th>Ср. цена</th>
         </tr></thead>
@@ -39,7 +46,7 @@ ob_start();
             $vol   = (int)($row['volume'] ?? $row['quantity'] ?? 0);
             $price = (float)($row['avgprice'] ?? $row['price'] ?? 0);
         ?>
-        <tr>
+        <tr data-name="<?= e(strtolower($name)) ?>">
             <td style="width:40px"><img src="<?= ship_icon($row['typeid'] ?? 0, 32) ?>" width="32" height="32" style="border-radius:3px;background:#0d1117" onerror="this.style.display='none'"></td>
             <td style="font-weight:600;color:var(--text-bright)"><?= e($name) ?></td>
             <td><?= number_format($vol) ?></td>
@@ -49,6 +56,30 @@ ob_start();
         </tbody>
     </table>
 </div>
+
+<script>
+(function() {
+    var table = document.getElementById('marketTable');
+    if (!table) return;
+    var rows = table.querySelectorAll('tbody tr[data-name]');
+    var searchItem = document.getElementById('searchItem');
+
+    function applyFilter() {
+        var q = searchItem.value.toLowerCase();
+        for (var i = 0; i < rows.length; i++) {
+            var r = rows[i];
+            if (!q || r.getAttribute('data-name').indexOf(q) !== -1) {
+                r.style.display = '';
+            } else {
+                r.style.display = 'none';
+            }
+        }
+    }
+
+    searchItem.addEventListener('input', applyFilter);
+})();
+</script>
+
 <?php else: ?>
 <div class="section">
     <p style="color:var(--text-dim);text-align:center;padding:40px 0">Данные рынка пока пусты.</p>

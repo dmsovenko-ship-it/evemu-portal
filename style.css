@@ -309,6 +309,63 @@ a:hover { text-decoration: underline; }
 .badge-open { background: #1a2a1a; color: #44cc66; }
 .badge-closed { background: #1a1a2a; color: #4466cc; }
 
+/* Filter bar */
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+    margin-bottom: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+}
+.filter-bar .form-group {
+    margin-bottom: 0;
+    flex: 0 1 auto;
+    min-width: 140px;
+}
+.filter-bar .form-group.filter-search {
+    flex: 1 1 200px;
+}
+.filter-bar label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 3px;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+}
+.filter-bar input,
+.filter-bar select {
+    width: 100%;
+    padding: 7px 10px;
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-bright);
+    font-size: 13px;
+    outline: none;
+    transition: border .15s;
+}
+.filter-bar input:focus,
+.filter-bar select:focus {
+    border-color: var(--accent2);
+}
+.filter-bar select {
+    cursor: pointer;
+}
+.filter-bar select option {
+    background: #0d1117;
+    color: var(--text-bright);
+}
+.filter-info {
+    color: var(--text-dim);
+    font-size: 12px;
+    margin-bottom: 12px;
+}
+
 /* Footer */
 .footer {
     border-top: 1px solid var(--border);
