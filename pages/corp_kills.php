@@ -27,18 +27,23 @@ $paginated = array_slice($kills, $offset, $perPage);
 $corpName = $corpInfo ? (string)($corpInfo->corporationName ?? 'Unknown') : 'Unknown';
 $ticker = $corpInfo ? (string)($corpInfo->ticker ?? '') : '';
 $memberCount = $corpInfo ? (int)($corpInfo->memberCount ?? 0) : 0;
+$ceoID = $corpInfo ? (int)($corpInfo->ceoID ?? 0) : 0;
+$ceoName = $corpInfo ? (string)($corpInfo->ceoName ?? '') : '';
 
 ob_start();
 ?>
 
 <div class="corp-profile">
-    <div class="corp-logo-wrap">
-        <img src="<?= corp_logo($corpID, 128) ?>" width="128" height="128" class="corp-logo" onerror="this.style.display='none'">
+    <div class="corp-logo">
+        <img src="<?= corp_logo($corpID, 128) ?>" onerror="this.style.display='none'">
     </div>
     <div class="corp-info">
         <h1><?= e($corpName) ?> <span class="corp-ticker">[<?= e($ticker) ?>]</span></h1>
         <div class="corp-meta">
             <span class="corp-members"><?= number_format($memberCount) ?> members</span>
+            <?php if ($ceoID): ?>
+            <span style="color:var(--text-dim)">CEO: <a href="/character/<?= $ceoID ?>"><?= e($ceoName) ?></a></span>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -88,9 +93,9 @@ ob_start();
 
 <?php if ($total_pages > 1): ?>
 <div class="pagination">
-    <?php if ($page_num > 1): ?><a href="?id=<?= $corpID ?>&p=<?= $page_num - 1 ?>">&laquo; Prev</a><?php endif; ?>
+    <?php if ($page_num > 1): ?><a href="/corporation/<?= $corpID ?>?p=<?= $page_num - 1 ?>">&laquo; Prev</a><?php endif; ?>
     <span>Page <?= $page_num ?> of <?= $total_pages ?></span>
-    <?php if ($page_num < $total_pages): ?><a href="?id=<?= $corpID ?>&p=<?= $page_num + 1 ?>">Next &raquo;</a><?php endif; ?>
+    <?php if ($page_num < $total_pages): ?><a href="/corporation/<?= $corpID ?>?p=<?= $page_num + 1 ?>">Next &raquo;</a><?php endif; ?>
 </div>
 <?php endif; ?>
 

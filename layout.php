@@ -15,15 +15,15 @@ function render_layout($title, $active, $content) {
     <div class="nav-inner">
         <a href="/" class="nav-brand"><?= SITE_NAME ?></a>
         <form action="/search" method="get" class="nav-search">
-            <input type="text" name="q" placeholder="Search..." class="nav-search-input" autocomplete="off">
-            <button type="submit" class="nav-search-btn">&#128269;</button>
+            <input type="text" name="q" placeholder="Search characters, corporations, systems..." class="nav-search-input" autocomplete="off">
+            <button type="submit" class="nav-search-btn">Search</button>
         </form>
         <div class="nav-links">
             <a href="/kills" class="<?= $active==='kills'?'active':'' ?>">Killboard</a>
             <a href="/players" class="<?= $active==='players'?'active':'' ?>">Players</a>
             <a href="/systems" class="<?= $active==='systems'?'active':'' ?>">Systems</a>
             <?php if ($user): ?>
-                <a href="/characters" class="<?= $active==='chars'?'active':'' ?>">Characters</a>
+                <a href="/characters" class="<?= $active==='chars'?'active':'' ?>">My Characters</a>
                 <?php if ($user['role'] & (ROLE_ADMIN|ROLE_GMH|ROLE_GML)): ?>
                     <a href="/admin" class="<?= $active==='admin'?'active':'' ?>">Admin</a>
                 <?php endif; ?>
@@ -39,7 +39,7 @@ function render_layout($title, $active, $content) {
 <?= $content ?>
 </main>
 <footer class="footer">
-    <p><?= SITE_NAME ?> Killboard &copy; <?= date('Y') ?></p>
+    <?= SITE_NAME ?> Killboard &copy; <?= date('Y') ?> &mdash; Powered by EVEmu
 </footer>
 </body>
 </html>

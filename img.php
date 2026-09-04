@@ -3,7 +3,7 @@ $cacheDir = __DIR__ . '/cache';
 if (!is_dir($cacheDir)) mkdir($cacheDir, 0777, true);
 
 $url = $_GET['url'] ?? '';
-if (empty($url) || !preg_match('#^https://(images\.eveonline\.com|images\.zkillboard\.com)/#', $url)) {
+if (empty($url) || !preg_match('#^https://(images\.eveonline\.com|images\.zkillboard\.com|images\.evetech\.net)/#', $url)) {
     http_response_code(400);
     exit;
 }

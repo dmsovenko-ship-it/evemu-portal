@@ -36,7 +36,7 @@ ob_start();
 <div class="system-profile">
     <div class="system-info">
         <h1>
-            <span class="sec" style="color:<?= security_color($systemSec) ?>;font-size:28px;font-weight:700"><?= number_format($systemSec, 1) ?></span>
+            <span class="sec" style="color:<?= security_color($systemSec) ?>;font-size:22px;font-weight:700"><?= number_format($systemSec, 1) ?></span>
             <?= e($systemName ?: 'System #' . $systemID) ?>
         </h1>
     </div>
@@ -87,9 +87,9 @@ ob_start();
 
 <?php if ($total_pages > 1): ?>
 <div class="pagination">
-    <?php if ($page_num > 1): ?><a href="?id=<?= $systemID ?>&p=<?= $page_num - 1 ?>">&laquo; Prev</a><?php endif; ?>
+    <?php if ($page_num > 1): ?><a href="/system/<?= $systemID ?>?p=<?= $page_num - 1 ?>">&laquo; Prev</a><?php endif; ?>
     <span>Page <?= $page_num ?> of <?= $total_pages ?></span>
-    <?php if ($page_num < $total_pages): ?><a href="?id=<?= $systemID ?>&p=<?= $page_num + 1 ?>">Next &raquo;</a><?php endif; ?>
+    <?php if ($page_num < $total_pages): ?><a href="/system/<?= $systemID ?>?p=<?= $page_num + 1 ?>">Next &raquo;</a><?php endif; ?>
 </div>
 <?php endif; ?>
 

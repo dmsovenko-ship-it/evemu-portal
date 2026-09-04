@@ -29,8 +29,9 @@ if (in_array($period, ['24h', '7d', '30d'])) {
 ob_start();
 ?>
 
-<div class="kills-header">
-    <h1>Killboard</h1>
+<div class="section-header" style="margin-bottom:12px">
+    <h2 style="font-size:16px">Killboard</h2>
+    <span class="section-count"><?= number_format($total) ?> kills</span>
 </div>
 
 <div class="period-tabs">
@@ -64,16 +65,16 @@ ob_start();
         <td class="k-icon"><img src="<?= ship_icon($k['victimshiptypeid'], 32) ?>" width="32" height="32" loading="lazy" onerror="this.style.display='none'"></td>
         <td class="k-system"><a href="/system/<?= $k['solarsystemid'] ?? '' ?>" onclick="event.stopPropagation()"><span class="sec" style="color:<?= security_color($sec) ?>"><?= number_format($sec, 1) ?></span> <?= e($k['solarsystemname']) ?></a></td>
         <td class="k-victim"><a href="/character/<?= $k['victimcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['victimname']) ?></a></td>
-        <td class="k-ship"><a href="/character/<?= $k['victimcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['victimshipname']) ?></a></td>
+        <td class="k-ship"><?= e($k['victimshipname']) ?></td>
         <td class="k-value"><?= number_format($dmg) ?></td>
         <td class="k-icon"><img src="<?= ship_icon($k['finalshiptypeid'], 32) ?>" width="32" height="32" loading="lazy" onerror="this.style.display='none'"></td>
         <td class="k-killer"><a href="/character/<?= $k['finalcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['finalname']) ?></a></td>
-        <td class="k-ship"><a href="/character/<?= $k['finalcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['finalshipname']) ?></a></td>
+        <td class="k-ship"><?= e($k['finalshipname']) ?></td>
         <td class="k-time" title="<?= date('Y-m-d H:i:s', $ts) ?>"><?= time_ago($ts) ?></td>
     </tr>
     <?php endforeach; ?>
     <?php if (empty($kills)): ?>
-        <tr><td colspan="9" class="empty">No kills found</td></tr>
+        <tr><td colspan="9" class="empty">No kills found for this period</td></tr>
     <?php endif; ?>
     </tbody>
 </table>

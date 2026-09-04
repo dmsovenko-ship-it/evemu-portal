@@ -13,32 +13,38 @@ if ($xml && $xml->result) {
 
 ob_start();
 ?>
-<h1>Рынок</h1>
 
-<div class="stat-cards">
+<div class="section-header" style="margin-bottom:12px">
+    <h2 style="font-size:16px">Market</h2>
+    <span class="section-count"><?= number_format($totalOrders) ?> orders</span>
+</div>
+
+<div class="stat-cards" style="justify-content:flex-start">
     <div class="stat-card">
         <div class="stat-num"><?= number_format($totalOrders) ?></div>
-        <div class="stat-label">Ордеров</div>
+        <div class="stat-label">Orders</div>
     </div>
     <div class="stat-card">
         <div class="stat-num"><?= count($orders) ?></div>
-        <div class="stat-label">Торгуемых предметов</div>
+        <div class="stat-label">Items Traded</div>
     </div>
 </div>
 
 <?php if (!empty($orders)): ?>
 <div class="filter-bar" id="filterBar">
     <div class="form-group filter-search">
-        <label for="searchItem">Предмет</label>
-        <input type="text" id="searchItem" placeholder="Фильтр по названию...">
+        <label for="searchItem">Item</label>
+        <input type="text" id="searchItem" placeholder="Filter by name...">
     </div>
 </div>
 
 <div class="section">
-    <h2>Топ товаров по объёму</h2>
+    <div class="section-header">
+        <h2>Top Items by Volume</h2>
+    </div>
     <table class="data-table" id="marketTable">
         <thead><tr>
-            <th></th><th>Предмет</th><th>Объём</th><th>Ср. цена</th>
+            <th></th><th>Item</th><th>Volume</th><th>Avg Price</th>
         </tr></thead>
         <tbody>
         <?php foreach ($orders as $row):
@@ -47,10 +53,10 @@ ob_start();
             $price = (float)($row['avgprice'] ?? $row['price'] ?? 0);
         ?>
         <tr data-name="<?= e(strtolower($name)) ?>">
-            <td style="width:40px"><img src="<?= ship_icon($row['typeid'] ?? 0, 32) ?>" width="32" height="32" style="border-radius:3px;background:#0d1117" onerror="this.style.display='none'"></td>
+            <td style="width:36px"><img src="<?= ship_icon($row['typeid'] ?? 0, 32) ?>" width="32" height="32" style="border-radius:3px;background:#0d1117" onerror="this.style.display='none'"></td>
             <td style="font-weight:600;color:var(--text-bright)"><?= e($name) ?></td>
-            <td><?= number_format($vol) ?></td>
-            <td style="color:var(--accent)"><?= $price > 0 ? number_format($price, 2, '.', ' ') . ' ISK' : '—' ?></td>
+            <td style="font-variant-numeric:tabular-nums"><?= number_format($vol) ?></td>
+            <td style="color:var(--accent);font-variant-numeric:tabular-nums"><?= $price > 0 ? number_format($price, 2, '.', ' ') . ' ISK' : '—' ?></td>
         </tr>
         <?php endforeach; ?>
         </tbody>
@@ -82,9 +88,9 @@ ob_start();
 
 <?php else: ?>
 <div class="section">
-    <p style="color:var(--text-dim);text-align:center;padding:40px 0">Данные рынка пока пусты.</p>
+    <p style="color:var(--text-dim);text-align:center;padding:32px 0">Market data is not yet available.</p>
 </div>
 <?php endif; ?>
 
 <?php
-render_layout('Рынок', 'market', ob_get_clean());
+render_layout('Market', 'market', ob_get_clean());

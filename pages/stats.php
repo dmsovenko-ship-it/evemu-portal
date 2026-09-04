@@ -7,9 +7,9 @@ $kills = api_get('/server/KillStats.xml.aspx');
 $online = $version = $players = $accounts = $characters = $bots = '—';
 if ($server && $server->result) {
     $r = $server->result;
-    $online    = $r->online ?? $r->serveronline ?? '—';
+    $online    = $r->online ?? $r->serveronline ?? $r->playersOnline ?? '—';
     $version   = $r->version ?? $r->serverversion ?? '—';
-    $players   = $r->players ?? '—';
+    $players   = $r->players ?? $r->playersOnline ?? '—';
     $accounts  = $r->accounts ?? '—';
     $characters = $r->characters ?? '—';
     $bots      = $r->bots ?? '—';
@@ -33,56 +33,58 @@ if ($kills && $kills->result) {
 
 ob_start();
 ?>
-<h1>Статистика сервера</h1>
+
+<div class="section-header" style="margin-bottom:12px">
+    <h2 style="font-size:16px">Server Statistics</h2>
+</div>
 
 <div class="stat-cards">
     <div class="stat-card">
-        <div class="stat-num" style="color:<?= $online ? '#66cc88' : '#ee4444' ?>"><?= e($online) ?></div>
-        <div class="stat-label">Онлайн</div>
+        <div class="stat-num" style="color:<?= $online != '—' && $online ? 'var(--accent)' : 'var(--danger)' ?>"><?= e($online) ?></div>
+        <div class="stat-label">Online</div>
     </div>
     <div class="stat-card">
         <div class="stat-num"><?= e($players) ?></div>
-        <div class="stat-label">Игроков</div>
+        <div class="stat-label">Players</div>
     </div>
     <div class="stat-card">
         <div class="stat-num"><?= e($accounts) ?></div>
-        <div class="stat-label">Аккаунтов</div>
+        <div class="stat-label">Accounts</div>
     </div>
     <div class="stat-card">
         <div class="stat-num"><?= e($characters) ?></div>
-        <div class="stat-label">Персонажей</div>
+        <div class="stat-label">Characters</div>
     </div>
     <div class="stat-card">
-        <div class="stat-num" style="color:#ee8844"><?= e($bots) ?></div>
-        <div class="stat-label">Ботов</div>
+        <div class="stat-num" style="color:var(--warn)"><?= e($bots) ?></div>
+        <div class="stat-label">Bots</div>
     </div>
     <div class="stat-card">
-        <div class="stat-num" style="color:#ee4444"><?= number_format($totalKills) ?></div>
-        <div class="stat-label">Всего киллов</div>
+        <div class="stat-num" style="color:var(--danger)"><?= number_format($totalKills) ?></div>
+        <div class="stat-label">Total Kills</div>
     </div>
     <div class="stat-card">
-        <div class="stat-num"><?= e($version) ?></div>
-        <div class="stat-label">Версия</div>
+        <div class="stat-num" style="font-size:16px"><?= e($version) ?></div>
+        <div class="stat-label">Version</div>
     </div>
 </div>
 
 <?php if (!empty($topKillers)): ?>
 <div class="section">
-    <h2>Топ убийц</h2>
+    <div class="section-header">
+        <h2>Top Killers</h2>
+    </div>
     <table class="data-table">
-        <thead><tr><th>#</th><th>Пилот</th><th>Корабль</th><th>Киллы</th></tr></thead>
+        <thead><tr><th>#</th><th>Pilot</th><th>Ship</th><th>Kills</th></tr></thead>
         <tbody>
         <?php foreach (array_slice($topKillers, 0, 10) as $i => $row): ?>
         <tr>
             <td><?= $i + 1 ?></td>
             <td><a href="/character/<?= $row['characterid'] ?? '' ?>"><?= e($row['charactername'] ?? $row['name'] ?? '') ?></a></td>
-            <td><?= e($row['shipname'] ?? $row['ship'] ?? '') ?></td>
+            <td style="color:var(--text-dim)"><?= e($row['shipname'] ?? $row['ship'] ?? '') ?></td>
             <td style="font-weight:600;color:var(--accent2)"><?= e($row['kills'] ?? $row['count'] ?? 0) ?></td>
         </tr>
         <?php endforeach; ?>
-        <?php if (empty($topKillers)): ?>
-        <tr><td colspan="4" class="empty">Нет данных</td></tr>
-        <?php endif; ?>
         </tbody>
     </table>
 </div>
@@ -90,21 +92,20 @@ ob_start();
 
 <?php if (!empty($topVictims)): ?>
 <div class="section">
-    <h2>Топ жертв</h2>
+    <div class="section-header">
+        <h2>Top Victims</h2>
+    </div>
     <table class="data-table">
-        <thead><tr><th>#</th><th>Пилот</th><th>Корабль</th><th>Смерти</th></tr></thead>
+        <thead><tr><th>#</th><th>Pilot</th><th>Ship</th><th>Deaths</th></tr></thead>
         <tbody>
         <?php foreach (array_slice($topVictims, 0, 10) as $i => $row): ?>
         <tr>
             <td><?= $i + 1 ?></td>
             <td><a href="/character/<?= $row['characterid'] ?? '' ?>"><?= e($row['charactername'] ?? $row['name'] ?? '') ?></a></td>
-            <td><?= e($row['shipname'] ?? $row['ship'] ?? '') ?></td>
+            <td style="color:var(--text-dim)"><?= e($row['shipname'] ?? $row['ship'] ?? '') ?></td>
             <td style="font-weight:600;color:var(--danger)"><?= e($row['deaths'] ?? $row['count'] ?? 0) ?></td>
         </tr>
         <?php endforeach; ?>
-        <?php if (empty($topVictims)): ?>
-        <tr><td colspan="4" class="empty">Нет данных</td></tr>
-        <?php endif; ?>
         </tbody>
     </table>
 </div>
@@ -112,14 +113,16 @@ ob_start();
 
 <?php if (!empty($killsBySystem)): ?>
 <div class="section">
-    <h2>Киллы по системам</h2>
+    <div class="section-header">
+        <h2>Kills by System</h2>
+    </div>
     <table class="data-table">
-        <thead><tr><th>Система</th><th>Киллы</th></tr></thead>
+        <thead><tr><th>System</th><th>Kills</th></tr></thead>
         <tbody>
         <?php foreach ($killsBySystem as $row): ?>
         <tr>
-            <td style="color:var(--gold)"><?= e($row['solarsystemname'] ?? $row['system'] ?? '') ?></td>
-            <td style="font-weight:600"><?= e($row['kills'] ?? $row['count'] ?? 0) ?></td>
+            <td style="color:var(--gold);font-weight:600"><?= e($row['solarsystemname'] ?? $row['system'] ?? '') ?></td>
+            <td style="font-weight:600;font-variant-numeric:tabular-nums"><?= e($row['kills'] ?? $row['count'] ?? 0) ?></td>
         </tr>
         <?php endforeach; ?>
         </tbody>
@@ -129,20 +132,19 @@ ob_start();
 
 <?php if (!empty($topShips)): ?>
 <div class="section">
-    <h2>Популярные корабли</h2>
+    <div class="section-header">
+        <h2>Popular Ships</h2>
+    </div>
     <table class="data-table">
-        <thead><tr><th></th><th>Корабль</th><th>Использований</th></tr></thead>
+        <thead><tr><th></th><th>Ship</th><th>Uses</th></tr></thead>
         <tbody>
         <?php foreach ($topShips as $row): ?>
         <tr>
-            <td style="width:40px"><img src="<?= ship_icon($row['typeid'] ?? 0, 32) ?>" width="32" height="32" style="border-radius:3px;background:#0d1117" onerror="this.style.display='none'"></td>
+            <td style="width:36px"><img src="<?= ship_icon($row['typeid'] ?? 0, 32) ?>" width="32" height="32" style="border-radius:3px;background:#0d1117" onerror="this.style.display='none'"></td>
             <td><?= e($row['shipname'] ?? $row['name'] ?? '') ?></td>
-            <td style="font-weight:600"><?= e($row['count'] ?? 0) ?></td>
+            <td style="font-weight:600;font-variant-numeric:tabular-nums"><?= e($row['count'] ?? 0) ?></td>
         </tr>
         <?php endforeach; ?>
-        <?php if (empty($topShips)): ?>
-        <tr><td colspan="3" class="empty">Нет данных</td></tr>
-        <?php endif; ?>
         </tbody>
     </table>
 </div>
@@ -150,9 +152,9 @@ ob_start();
 
 <?php if ($totalKills === 0 && empty($topKillers) && empty($killsBySystem)): ?>
 <div class="section">
-    <p style="color:var(--text-dim);text-align:center;padding:40px 0">Статистика пока пуста. Начните стрелять!</p>
+    <p style="color:var(--text-dim);text-align:center;padding:32px 0">Statistics are empty. Go get some kills!</p>
 </div>
 <?php endif; ?>
 
 <?php
-render_layout('Статистика', 'stats', ob_get_clean());
+render_layout('Statistics', 'stats', ob_get_clean());

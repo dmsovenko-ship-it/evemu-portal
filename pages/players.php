@@ -7,13 +7,11 @@ $xml = api_get('/char/CharacterList.xml.aspx?page=' . $page_num);
 $chars = [];
 $total = 0;
 $perPage = 50;
-$pageFromApi = $page_num;
 if ($xml && $xml->result) {
     if (!empty($xml->result->characters))
         foreach ($xml->result->characters->row as $r) $chars[] = $r;
     $total = (int)($xml->result->total ?? count($chars));
     $perPage = (int)($xml->result->perPage ?? 50);
-    $pageFromApi = (int)($xml->result->page ?? $page_num);
 }
 
 usort($chars, function ($a, $b) {
@@ -27,17 +25,21 @@ if ($total === 0) { $showFrom = 0; $showTo = 0; }
 
 ob_start();
 ?>
-<h1>Игроки</h1>
+
+<div class="section-header" style="margin-bottom:12px">
+    <h2 style="font-size:16px">Players</h2>
+    <span class="section-count"><?= number_format($total) ?> characters</span>
+</div>
 
 <div class="filter-bar" id="filterBar">
     <div class="form-group filter-search">
-        <label for="searchName">Имя</label>
-        <input type="text" id="searchName" placeholder="Фильтр по имени...">
+        <label for="searchName">Name</label>
+        <input type="text" id="searchName" placeholder="Filter by name...">
     </div>
     <div class="form-group">
-        <label for="filterRace">Раса</label>
+        <label for="filterRace">Race</label>
         <select id="filterRace">
-            <option value="">Все</option>
+            <option value="">All</option>
             <option value="Amarr">Amarr</option>
             <option value="Caldari">Caldari</option>
             <option value="Gallente">Gallente</option>
@@ -45,18 +47,18 @@ ob_start();
         </select>
     </div>
     <div class="form-group filter-search">
-        <label for="searchCorp">Корпорация</label>
-        <input type="text" id="searchCorp" placeholder="Фильтр по корпу/тикеру...">
+        <label for="searchCorp">Corporation</label>
+        <input type="text" id="searchCorp" placeholder="Filter by corp/ticker...">
     </div>
 </div>
 
 <div class="filter-info" id="filterInfo">
-    Показано <?= $showFrom ?>–<?= $showTo ?> из <?= number_format($total) ?> персонажей
+    Showing <?= $showFrom ?>&ndash;<?= $showTo ?> of <?= number_format($total) ?> characters
 </div>
 
 <table class="data-table" id="playersTable">
     <thead><tr>
-        <th></th><th>Имя</th><th>Раса</th><th>Sec</th><th>Корп</th><th>Skillpoints</th><th>Система</th><th>Корабль</th>
+        <th></th><th>Name</th><th>Sec</th><th>Corp</th><th>Skillpoints</th><th>System</th><th>Ship</th>
     </tr></thead>
     <tbody>
     <?php foreach ($chars as $c):
@@ -66,22 +68,21 @@ ob_start();
         $corpName = $c['corporationname'] ?? $c['corpname'] ?? '';
     ?>
     <tr data-race="<?= e($race) ?>" data-corp="<?= e(strtolower($corpTicker . ' ' . $corpName)) ?>" data-name="<?= e(strtolower($c['charactername'] ?? '')) ?>">
-        <td style="width:40px">
+        <td style="width:36px">
             <img src="<?= char_portrait($c['characterid'], 64) ?>"
-                 width="32" height="32" style="border-radius:3px;background:#111"
-                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect fill=%22%23111%22 width=%2232%22 height=%2232%22/></svg>'">
+                 width="32" height="32" style="border-radius:3px;background:#111820"
+                 onerror="this.style.display='none'">
         </td>
         <td><a href="/character/<?= $c['characterid'] ?>" style="font-weight:600;color:var(--text-bright)"><?= e($c['charactername'] ?? '') ?></a></td>
-        <td style="color:var(--text-dim)"><?= e($race) ?></td>
-        <td><span style="color:<?= security_color($sec) ?>;font-weight:600;font-size:12px"><?= number_format($sec, 1) ?></span></td>
+        <td><span style="color:<?= security_color($sec) ?>;font-weight:600;font-size:11px"><?= number_format($sec, 1) ?></span></td>
         <td style="color:var(--accent2)"><?= e($corpTicker) ?></td>
-        <td style="font-weight:600"><?= number_format((int)($c['skillpoints'] ?? 0)) ?></td>
+        <td style="font-weight:600;font-variant-numeric:tabular-nums"><?= number_format((int)($c['skillpoints'] ?? 0)) ?></td>
         <td style="color:var(--gold)"><?= e($c['solarsystemname'] ?? $c['system'] ?? '') ?></td>
-        <td style="color:#8899aa"><?= e($c['shipname'] ?? '') ?></td>
+        <td style="color:var(--text-dim)"><?= e($c['shipname'] ?? '') ?></td>
     </tr>
     <?php endforeach; ?>
     <?php if (empty($chars)): ?>
-    <tr><td colspan="8" class="empty">Нет персонажей на сервере</td></tr>
+    <tr><td colspan="7" class="empty">No characters found</td></tr>
     <?php endif; ?>
     </tbody>
 </table>
@@ -122,8 +123,8 @@ ob_start();
             }
         }
         info.textContent = shown === rows.length
-            ? 'Показано <?= $showFrom ?>\u2013<?= $showTo ?> из <?= number_format($total) ?> персонажей'
-            : 'Фильтр: ' + shown + ' из ' + rows.length + ' на странице';
+            ? 'Showing <?= $showFrom ?>\u2013<?= $showTo ?> of <?= number_format($total) ?> characters'
+            : 'Filter: ' + shown + ' of ' + rows.length + ' on page';
     }
 
     searchName.addEventListener('input', applyFilters);
@@ -133,4 +134,4 @@ ob_start();
 </script>
 
 <?php
-render_layout('Игроки', 'players', ob_get_clean());
+render_layout('Players', 'players', ob_get_clean());

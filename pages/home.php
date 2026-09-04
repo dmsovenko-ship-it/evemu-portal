@@ -19,36 +19,33 @@ if ($allKills && $allKills->result && $allKills->result->kills)
     foreach ($allKills->result->kills->row as $r) $recentKills[] = $r;
 
 $onlinePlayers = 0;
-$totalKills = 0;
+$totalAccounts = 0;
+$totalCharacters = 0;
 if ($serverStatus && $serverStatus->result) {
     $onlinePlayers = (int)($serverStatus->result->playersOnline ?? 0);
-    $totalKills = (int)($serverStatus->result->totalKills ?? 0);
+    $totalAccounts = (int)($serverStatus->result->accounts ?? 0);
+    $totalCharacters = (int)($serverStatus->result->characters ?? 0);
 }
 
 ob_start();
 ?>
 
-<div class="hero">
-    <h1><?= SITE_NAME ?> Killboard</h1>
-    <p class="hero-sub">Real-time kill tracking for <?= SITE_NAME ?></p>
-</div>
-
 <div class="stat-cards">
     <div class="stat-card">
-        <div class="stat-num"><?= number_format($onlinePlayers) ?></div>
+        <div class="stat-num" style="color:<?= $onlinePlayers > 0 ? 'var(--accent)' : 'var(--danger)' ?>"><?= number_format($onlinePlayers) ?></div>
         <div class="stat-label">Online Now</div>
     </div>
     <div class="stat-card">
-        <div class="stat-num"><?= number_format(count($recentKills)) ?></div>
+        <div class="stat-num"><?= number_format($totalAccounts) ?></div>
+        <div class="stat-label">Accounts</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-num"><?= number_format($totalCharacters) ?></div>
+        <div class="stat-label">Characters</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-num" style="color:var(--warn)"><?= number_format(count($recentKills)) ?></div>
         <div class="stat-label">Total Kills</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-num"><?= count($top7dKills) ?></div>
-        <div class="stat-label">Kills (7d)</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-num"><?= count($top24hKills) ?></div>
-        <div class="stat-label">Kills (24h)</div>
     </div>
 </div>
 
@@ -56,12 +53,12 @@ ob_start();
     <div class="home-main">
 
         <?php if (!empty($top7dKills)): ?>
-        <div class="section">
-            <div class="section-header">
-                <h2>Most Valuable Kills — Last 7 Days</h2>
+        <div class="top-kills-card">
+            <div class="top-kills-header">
+                <h3>Most Valuable Kills &mdash; Last 7 Days</h3>
                 <a href="/kills?period=7d" class="section-link">View All &rarr;</a>
             </div>
-            <table class="kill-table compact">
+            <table class="kill-table">
                 <thead>
                     <tr>
                         <th class="k-icon"></th>
@@ -85,29 +82,26 @@ ob_start();
                     <td class="k-icon"><img src="<?= ship_icon($k['victimshiptypeid'], 32) ?>" width="32" height="32" loading="lazy" onerror="this.style.display='none'"></td>
                     <td class="k-system"><a href="/system/<?= $k['solarsystemid'] ?? '' ?>" onclick="event.stopPropagation()"><span class="sec" style="color:<?= security_color($sec) ?>"><?= number_format($sec, 1) ?></span> <?= e($k['solarsystemname']) ?></a></td>
                     <td class="k-victim"><a href="/character/<?= $k['victimcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['victimname']) ?></a></td>
-                    <td class="k-ship"><a href="/character/<?= $k['victimcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['victimshipname']) ?></a></td>
+                    <td class="k-ship"><?= e($k['victimshipname']) ?></td>
                     <td class="k-value"><?= number_format($dmg) ?></td>
                     <td class="k-icon"><img src="<?= ship_icon($k['finalshiptypeid'], 32) ?>" width="32" height="32" loading="lazy" onerror="this.style.display='none'"></td>
                     <td class="k-killer"><a href="/character/<?= $k['finalcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['finalname']) ?></a></td>
-                    <td class="k-ship"><a href="/character/<?= $k['finalcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['finalshipname']) ?></a></td>
+                    <td class="k-ship"><?= e($k['finalshipname']) ?></td>
                     <td class="k-time" title="<?= date('Y-m-d H:i:s', $ts) ?>"><?= time_ago($ts) ?></td>
                 </tr>
                 <?php endforeach; ?>
-                <?php if (empty($top7dKills)): ?>
-                    <tr><td colspan="9" class="empty">No kills in the last 7 days</td></tr>
-                <?php endif; ?>
                 </tbody>
             </table>
         </div>
         <?php endif; ?>
 
         <?php if (!empty($top24hKills)): ?>
-        <div class="section">
-            <div class="section-header">
-                <h2>Most Valuable Kills — 24 Hours</h2>
+        <div class="top-kills-card">
+            <div class="top-kills-header">
+                <h3>Most Valuable Kills &mdash; 24 Hours</h3>
                 <a href="/kills?period=24h" class="section-link">View All &rarr;</a>
             </div>
-            <table class="kill-table compact">
+            <table class="kill-table">
                 <thead>
                     <tr>
                         <th class="k-icon"></th>
@@ -131,28 +125,25 @@ ob_start();
                     <td class="k-icon"><img src="<?= ship_icon($k['victimshiptypeid'], 32) ?>" width="32" height="32" loading="lazy" onerror="this.style.display='none'"></td>
                     <td class="k-system"><a href="/system/<?= $k['solarsystemid'] ?? '' ?>" onclick="event.stopPropagation()"><span class="sec" style="color:<?= security_color($sec) ?>"><?= number_format($sec, 1) ?></span> <?= e($k['solarsystemname']) ?></a></td>
                     <td class="k-victim"><a href="/character/<?= $k['victimcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['victimname']) ?></a></td>
-                    <td class="k-ship"><a href="/character/<?= $k['victimcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['victimshipname']) ?></a></td>
+                    <td class="k-ship"><?= e($k['victimshipname']) ?></td>
                     <td class="k-value"><?= number_format($dmg) ?></td>
                     <td class="k-icon"><img src="<?= ship_icon($k['finalshiptypeid'], 32) ?>" width="32" height="32" loading="lazy" onerror="this.style.display='none'"></td>
                     <td class="k-killer"><a href="/character/<?= $k['finalcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['finalname']) ?></a></td>
-                    <td class="k-ship"><a href="/character/<?= $k['finalcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['finalshipname']) ?></a></td>
+                    <td class="k-ship"><?= e($k['finalshipname']) ?></td>
                     <td class="k-time" title="<?= date('Y-m-d H:i:s', $ts) ?>"><?= time_ago($ts) ?></td>
                 </tr>
                 <?php endforeach; ?>
-                <?php if (empty($top24hKills)): ?>
-                    <tr><td colspan="9" class="empty">No kills in the last 24 hours</td></tr>
-                <?php endif; ?>
                 </tbody>
             </table>
         </div>
         <?php endif; ?>
 
-        <div class="section">
-            <div class="section-header">
-                <h2>Recent Kills</h2>
+        <div class="top-kills-card">
+            <div class="top-kills-header">
+                <h3>Recent Kills</h3>
                 <a href="/kills" class="section-link">View All &rarr;</a>
             </div>
-            <table class="kill-table compact">
+            <table class="kill-table">
                 <thead>
                     <tr>
                         <th class="k-icon"></th>
@@ -167,7 +158,7 @@ ob_start();
                     </tr>
                 </thead>
                 <tbody>
-                <?php foreach (array_slice($recentKills, 0, 15) as $k):
+                <?php foreach (array_slice($recentKills, 0, 20) as $k):
                     $ts = filetime_to_unix((string)$k['killtime']);
                     $sec = (float)$k['finalsecuritystatus'];
                     $dmg = (int)$k['victimdamagetaken'];
@@ -176,11 +167,11 @@ ob_start();
                     <td class="k-icon"><img src="<?= ship_icon($k['victimshiptypeid'], 32) ?>" width="32" height="32" loading="lazy" onerror="this.style.display='none'"></td>
                     <td class="k-system"><a href="/system/<?= $k['solarsystemid'] ?? '' ?>" onclick="event.stopPropagation()"><span class="sec" style="color:<?= security_color($sec) ?>"><?= number_format($sec, 1) ?></span> <?= e($k['solarsystemname']) ?></a></td>
                     <td class="k-victim"><a href="/character/<?= $k['victimcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['victimname']) ?></a></td>
-                    <td class="k-ship"><a href="/character/<?= $k['victimcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['victimshipname']) ?></a></td>
+                    <td class="k-ship"><?= e($k['victimshipname']) ?></td>
                     <td class="k-value"><?= number_format($dmg) ?></td>
                     <td class="k-icon"><img src="<?= ship_icon($k['finalshiptypeid'], 32) ?>" width="32" height="32" loading="lazy" onerror="this.style.display='none'"></td>
                     <td class="k-killer"><a href="/character/<?= $k['finalcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['finalname']) ?></a></td>
-                    <td class="k-ship"><a href="/character/<?= $k['finalcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['finalshipname']) ?></a></td>
+                    <td class="k-ship"><?= e($k['finalshipname']) ?></td>
                     <td class="k-time" title="<?= date('Y-m-d H:i:s', $ts) ?>"><?= time_ago($ts) ?></td>
                 </tr>
                 <?php endforeach; ?>
@@ -199,22 +190,26 @@ ob_start();
             <div class="sidebar-links">
                 <a href="/kills">All Kills</a>
                 <a href="/kills?period=24h">Kills (24h)</a>
-                <a href="/kills?period=7d">Kills (7d)</a>
-                <a href="/kills?period=30d">Kills (30d)</a>
+                <a href="/kills?period=7d">Kills (7 Days)</a>
+                <a href="/kills?period=30d">Kills (30 Days)</a>
                 <a href="/players">Players</a>
-                <a href="/systems">Systems</a>
+                <a href="/systems">Active Systems</a>
             </div>
         </div>
         <div class="sidebar-card">
-            <h3>Server Info</h3>
+            <h3>Server Stats</h3>
             <div class="sidebar-stats">
                 <div class="sidebar-stat">
                     <span class="sidebar-stat-label">Online</span>
-                    <span class="sidebar-stat-value"><?= number_format($onlinePlayers) ?></span>
+                    <span class="sidebar-stat-value" style="color:<?= $onlinePlayers > 0 ? 'var(--accent)' : 'var(--danger)' ?>"><?= number_format($onlinePlayers) ?></span>
                 </div>
                 <div class="sidebar-stat">
-                    <span class="sidebar-stat-label">Total Kills</span>
-                    <span class="sidebar-stat-value"><?= number_format(count($recentKills)) ?></span>
+                    <span class="sidebar-stat-label">Accounts</span>
+                    <span class="sidebar-stat-value"><?= number_format($totalAccounts) ?></span>
+                </div>
+                <div class="sidebar-stat">
+                    <span class="sidebar-stat-label">Characters</span>
+                    <span class="sidebar-stat-value"><?= number_format($totalCharacters) ?></span>
                 </div>
             </div>
         </div>

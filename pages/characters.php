@@ -11,23 +11,28 @@ if ($xml && $xml->result && $xml->result->characters)
 
 ob_start();
 ?>
-<h1>Персонажи</h1>
+
+<div class="section-header" style="margin-bottom:12px">
+    <h2 style="font-size:16px">My Characters</h2>
+</div>
+
 <?php if (empty($chars)): ?>
-    <p style="color:var(--text-dim)">У этого аккаунта пока нет персонажей. Создайте нового в EVE Online客户端е.</p>
+    <p style="color:var(--text-dim);padding:32px 0;text-align:center">No characters on this account yet. Create one in the EVE Online client.</p>
 <?php else: ?>
-<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:16px">
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
 <?php foreach ($chars as $c): ?>
     <div class="form-card" style="cursor:pointer" onclick="location.href='/character/<?= $c['characterid'] ?>'">
         <div style="display:flex;gap:12px;align-items:center">
-            <img src="https://images.eveonline.com/Character/<?= $c['characterid'] ?>_128.jpg" width="64" height="64" style="border-radius:4px;background:#111" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22><rect fill=%22%23111%22 width=%2264%22 height=%2264%22/><text x=%2232%22 y=%2236%22 text-anchor=%22middle%22 fill=%22%23556%22 font-size=%2224%22>?</text></svg>'">
+            <img src="<?= char_portrait($c['characterid'], 64) ?>" width="56" height="56" style="border-radius:4px;background:#111820" onerror="this.style.display='none'">
             <div>
-                <div style="font-weight:600;color:var(--text-bright);font-size:15px"><?= e($c['charactername']) ?></div>
-                <div style="color:var(--text-dim);font-size:12px">Skillpoints: <?= number_format((int)$c['skillpoints']) ?></div>
+                <div style="font-weight:600;color:var(--text-bright);font-size:14px"><?= e($c['charactername']) ?></div>
+                <div style="color:var(--text-dim);font-size:11px;margin-top:2px"><?= number_format((int)$c['skillpoints']) ?> SP</div>
             </div>
         </div>
     </div>
 <?php endforeach; ?>
 </div>
 <?php endif; ?>
+
 <?php
-render_layout('Персонажи', 'chars', ob_get_clean());
+render_layout('Characters', 'chars', ob_get_clean());

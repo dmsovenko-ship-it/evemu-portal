@@ -1,6 +1,7 @@
 <?php
 define('API_BASE', 'http://127.0.0.1:26002');
 define('ZKILLBOARD_SHIPS', 'https://images.zkillboard.com/renders');
+define('ZKILLBOARD_TYPES', 'https://images.zkillboard.com/types');
 define('IMAGE_SERVER', 'http://127.0.0.1:26001');
 define('SITE_NAME', 'EVEmu');
 define('SESSION_LIFETIME', 86400);
@@ -68,12 +69,17 @@ function role_name($role) {
     return implode(', ', $names);
 }
 
-function ship_icon($typeID, $size = 128) {
+function ship_icon($typeID, $size = 32) {
     if (!$typeID) return '';
     return '/img.php?url=' . urlencode(ZKILLBOARD_SHIPS . '/' . $typeID . '_' . $size . '.png');
 }
 
-function char_portrait($charID, $size = 128) {
+function ship_type_icon($typeID, $size = 32) {
+    if (!$typeID) return '';
+    return '/img.php?url=' . urlencode(ZKILLBOARD_TYPES . '/' . $typeID . '/icon/' . $size);
+}
+
+function char_portrait($charID, $size = 64) {
     if (!$charID) return '';
     return IMAGE_SERVER . '/Character/' . $charID . '_' . $size . '.jpg';
 }
@@ -91,7 +97,7 @@ function alliance_logo($allianceID, $size = 32) {
 function filetime_to_unix($filetime) {
     $ft = (int)$filetime;
     if ($ft <= 0) return 0;
-    return intval(($ft - 116444736000000000) / 10000000);
+    return intval(($ft - 11644473600000000) / 10000000);
 }
 
 function security_color($sec) {
@@ -113,8 +119,42 @@ function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 function time_ago($ts) {
     if ($ts <= 0) return '';
     $diff = time() - $ts;
+    if ($diff < 0) return 'just now';
     if ($diff < 60) return $diff . 's ago';
     if ($diff < 3600) return floor($diff / 60) . 'm ago';
     if ($diff < 86400) return floor($diff / 3600) . 'h ago';
     return floor($diff / 86400) . 'd ago';
+}
+
+function format_isk($val) {
+    $val = (float)$val;
+    if ($val >= 1e12) return number_format($val / 1e12, 2) . 'T ISK';
+    if ($val >= 1e9) return number_format($val / 1e9, 2) . 'B ISK';
+    if ($val >= 1e6) return number_format($val / 1e6, 2) . 'M ISK';
+    if ($val >= 1e3) return number_format($val / 1e3, 2) . 'K ISK';
+    return number_format($val, 2) . ' ISK';
+}
+
+function format_isk_full($val) {
+    return number_format((float)$val, 2) . ' ISK';
+}
+
+function get_slot_name($flag) {
+    $flag = (int)$flag;
+    if ($flag >= 27 && $flag <= 34) return 'High';
+    if ($flag >= 19 && $flag <= 26) return 'Mid';
+    if ($flag >= 11 && $flag <= 18) return 'Low';
+    if ($flag >= 92 && $flag <= 94) return 'Rig';
+    if ($flag >= 133 && $flag <= 135) return 'Subsystem';
+    if ($flag === 87) return 'Cargo';
+    if ($flag === 89) return 'Drone Bay';
+    if ($flag === 5) return 'Ship';
+    if ($flag === 8) return 'Cargo';
+    if ($flag === 155) return 'Rig';
+    return 'Other';
+}
+
+function slot_sort_order($name) {
+    $order = ['High' => 0, 'Mid' => 1, 'Low' => 2, 'Rig' => 3, 'Subsystem' => 4, 'Ship' => 5, 'Cargo' => 6, 'Drone Bay' => 7, 'Other' => 8];
+    return $order[$name] ?? 9;
 }

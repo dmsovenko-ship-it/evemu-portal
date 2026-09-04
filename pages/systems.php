@@ -14,31 +14,35 @@ $totalSystems = count($systems);
 
 ob_start();
 ?>
-<h1>Активные системы</h1>
+
+<div class="section-header" style="margin-bottom:12px">
+    <h2 style="font-size:16px">Active Systems</h2>
+    <span class="section-count"><?= number_format($totalSystems) ?> systems</span>
+</div>
 
 <div class="filter-bar" id="filterBar">
     <div class="form-group filter-search">
-        <label for="searchSystem">Система</label>
-        <input type="text" id="searchSystem" placeholder="Фильтр по названию...">
+        <label for="searchSystem">System</label>
+        <input type="text" id="searchSystem" placeholder="Filter by name...">
     </div>
     <div class="form-group">
-        <label for="filterSec">Безопасность</label>
+        <label for="filterSec">Security</label>
         <select id="filterSec">
-            <option value="">Все</option>
+            <option value="">All</option>
             <option value="high">High (>0.5)</option>
-            <option value="low">Low (-0.5…0.5)</option>
+            <option value="low">Low (-0.5..0.5)</option>
             <option value="null">Null (<-0.5)</option>
         </select>
     </div>
 </div>
 
 <div class="filter-info" id="filterInfo">
-    Систем: <?= $totalSystems ?>
+    Systems: <?= $totalSystems ?>
 </div>
 
 <table class="data-table" id="systemsTable">
     <thead><tr>
-        <th>Система</th><th>Sec</th><th>Игроков</th><th>Кораблей</th>
+        <th>System</th><th>Sec</th><th>Players</th><th>Ships</th>
     </tr></thead>
     <tbody>
     <?php foreach ($systems as $s):
@@ -46,17 +50,18 @@ ob_start();
         $name = $s['solarsystemname'] ?? $s['systemname'] ?? $s['name'] ?? '';
         $players = $s['playercount'] ?? $s['players'] ?? 0;
         $ships   = $s['shipcount'] ?? $s['ships'] ?? 0;
+        $sysID = $s['solarsystemid'] ?? $s['systemid'] ?? 0;
         $secClass = $sec > 0.5 ? 'high' : ($sec >= -0.5 ? 'low' : 'null');
     ?>
     <tr data-name="<?= e(strtolower($name)) ?>" data-sec="<?= $secClass ?>">
-        <td style="font-weight:600;color:var(--text-bright)"><?= e($name) ?></td>
+        <td style="font-weight:600"><a href="/system/<?= $sysID ?>"><?= e($name) ?></a></td>
         <td><span style="color:<?= security_color($sec) ?>;font-weight:600"><?= number_format($sec, 1) ?></span></td>
-        <td style="font-weight:600"><?= (int)$players ?></td>
-        <td><?= (int)$ships ?></td>
+        <td style="font-weight:600;font-variant-numeric:tabular-nums"><?= (int)$players ?></td>
+        <td style="font-variant-numeric:tabular-nums"><?= (int)$ships ?></td>
     </tr>
     <?php endforeach; ?>
     <?php if (empty($systems)): ?>
-    <tr><td colspan="4" class="empty">Нет активных систем</td></tr>
+    <tr><td colspan="4" class="empty">No active systems</td></tr>
     <?php endif; ?>
     </tbody>
 </table>
@@ -86,8 +91,8 @@ ob_start();
             }
         }
         info.textContent = shown === rows.length
-            ? 'Систем: <?= $totalSystems ?>'
-            : 'Фильтр: ' + shown + ' из <?= $totalSystems ?> систем';
+            ? 'Systems: <?= $totalSystems ?>'
+            : 'Filter: ' + shown + ' of <?= $totalSystems ?> systems';
     }
 
     searchSystem.addEventListener('input', applyFilters);
@@ -96,4 +101,4 @@ ob_start();
 </script>
 
 <?php
-render_layout('Системы', 'systems', ob_get_clean());
+render_layout('Systems', 'systems', ob_get_clean());

@@ -44,12 +44,19 @@ ob_start();
     <div class="search-section">
         <h2>Characters</h2>
         <div class="search-grid">
-            <?php foreach ($characters as $c): ?>
+            <?php foreach ($characters as $c):
+                $csec = (float)($c['securitystatus'] ?? 0);
+                $csp = (int)($c['skillpoints'] ?? 0);
+            ?>
             <a href="/character/<?= $c['characterid'] ?>" class="search-card">
-                <img src="<?= char_portrait($c['characterid'], 64) ?>" width="64" height="64" class="search-card-img" onerror="this.style.display='none'">
+                <img src="<?= char_portrait($c['characterid'], 64) ?>" width="48" height="48" class="search-card-img" onerror="this.style.display='none'">
                 <div class="search-card-info">
                     <div class="search-card-name"><?= e($c['charactername']) ?></div>
-                    <div class="search-card-meta"><?= e($c['corporationname'] ?? '') ?></div>
+                    <div class="search-card-meta">
+                        <span class="sec" style="color:<?= security_color($csec) ?>;font-size:10px;font-weight:600"><?= number_format($csec, 1) ?></span>
+                        <?= e($c['corporationname'] ?? '') ?>
+                        <?php if ($csp > 0): ?> &middot; <?= number_format($csp) ?> SP<?php endif; ?>
+                    </div>
                 </div>
             </a>
             <?php endforeach; ?>
@@ -63,10 +70,10 @@ ob_start();
         <div class="search-grid">
             <?php foreach ($corporations as $c): ?>
             <a href="/corporation/<?= $c['corporationid'] ?>" class="search-card">
-                <img src="<?= corp_logo($c['corporationid'], 64) ?>" width="64" height="64" class="search-card-img" onerror="this.style.display='none'">
+                <img src="<?= corp_logo($c['corporationid'], 64) ?>" width="48" height="48" class="search-card-img" onerror="this.style.display='none'">
                 <div class="search-card-info">
                     <div class="search-card-name"><?= e($c['corporationname']) ?></div>
-                    <div class="search-card-meta"><?= e($c['ticker'] ?? '') ?></div>
+                    <div class="search-card-meta">[<?= e($c['ticker'] ?? '') ?>]</div>
                 </div>
             </a>
             <?php endforeach; ?>

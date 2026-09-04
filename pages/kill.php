@@ -12,8 +12,14 @@ if ($xml && $xml->result && $xml->result->kills)
 
 if (!$k) {
     ob_start();
-    echo '<h2>Килл #' . $killID . ' не найден</h2><p><a href="/kills">Назад</a></p>';
-    render_layout('Kill not found', '', ob_get_clean());
+    ?>
+    <div style="text-align:center;padding:60px 0">
+        <h2 style="color:var(--text-bright);margin-bottom:8px">Kill #<?= $killID ?> not found</h2>
+        <p style="color:var(--text-dim);margin-bottom:16px">This killmail may have been deleted or does not exist.</p>
+        <a href="/kills" style="color:var(--accent2)">&laquo; Back to Killboard</a>
+    </div>
+    <?php
+    render_layout('Kill not found', 'kills', ob_get_clean());
     return;
 }
 
@@ -39,7 +45,6 @@ if ($blob && strlen($blob) > 10) {
     }
 }
 
-// resolve item names
 $allTypeIDs = array_unique(array_merge(
     array_column($drops, 't'),
     array_column($destroyed, 't')
@@ -50,148 +55,163 @@ if (!empty($allTypeIDs)) {
     $nxml = api_get('/char/Resolve.xml.aspx?ids=' . $ids);
     if ($nxml && $nxml->result && $nxml->result->names)
         foreach ($nxml->result->names->row as $nr)
-            if ((string)$nr['type'] === 'ship')
-                $itemNames[(int)$nr['id']] = (string)$nr['name'];
+            $itemNames[(int)$nr['id']] = (string)$nr['name'];
 }
+
+$victimDmg = (int)$k['victimdamagetaken'];
+$finalDmg = (int)$k['finaldamagedone'];
+$dmgPct = $victimDmg > 0 ? round($finalDmg / $victimDmg * 100, 1) : 0;
+
+$slots = [];
+foreach ($destroyed as $item) {
+    $slot = get_slot_name($item['f']);
+    $slots[$slot][] = ['item' => $item, 'status' => 'destroyed'];
+}
+foreach ($drops as $item) {
+    $slot = get_slot_name($item['f']);
+    $slots[$slot][] = ['item' => $item, 'status' => 'dropped'];
+}
+uksort($slots, function($a, $b) { return slot_sort_order($a) - slot_sort_order($b); });
+
+$totalDestroyed = 0;
+$totalDropped = 0;
+foreach ($destroyed as $item) $totalDestroyed += ($item['x'] > 0 ? $item['x'] : 1) * ($item['q'] > 0 ? $item['q'] : 1);
+foreach ($drops as $item) $totalDropped += ($item['x'] > 0 ? $item['x'] : 1) * ($item['q'] > 0 ? $item['q'] : 1);
+
+$attackerColors = ['#ee4444','#ee8844','#eecc44','#88cc44','#44cc88','#44aacc','#4488ee','#8844ee','#cc44ee','#ee44aa','#ee6644','#ccaa44'];
 
 ob_start();
 ?>
-<style>
-.kill-detail-hero { display: flex; gap: 24px; margin-bottom: 24px; }
-.kill-victim { flex: 1; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; display: flex; gap: 20px; }
-.victim-portrait { flex-shrink: 0; }
-.victim-portrait img { width: 128px; height: 128px; border-radius: 6px; background: #0d1117; }
-.victim-info { flex: 1; }
-.victim-info h2 { font-size: 20px; color: var(--text-bright); margin-bottom: 4px; }
-.victim-corp { color: var(--text-dim); font-size: 13px; margin-bottom: 12px; }
-.victim-corp img { width: 24px; height: 24px; border-radius: 3px; vertical-align: middle; margin-right: 4px; }
-.victim-ship { font-size: 16px; color: var(--accent2); margin-bottom: 8px; }
-.victim-ship img { width: 32px; height: 32px; vertical-align: middle; margin-right: 6px; }
-.victim-meta { font-size: 12px; color: var(--text-dim); line-height: 1.8; }
-.victim-meta strong { color: var(--text); }
 
-.kill-stats { flex: 0 0 280px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
-.stat-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
-.stat-row:last-child { border-bottom: none; }
-.stat-label { color: var(--text-dim); }
-.stat-value { color: var(--text-bright); font-weight: 600; }
-.stat-value.isk { color: var(--gold); }
-
-.section-title { font-size: 14px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; margin: 20px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
-
-.fit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 6px; margin-bottom: 16px; }
-.fit-slot { width: 36px; height: 36px; border-radius: 4px; background: #0d1117; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
-.fit-slot img { width: 32px; height: 32px; border-radius: 2px; }
-.fit-slot:hover { border-color: var(--accent2); }
-
-.items-table { width: 100%; border-collapse: collapse; }
-.items-table th { background: var(--bg-card); color: var(--text-dim); font-size: 11px; text-transform: uppercase; padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border); }
-.items-table td { padding: 5px 8px; border-bottom: 1px solid var(--border); font-size: 13px; }
-.items-table .destroyed { color: var(--danger); }
-.items-table .dropped { color: var(--accent); }
-
-.attacker-row { display: flex; align-items: center; gap: 12px; padding: 8px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 6px; }
-.attacker-row img { border-radius: 4px; background: #0d1117; }
-.attacker-name { font-weight: 600; color: var(--text-bright); }
-.attacker-ship { color: var(--accent2); font-size: 12px; }
-.attacker-dmg { margin-left: auto; text-align: right; }
-.attacker-dmg .dmg-val { font-weight: 600; color: #ee6644; }
-.attacker-dmg .dmg-pct { font-size: 11px; color: var(--text-dim); }
-</style>
-
-<a href="/kills" style="font-size:13px">&laquo; Killboard</a>
+<a href="/kills" style="font-size:12px;color:var(--text-dim);display:inline-block;margin-bottom:8px">&laquo; Killboard</a>
 
 <div class="kill-detail-hero">
     <div class="kill-victim">
         <div class="victim-portrait">
             <img src="<?= char_portrait($k['victimcharacterid'], 128) ?>"
-                 onerror="this.src='https://images.zkillboard.com/types/<?= $k['victimshiptypeid'] ?>/render/128'" alt="">
+                 onerror="this.src='<?= ship_icon($k['victimshiptypeid'], 128) ?>'">
         </div>
         <div class="victim-info">
             <h2><?= e($k['victimname'] ?: 'Unknown') ?></h2>
             <div class="victim-corp">
-                <img src="<?= corp_logo($k['victimcorporationid'], 32) ?>"
-                     onerror="this.style.display='none'" alt="">
-                <?= e($k['finalname'] ? '' : '') ?>
+                <?php if ($k['victimcorporationid']): ?>
+                <img src="<?= corp_logo($k['victimcorporationid'], 32) ?>" onerror="this.style.display='none'">
+                <a href="/corporation/<?= $k['victimcorporationid'] ?>"><?= e($k['victimcorpname'] ?? '') ?></a>
+                <?php endif; ?>
+                <?php if (!empty($k['victimalliancename'])): ?>
+                <span style="color:#556677">/</span>
+                <a href="/corporation/<?= $k['victimallianceid'] ?? '' ?>" style="color:#556677"><?= e($k['victimalliancename']) ?></a>
+                <?php endif; ?>
             </div>
             <div class="victim-ship">
-                <img src="<?= ship_icon($k['victimshiptypeid'], 32) ?>" onerror="this.style.display='none'" alt="">
+                <img src="<?= ship_icon($k['victimshiptypeid'], 32) ?>" onerror="this.style.display='none'">
                 <?= e($k['victimshipname']) ?>
             </div>
             <div class="victim-meta">
-                <strong>Система:</strong> <?= e($k['solarsystemname']) ?>
-                (<span style="color:<?= security_color($sec) ?>"><?= number_format($sec, 1) ?></span>)<br>
-                <strong>Время:</strong> <?= date('Y-m-d H:i:s', $ts) ?><br>
-                <strong>Урон:</strong> <?= number_format((int)$k['victimdamagetaken']) ?>
+                <strong>System:</strong>
+                <a href="/system/<?= $k['solarsystemid'] ?? '' ?>">
+                    <span class="sec" style="color:<?= security_color($sec) ?>"><?= number_format($sec, 1) ?></span>
+                    <?= e($k['solarsystemname']) ?>
+                </a><br>
+                <strong>Time:</strong> <?= date('Y-m-d H:i:s', $ts) ?><br>
+                <strong>Damage Taken:</strong> <?= number_format($victimDmg) ?>
             </div>
         </div>
     </div>
 
     <div class="kill-stats">
         <div class="stat-row">
-            <span class="stat-label">Убийца</span>
-            <span class="stat-value"><?= e($k['finalname'] ?: 'Unknown') ?></span>
+            <span class="stat-label">Final Blow</span>
+            <span class="stat-value"><a href="/character/<?= $k['finalcharacterid'] ?>"><?= e($k['finalname'] ?: 'Unknown') ?></a></span>
         </div>
         <div class="stat-row">
-            <span class="stat-label">Корабль убийцы</span>
+            <span class="stat-label">Final Ship</span>
             <span class="stat-value"><?= e($k['finalshipname']) ?></span>
         </div>
         <div class="stat-row">
-            <span class="stat-label">Оружие</span>
-            <span class="stat-value"><?= e($k['finalweaponname']) ?></span>
+            <span class="stat-label">Weapon</span>
+            <span class="stat-value" style="font-size:11px"><?= e($k['finalweaponname']) ?></span>
         </div>
         <div class="stat-row">
-            <span class="stat-label">Урон убийцы</span>
-            <span class="stat-value" style="color:#ee6644"><?= number_format((int)$k['finaldamagedone']) ?></span>
+            <span class="stat-label">Final Damage</span>
+            <span class="stat-value" style="color:var(--warn)"><?= number_format($finalDmg) ?></span>
         </div>
         <div class="stat-row">
-            <span class="stat-label">Sec Status</span>
+            <span class="stat-label">Total Damage</span>
+            <span class="stat-value" style="color:var(--danger)"><?= number_format($victimDmg) ?></span>
+        </div>
+        <div class="stat-row">
+            <span class="stat-label">Security</span>
             <span class="stat-value" style="color:<?= security_color($sec) ?>"><?= number_format($sec, 2) ?></span>
         </div>
     </div>
 </div>
 
-<?php if (!empty($destroyed) || !empty($drops)): ?>
-<div class="section-title">Предметы</div>
+<div class="ship-render-wrap">
+    <img src="<?= ship_icon($k['victimshiptypeid'], 256) ?>" alt="<?= e($k['victimshipname']) ?>" onerror="this.style.display='none'">
+</div>
+
+<?php if (!empty($slots)): ?>
+<div class="section-title">Items</div>
 <table class="items-table">
-    <thead><tr><th></th><th>Предмет</th><th>Кол-во</th><th>Статус</th></tr></thead>
+    <thead><tr><th></th><th>Item</th><th>Qty</th><th>Status</th></tr></thead>
     <tbody>
-    <?php foreach ($destroyed as $item): ?>
-        <tr>
-            <td><img src="<?= ship_icon($item['t'], 32) ?>" width="32" height="32" onerror="this.style.display='none'"></td>
-            <td><?= e($itemNames[$item['t']] ?? '#' . $item['t']) ?></td>
-            <td><?= max(1, $item['q'] * max(1, $item['x'])) ?></td>
-            <td class="destroyed">Уничтожено</td>
-        </tr>
+    <?php foreach ($slots as $slotName => $slotItems): ?>
+    <tr><td colspan="4" class="slot-header"><?= e($slotName) ?> Slots</td></tr>
+    <?php foreach ($slotItems as $si):
+        $item = $si['item'];
+        $name = $itemNames[$item['t']] ?? 'Unknown #' . $item['t'];
+        $qty = max(1, $item['q'] * max(1, $item['x']));
+    ?>
+    <tr>
+        <td style="width:32px"><img src="<?= ship_type_icon($item['t'], 32) ?>" width="32" height="32" onerror="this.style.display='none'"></td>
+        <td><?= e($name) ?></td>
+        <td><?= $qty > 1 ? $qty : '' ?></td>
+        <td class="<?= $si['status'] ?>"><?= $si['status'] === 'destroyed' ? 'Destroyed' : 'Dropped' ?></td>
+    </tr>
     <?php endforeach; ?>
-    <?php foreach ($drops as $item): ?>
-        <tr>
-            <td><img src="<?= ship_icon($item['t'], 32) ?>" width="32" height="32" onerror="this.style.display='none'"></td>
-            <td><?= e($itemNames[$item['t']] ?? '#' . $item['t']) ?></td>
-            <td><?= max(1, $item['q'] * max(1, $item['x'])) ?></td>
-            <td class="dropped">Выпало</td>
-        </tr>
     <?php endforeach; ?>
     </tbody>
 </table>
 <?php endif; ?>
 
-<div class="section-title">Атакующий</div>
-<div class="attacker-row">
-    <img src="<?= char_portrait($k['finalcharacterid'], 64) ?>"
-         width="64" height="64" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22><rect fill=%22%23111%22 width=%2264%22 height=%2264%22/><text x=%2232%22 y=%2236%22 text-anchor=%22middle%22 fill=%22%23556%22 font-size=%2220%22>?</text></svg>'" alt="">
-    <div>
-        <div class="attacker-name"><?= e($k['finalname'] ?: 'Unknown') ?></div>
-        <div class="attacker-ship">
-            <img src="<?= ship_icon($k['finalshiptypeid'], 16) ?>" width="16" height="16" onerror="this.style.display='none'" style="vertical-align:middle">
-            <?= e($k['finalshipname']) ?>
+<?php if ($victimDmg > 0): ?>
+<div class="damage-bar-wrap">
+    <div class="damage-bar-label">Damage Distribution</div>
+    <div class="damage-bar">
+        <div class="damage-bar-seg" style="width:<?= $dmgPct ?>%;background:var(--accent)" title="<?= e($k['finalname']) ?>: <?= number_format($finalDmg) ?> (<?= $dmgPct ?>%)"></div>
+        <div class="damage-bar-seg" style="width:<?= max(0, 100 - $dmgPct) ?>%;background:var(--danger)" title="Others"></div>
+    </div>
+</div>
+<?php endif; ?>
+
+<div class="attacker-section">
+    <div class="section-title">Attackers</div>
+
+    <div class="attacker-row final-blow">
+        <img class="atk-portrait" src="<?= char_portrait($k['finalcharacterid'], 64) ?>" width="48" height="48"
+             onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22><rect fill=%22%23111820%22 width=%2248%22 height=%2248%22/><text x=%2224%22 y=%2228%22 text-anchor=%22middle%22 fill=%22%23556%22 font-size=%2216%22>?</text></svg>'">
+        <div class="atk-info">
+            <div class="atk-name"><?= e($k['finalname'] ?: 'Unknown') ?></div>
+            <div class="atk-ship">
+                <img src="<?= ship_icon($k['finalshiptypeid'], 16) ?>" width="16" height="16" style="vertical-align:middle;margin-right:2px" onerror="this.style.display='none'">
+                <?= e($k['finalshipname']) ?>
+            </div>
+            <?php if (!empty($k['finalcorpname'])): ?>
+            <div class="atk-corp"><?= e($k['finalcorpname']) ?></div>
+            <?php endif; ?>
+        </div>
+        <div class="atk-dmg">
+            <div class="atk-dmg-val"><?= number_format($finalDmg) ?></div>
+            <div class="atk-dmg-pct"><?= $dmgPct ?>%</div>
         </div>
     </div>
-    <div class="attacker-dmg">
-        <div class="dmg-val"><?= number_format((int)$k['finaldamagedone']) ?></div>
-        <div class="dmg-pct">100%</div>
+
+    <div style="font-size:10px;color:var(--text-dim);padding:4px 10px;text-transform:uppercase;letter-spacing:.3px;font-weight:600">
+        Final Blow &amp; Top Damage
     </div>
 </div>
 
 <?php
-render_layout('Kill #' . $k['killid'], 'kills', ob_get_clean());
+$content = ob_get_clean();
+render_layout($k['victimshipname'] . ' | ' . $k['victimname'] . ' | Killmail', 'kills', $content);

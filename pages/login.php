@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($xml && $xml->error) {
         $error = (string)$xml->error;
     } else {
-        $error = 'Ошибка сервера.';
+        $error = 'Server error.';
     }
 }
 
@@ -26,21 +26,21 @@ ob_start();
 ?>
 <div class="form-page">
     <div class="form-card">
-        <h2>Вход</h2>
+        <h2>Login</h2>
         <?php if ($error): ?><div class="form-error"><?= e($error) ?></div><?php endif; ?>
         <form method="POST">
             <div class="form-group">
-                <label>Имя аккаунта</label>
+                <label>Account Name</label>
                 <input name="name" required autofocus>
             </div>
             <div class="form-group">
-                <label>Пароль</label>
+                <label>Password</label>
                 <input name="password" type="password" required>
             </div>
-            <button type="submit" class="btn btn-primary">Войти</button>
+            <button type="submit" class="btn btn-primary">Login</button>
         </form>
-        <div class="form-footer">Нет аккаунта? <a href="/register">Зарегистрироваться</a></div>
+        <div class="form-footer">Don't have an account? <a href="/register">Register</a></div>
     </div>
 </div>
 <?php
-render_layout('Вход', '', ob_get_clean());
+render_layout('Login', '', ob_get_clean());
