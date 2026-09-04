@@ -300,7 +300,8 @@ ob_start();
         for ($i=0;$i<$cnt;$i++) $fitCells[] = [$g, $i, $cellMap($g, max($cnt,1))[$i] ?? null];
     }
     ?>
-    <div class="fit-window">
+    <div class="fit-layout">
+      <div class="fit-window">
         <!-- panel background + slot-group strip labels (zkillboard assets) -->
         <img class="fit-bg" src="/img/panel/tyrannis.png" alt="">
         <?php if ($hH): ?><img class="fit-bg" src="/img/panel/8h.png" alt=""><?php endif; ?>
@@ -335,10 +336,25 @@ ob_start();
             <?php foreach ($droneItems as $it) echo $renderCell($it); ?>
         </div>
         <?php endif; ?>
-    </div>
-    <div class="fit-caption">
-        <span class="dot dropped"></span> Dropped &nbsp;
-        <span class="dot destroyed"></span> Destroyed
+      </div>
+
+      <div class="fit-side">
+        <table class="fit-info">
+            <tbody>
+            <tr><th>Ship:</th><td><?= e($k['victimshipname']) ?: e($k['victimshiptypeid']) ?></td></tr>
+            <tr><th>System:</th><td><a href="/system/<?= $k['systemid'] ?>"><?= e($k['systemname']) ?></a> <span style="color:<?= security_color($sec) ?>">(<?= number_format($sec,1) ?>)</span> / <a href="/region/<?= $k['regionid'] ?>"><?= e($k['regionname']) ?></a></td></tr>
+            <tr><th>Time:</th><td><?= date('Y-m-d H:i', $ts) ?></td></tr>
+            <tr><th>Damage:</th><td><?= number_format($victimDmg) ?></td></tr>
+            <tr class="fit-info-destroyed"><th>Destroyed:</th><td><?= isk_compact($totDestroyed) ?> ISK</td></tr>
+            <tr class="fit-info-dropped"><th>Dropped:</th><td><?= isk_compact($totDropped) ?> ISK</td></tr>
+            <tr><th>Total:</th><td><strong><?= isk_compact($totAll) ?> ISK</strong></td></tr>
+            </tbody>
+        </table>
+        <div class="fit-caption">
+            <span class="dot dropped"></span> Dropped &nbsp;
+            <span class="dot destroyed"></span> Destroyed
+        </div>
+      </div>
     </div>
 
     <div class="section-title">Items</div>

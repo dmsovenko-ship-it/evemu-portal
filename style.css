@@ -395,7 +395,44 @@ img[width][height] { max-width: none; object-fit: contain; }
     border-radius: 6px;
     overflow: hidden;
     user-select: none;
+    flex: 0 0 auto;
 }
+/* fitting panel + right-hand info table (zkillboard layout) */
+.fit-layout {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.fit-side {
+    min-width: 200px;
+    flex: 1 1 200px;
+    max-width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.fit-info {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+.fit-info th {
+    text-align: left;
+    color: var(--text-dim);
+    font-weight: 500;
+    padding: 3px 8px 3px 0;
+    vertical-align: top;
+    white-space: nowrap;
+}
+.fit-info td {
+    color: var(--text);
+    padding: 3px 0;
+    vertical-align: top;
+}
+.fit-info .fit-info-destroyed td { color: var(--danger); }
+.fit-info .fit-info-dropped td { color: var(--accent); }
 .fit-bg {
     position: absolute;
     left: 0;
@@ -418,8 +455,8 @@ img[width][height] { max-width: none; object-fit: contain; }
     pointer-events: none;
 }
 .fit-shipbox img {
-    width: 256px;
-    height: 256px;
+    width: 232px;
+    height: 232px;
     object-fit: contain;
     /* the evetech render is JPEG (opaque corners) — fade the edges so the
        square doesn't cover the slot cells on the panel */
@@ -445,10 +482,6 @@ img[width][height] { max-width: none; object-fit: contain; }
     border-radius: 3px;
     z-index: 2;
 }
-/* subtle status tint without an intrusive outline */
-.fit-modpic.dropped { box-shadow: inset 0 0 0 1px rgba(102,204,136,.6); }
-.fit-modpic.destroyed { box-shadow: inset 0 0 0 1px rgba(238,68,68,.6); }
-.fit-modpic.partial { box-shadow: inset 0 0 0 1px rgba(238,136,68,.6); }
 .fit-drones {
     position: absolute;
     z-index: 3;
