@@ -26,19 +26,25 @@ $finalDmg = (int)$k['finaldamagedone'];
 $dmgPct = $victimDmg > 0 ? round($finalDmg / $victimDmg * 100, 1) : 0;
 
 // ---- parse killBlob into slot buckets ----
-$blob = (string)$k['killblob'];
+// The API serves killblob XML-escaped inside the XML attribute (&lt;items&gt;...).
+// SimpleXML leaves those entities undecoded, so decode first, then extract the
+// <i .../> elements with a regex — no dependency on php-xml/DOMDocument.
+$blob = html_entity_decode((string)$k['killblob'], ENT_QUOTES | ENT_XML1, 'UTF-8');
 $items = [];
-if ($blob && strlen($blob) > 10) {
-    $doc = new DOMDocument();
-    @$doc->loadXML($blob);
-    foreach ($doc->getElementsByTagName('i') as $el) {
+if ($blob && preg_match_all('/<i\b[^>]*\/>/', $blob, $m)) {
+    foreach ($m[0] as $tag) {
+        $get = function($attr) use ($tag) {
+            if (preg_match('/\b' . $attr . '=["\']?(\d+)["\']?/', $tag, $mm)) return (int)$mm[1];
+            return 0;
+        };
+        $t = $get('t'); if (!$t) continue;
         $items[] = [
-            't' => (int)$el->getAttribute('t'),
-            'f' => (int)$el->getAttribute('f'),
-            'q' => max(1, (int)$el->getAttribute('q')),
-            's' => (int)$el->getAttribute('s'),
-            'd' => (int)$el->getAttribute('d'),
-            'x' => (int)$el->getAttribute('x'),
+            't' => $t,
+            'f' => $get('f'),
+            'q' => max(1, $get('q')),
+            's' => $get('s'),
+            'd' => $get('d'),
+            'x' => $get('x'),
         ];
     }
 }
@@ -129,24 +135,20 @@ function render_minimap($nodes, $links, $focus, $w = 172, $h = 100) {
 }
 
 // ---- load map geometry ----
-$mapSys = $mapCon = $mapReg = [];
+//  $mapSys = systems of the victim's constellation (with x/z + security)
+//  $mapCon = constellations of the victim's region
+//  $jumps  = stargate links inside the constellation
+$mapSys = $mapCon = [];
+$jumps = [];
 if ((int)$k['systemid']) {
     $mxml = api_get('/server/MapData.xml.aspx?systemid=' . $k['systemid']);
     if ($mxml && $mxml->result) {
-        $cur = $mxml->result->system;
         foreach ($mxml->result->systems->row ?? [] as $r)
             $mapSys[] = ['id'=>(int)$r['id'],'name'=>(string)$r['name'],'sec'=>(string)$r['security'],'x'=>(float)$r['x'],'z'=>(float)$r['z']];
         foreach ($mxml->result->constellations->row ?? [] as $r)
             $mapCon[] = ['id'=>(int)$r['id'],'name'=>(string)$r['name'],'sec'=>0.5,'x'=>(float)$r['x'],'z'=>(float)$r['z']];
-        $jumps = [];
         foreach ($mxml->result->jumps->row ?? [] as $r)
             $jumps[] = ['from'=>(int)$r['from'],'to'=>(int)$r['to']];
-        $sysFocus = (int)$k['systemid'];
-        $conFocus = $cur ? (int)$cur['constellationid'] : 0;
-        $mapSysSys = $mapSys;
-        $mapSysCon = $mapCon;
-        // region map: scatter current region's systems is potentially huge; reuse constellation systems + focus is fine here
-        $mapSysReg = array_slice($mapSys, 0, 900);
     }
 }
 
@@ -373,25 +375,50 @@ ob_start();
   </div>
 
   <div class="kill-rail">
-    <?php if ($mapSys): ?>
+    <?php
+    // ---- map semantics (MapData API) ----
+    //  $mapSys = systems of the victim's constellation (with x/z + security)
+    //  $mapCon = constellations of the victim's region
+    //  $jumps  = stargate links inside the constellation
+    $sysFocus = (int)$k['systemid'];
+    $conFocus = (int)$k['constellationid'];
+
+    // System card: the victim system + the systems it links to directly.
+    $sysNodes = []; $sysEdges = [];
+    $sysById = [];
+    foreach ($mapSys as $n) $sysById[$n['id']] = $n;
+    if (isset($sysById[$sysFocus])) {
+        $sysNodes[] = $sysById[$sysFocus];
+        foreach ($jumps as $jk) {
+            $other = ($jk['from'] == $sysFocus) ? $jk['to'] : (($jk['to'] == $sysFocus) ? $jk['from'] : 0);
+            if ($other && isset($sysById[$other])) { $sysNodes[] = $sysById[$other]; $sysEdges[] = $jk; }
+        }
+    }
+    // Constellation card: all systems of the constellation + their stargate links.
+    $conNodes = $mapSys;
+    $conEdges = $jumps;
+    // Region card: constellations of the region (no intra links provided).
+    $regNodes = $mapCon;
+    ?>
+    <?php if ($sysNodes): ?>
     <div class="map-card">
         <div class="map-title">System</div>
-        <div class="map-cap"><a class="rail-link" href="/system/<?= (int)$k['systemid'] ?>"><?= e($k['systemname']) ?></a> — <?= e($k['constellationname']) ?></div>
-        <?= render_minimap($mapSysSys ?? $mapSys, $jumps ?? [], (int)$k['systemid']) ?>
+        <div class="map-cap"><a class="rail-link" href="/system/<?= $sysFocus ?>"><?= e($k['systemname']) ?></a> — <?= e($k['constellationname']) ?></div>
+        <?= render_minimap($sysNodes, $sysEdges, $sysFocus) ?>
     </div>
     <?php endif; ?>
-    <?php if (!empty($mapSysCon)): ?>
+    <?php if (!empty($conNodes)): ?>
     <div class="map-card">
         <div class="map-title">Constellation</div>
-        <div class="map-cap"><?= e($k['constellationname']) ?> in <?= e($k['regionname']) ?></div>
-        <?= render_minimap($mapSysCon, [], $conFocus) ?>
+        <div class="map-cap"><?= e($k['constellationname']) ?> (<?= count($conNodes) ?> systems)</div>
+        <?= render_minimap($conNodes, $conEdges, $sysFocus) ?>
     </div>
     <?php endif; ?>
-    <?php if (!empty($mapSysCon)): ?>
+    <?php if (!empty($regNodes)): ?>
     <div class="map-card">
         <div class="map-title">Region</div>
-        <div class="map-cap"><?= e($k['regionname']) ?> (<?= count($mapSysCon) ?> constellations)</div>
-        <?= render_minimap($mapSysCon, [], $conFocus) ?>
+        <div class="map-cap"><?= e($k['regionname']) ?> (<?= count($regNodes) ?> constellations)</div>
+        <?= render_minimap($regNodes, [], $conFocus) ?>
     </div>
     <?php endif; ?>
   </div>
