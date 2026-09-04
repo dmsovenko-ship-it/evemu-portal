@@ -276,59 +276,42 @@ ob_start();
     $sbCells = $cellMap('Subsystem', $hS);
     // drones (Drone Bay) shown as a small badge group below-left
     $droneItems = $slots['Drone Bay'] ?? [];
-    // ── Place cells on the ring around the ship ────────────────────────
-    // a = angle in degrees, 0 = up, 90 = right, 180 = down, 270 = left.
-    // Each group spans its own arc; cells are spread evenly across it.
-    $ring = function($cells, $aStart, $aEnd) {
-        $n = count($cells);
-        $out = [];
-        if ($n < 1) return $out;
-        for ($i = 0; $i < $n; $i++) {
-            $a = ($n == 1) ? ($aStart + $aEnd) / 2 : $aStart + ($aEnd - $aStart) * $i / ($n - 1);
-            $out[] = [$cells[$i], $a];
-        }
-        return $out;
-    };
-    // arcs: High wide over the top, Low wide over the bottom,
-    // Mid on the right, tuning (rigs+subs) on the left.
-    $hiPos = $ring($hiCells, -70, 70);        // top
-    $loPos = $ring($loCells, 110, 250);       // bottom
-    $mdPos = $ring($mdCells, 78, 102);        // right
-    $tuCells = array_merge($rgCells, $sbCells);
-    $tuPos = $ring($tuCells, 258, 282);       // left
-    $renderPos = function($pos, $rPct, $tag = '') use (&$renderCell) {
-        [$cell, $a] = $pos;
-        $rad = deg2rad($a);
-        $x = 50 + $rPct * sin($rad);
-        $y = 50 - $rPct * cos($rad);
-        $html = '<div class="fit-pcell" style="left:' . round($x, 2) . '%;top:' . round($y, 2) . '%">' . $renderCell($cell) . '</div>';
-        return $html;
-    };
-    $ringR = 42; // radius of the slot ring in % of canvas
+    // ── Fixed EDAN-style fitting map (canvas 358x360, slot positions in px) ──
+    // Universal slot layout: prefix = slot type, index = position along arc.
+    //   0_* High (8) — arc over the top     4_* Low (8) — arc along the bottom
+    //   2_* Mid  (8) — arc down the right   5_* Rig (3) — upper-left
+    //   8_* Sub  (5) — lower-left           d   = drone bay strip
+    $EDAN = [
+        'High' => [[77,43],[100,30],[123,21],[149,17],[173,17],[199,21],[223,30],[245,43]],
+        'Mid'  => [[280,80],[293,103],[302,127],[306,152],[306,175],[302,200],[293,225],[280,246]],
+        'Low'  => [[77,283],[99,296],[123,304],[148,308],[173,308],[199,304],[222,296],[244,283]],
+        'Rig'  => [[22,122],[32,97],[47,74]],
+        'Sub'  => [[46,253],[31,232],[21,207],[16,181],[15,155]],
+    ];
+    // canvas 358 wide / 360 tall; also used for aspect ratio
+    $CW = 358; $CH = 360;
+    $fitCells = [];   // ordered list of [slotGroup, index, item|null]
+    foreach (['High','Mid','Low'] as $g) {
+        $n = max((int)$hH, (int)$hM, (int)$hL, 0);
+        $cnt = ($g=='High')?$hH:(($g=='Mid')?$hM:$hL);
+        for ($i=0;$i<$cnt;$i++) $fitCells[] = [$g, $i, $cellMap($g, max($cnt,1))[$i] ?? null];
+    }
+    foreach (['Rig','Sub'] as $g) {
+        $cnt = ($g=='Rig')?$hR:$hS;
+        for ($i=0;$i<$cnt;$i++) $fitCells[] = [$g, $i, $cellMap($g, max($cnt,1))[$i] ?? null];
+    }
     ?>
     <div class="fit-window">
         <div class="fit-ship"><img src="<?= ship_icon($k['victimshiptypeid'], 256) ?>" alt="<?= e($k['victimshipname']) ?>" onerror="this.style.display='none'"></div>
         <div class="fit-ship-name"><?= e($k['victimshipname']) ?></div>
 
-        <?php if ($hiPos): ?>
-        <div class="fit-ring-label lab-top">HIGH</div>
-        <?php foreach ($hiPos as $p) echo $renderPos($p, $ringR); ?>
-        <?php endif; ?>
-
-        <?php if ($loPos): ?>
-        <div class="fit-ring-label lab-bottom">LOW</div>
-        <?php foreach ($loPos as $p) echo $renderPos($p, $ringR); ?>
-        <?php endif; ?>
-
-        <?php if ($mdPos): ?>
-        <div class="fit-ring-label lab-right">MID</div>
-        <?php foreach ($mdPos as $p) echo $renderPos($p, $ringR); ?>
-        <?php endif; ?>
-
-        <?php if ($tuPos): ?>
-        <div class="fit-ring-label lab-left">TUNING</div>
-        <?php foreach ($tuPos as $p) echo $renderPos($p, $ringR); ?>
-        <?php endif; ?>
+        <?php foreach ($fitCells as [$g, $idx, $item]):
+            $pos = $EDAN[$g][$idx] ?? null; if (!$pos) continue;   // [left, top]
+            $xp = round(($pos[0] / $CW) * 100, 2);
+            $yp = round(($pos[1] / $CH) * 100, 2);
+            ?>
+            <div class="fit-pcell" style="left:<?= $xp ?>%;top:<?= $yp ?>%"><?= $renderCell($item) ?></div>
+        <?php endforeach; ?>
 
         <?php if ($droneItems): ?>
         <div class="fit-drones">

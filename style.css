@@ -366,22 +366,21 @@ img { max-width: 100%; }
 .stat-value { color: var(--text-bright); font-weight: 600; }
 .stat-value.isk { color: var(--gold); }
 
-/* ── Classic EVE fitting-window schematic ────────────────
-   Square canvas; destroyed hull large in the middle (nose up). Slot cells
-   sit on a ring around the hull the way the fitting window arranges them:
-   High cells arc over the top, Low over the bottom, Mid on the right,
-   rigs/subs (tuning) on the left. One cell per hull slot (empty dashed cells
-   included). Dropped=green, destroyed=red, partial=amber.                 */
+/* ── EVE fitting-window schematic (EDAN layout) ─────────
+   Canvas ~358x360 (square). Ship render centred; slot cells sit on fixed
+   arcs around the hull exactly like the fitting window: High over the top,
+   Low along the bottom, Mid down the right, rigs up-left, subs low-left,
+   drone bay strip. Cell px→% mapping matches sotzone/EDAN fitmap.          */
 .fit-window {
     position: relative;
     width: 100%;
-    aspect-ratio: 1 / 1;
-    max-width: 560px;
-    max-height: 560px;
+    max-width: 480px;
+    aspect-ratio: 358 / 360;
     margin: 0 auto;
     border: 1px solid var(--border);
     border-radius: 6px;
-    background: radial-gradient(ellipse at center, #0f1722 0%, #080c12 78%);
+    background:
+        radial-gradient(ellipse at 50% 48%, #101a26 0%, #080c12 80%);
     overflow: hidden;
     user-select: none;
 }
@@ -395,26 +394,26 @@ img { max-width: 100%; }
     pointer-events: none;
 }
 .fit-ship img {
-    max-width: 46%;
-    max-height: 50%;
+    max-width: 56%;
+    max-height: 60%;
     object-fit: contain;
     opacity: .95;
-    filter: drop-shadow(0 0 26px rgba(0,0,0,.95));
+    filter: drop-shadow(0 0 20px rgba(0,0,0,.95));
 }
 .fit-ship-name {
     position: absolute;
     left: 0;
     right: 0;
     top: 50%;
-    margin-top: 8px;
+    margin-top: 6px;
     text-align: center;
-    font-size: 11px;
+    font-size: 10px;
     color: var(--text-dim);
     z-index: 1;
     text-shadow: 0 1px 3px #000;
     pointer-events: none;
 }
-/* absolutely placed cell wrapper: its center sits at left/top */
+/* absolutely placed cell: centre sits at (left,top) % */
 .fit-pcell {
     position: absolute;
     width: 34px;
@@ -426,7 +425,7 @@ img { max-width: 100%; }
     width: 34px;
     height: 34px;
     border-radius: 3px;
-    background: rgba(13,17,23,.9);
+    background: rgba(13,17,23,.92);
     border: 2px solid var(--border);
     display: flex;
     align-items: center;
@@ -438,41 +437,23 @@ img { max-width: 100%; }
 .fit-cell.empty {
     border-style: dashed;
     border-color: #2a3344;
-    background: rgba(13,17,23,.35);
+    background: rgba(13,17,23,.4);
 }
-.fit-cell:hover { border-color: var(--accent2); transform: scale(1.1); z-index: 5; }
+.fit-cell:hover { border-color: var(--accent2); transform: scale(1.12); z-index: 6; }
 .fit-cell img { width: 28px; height: 28px; border-radius: 2px; }
 .fit-cell.destroyed { border-color: var(--danger); }
 .fit-cell.dropped   { border-color: var(--accent); }
 .fit-cell.partial   { border-color: var(--warn); }
-/* group labels pinned on the ring */
-.fit-ring-label {
-    position: absolute;
-    z-index: 3;
-    font-size: 9px;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    background: rgba(10,14,20,.72);
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    padding: 1px 6px;
-    white-space: nowrap;
-    transform: translate(-50%, -50%);
-}
-.lab-top    { top: 1%; left: 50%; }
-.lab-bottom { top: 99%; left: 50%; }
-.lab-right  { top: 50%; left: 99%; }
-.lab-left   { top: 50%; left: 1%; }
 .fit-drones {
     position: absolute;
-    left: 50%;
-    bottom: 1%;
-    transform: translateX(-50%);
     display: flex;
     align-items: center;
     gap: 4px;
     z-index: 3;
+    left: 50%;
+    top: 50%;
+    margin-left: 6px;
+    /* drone bay sits along the middle-left per EDAN; fallback strip below ship */
 }
 .fit-arc-tag {
     font-size: 9px;
