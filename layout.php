@@ -16,6 +16,10 @@ function render_layout($title, $active, $content) {
         <a href="/" class="nav-brand"><?= SITE_NAME ?></a>
         <div class="nav-links">
             <a href="/kills" class="<?= $active==='kills'?'active':'' ?>">Killboard</a>
+            <a href="/stats" class="<?= $active==='stats'?'active':'' ?>">Статистика</a>
+            <a href="/players" class="<?= $active==='players'?'active':'' ?>">Игроки</a>
+            <a href="/systems" class="<?= $active==='systems'?'active':'' ?>">Системы</a>
+            <a href="/market" class="<?= $active==='market'?'active':'' ?>">Рынок</a>
             <?php if ($user): ?>
                 <a href="/characters" class="<?= $active==='chars'?'active':'' ?>">Персонажи</a>
                 <?php if ($user['role'] & (ROLE_ADMIN|ROLE_GMH|ROLE_GML)): ?>
