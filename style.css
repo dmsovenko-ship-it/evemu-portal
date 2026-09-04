@@ -24,9 +24,11 @@
 
 body {
     background-color: #05060b;
-    background-image: url('/img/space_bg.jpg');
-    background-size: cover;
-    background-position: center;
+    background-image:
+        linear-gradient(rgba(4,6,12,.55), rgba(4,6,12,.55)),
+        url('/img/space_bg.jpg');
+    background-size: cover, cover;
+    background-position: center, center;
     background-attachment: fixed;
     color: var(--text);
     font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
