@@ -62,10 +62,17 @@ ob_start();
     </tr></thead>
     <tbody>
     <?php foreach ($chars as $c):
-        $sec = (float)($c['securitystatus'] ?? 0);
-        $race = $c['racename'] ?? $c['race'] ?? '';
-        $corpTicker = $c['corporationticker'] ?? $c['corpticker'] ?? '';
-        $corpName = $c['corporationname'] ?? $c['corpname'] ?? '';
+        $sec = (float)($c['securityrating'] ?? 0);
+        $raceID = (int)($c['raceid'] ?? 0);
+        $raceNames = [1=>'Caldari',2=>'Minmatar',4=>'Amarr',8=>'Gallente'];
+        $race = $raceNames[$raceID] ?? '';
+        $corpTicker = $c['ticker'] ?? '';
+        $corpName = $c['corporationname'] ?? '';
+        $corpID = (int)($c['corporationid'] ?? 0);
+        $sysName = $c['systemname'] ?? '';
+        $sysID = (int)($c['systemid'] ?? 0);
+        $shipName = $c['shipname'] ?? '';
+        $shipType = (int)($c['shiptypeid'] ?? 0);
     ?>
     <tr data-race="<?= e($race) ?>" data-corp="<?= e(strtolower($corpTicker . ' ' . $corpName)) ?>" data-name="<?= e(strtolower($c['charactername'] ?? '')) ?>">
         <td style="width:36px">
@@ -75,10 +82,14 @@ ob_start();
         </td>
         <td><a href="/character/<?= $c['characterid'] ?>" style="font-weight:600;color:var(--text-bright)"><?= e($c['charactername'] ?? '') ?></a></td>
         <td><span style="color:<?= security_color($sec) ?>;font-weight:600;font-size:11px"><?= number_format($sec, 1) ?></span></td>
-        <td style="color:var(--accent2)"><?= e($corpTicker) ?></td>
+        <td>
+            <?php if ($corpID): ?><img src="<?= corp_logo($corpID, 32) ?>" width="20" height="20" style="vertical-align:middle;border-radius:2px;margin-right:4px" onerror="this.style.display='none'"><?php endif; ?>
+            <?php if ($corpID): ?><a href="/corporation/<?= $corpID ?>" style="color:var(--accent2)"><?= e($corpTicker) ?></a>
+            <?php else: ?><span style="color:var(--text-dim)">—</span><?php endif; ?>
+        </td>
         <td style="font-weight:600;font-variant-numeric:tabular-nums"><?= number_format((int)($c['skillpoints'] ?? 0)) ?></td>
-        <td style="color:var(--gold)"><?= e($c['solarsystemname'] ?? $c['system'] ?? '') ?></td>
-        <td style="color:var(--text-dim)"><?= e($c['shipname'] ?? '') ?></td>
+        <td><?php if ($sysID && $sysName): ?><a href="/system/<?= $sysID ?>" style="color:var(--gold)"><?= e($sysName) ?></a><?php else: ?><span style="color:var(--text-dim)">—</span><?php endif; ?></td>
+        <td><?php if ($shipType && $shipName): ?><a href="/ship/<?= $shipType ?>" style="color:var(--text-dim)"><?= e($shipName) ?></a><?php else: ?><span style="color:var(--text-dim)">—</span><?php endif; ?></td>
     </tr>
     <?php endforeach; ?>
     <?php if (empty($chars)): ?>

@@ -46,11 +46,11 @@ ob_start();
     </tr></thead>
     <tbody>
     <?php foreach ($systems as $s):
-        $sec  = (float)($s['security'] ?? $s['securitystatus'] ?? 0);
-        $name = $s['solarsystemname'] ?? $s['systemname'] ?? $s['name'] ?? '';
-        $players = $s['playercount'] ?? $s['players'] ?? 0;
-        $ships   = $s['shipcount'] ?? $s['ships'] ?? 0;
-        $sysID = $s['solarsystemid'] ?? $s['systemid'] ?? 0;
+        $sec  = (float)($s['security'] ?? 0);
+        $name = $s['name'] ?? $s['systemname'] ?? '';
+        $players = (int)($s['players'] ?? 0);
+        $ships   = (int)($s['ships'] ?? 0);
+        $sysID = (int)($s['systemid'] ?? $s['solarsystemid'] ?? 0);
         $secClass = $sec > 0.5 ? 'high' : ($sec >= -0.5 ? 'low' : 'null');
     ?>
     <tr data-name="<?= e(strtolower($name)) ?>" data-sec="<?= $secClass ?>">
