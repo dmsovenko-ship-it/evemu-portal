@@ -49,17 +49,17 @@ ob_start();
 .zk-main { min-width:0; }
 .zk-rail { display:flex; flex-direction:column; gap:14px; }
 
-.kill-card-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px; }
+.kill-card-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:22px; }
 .zk-section-title { font-size:16px; font-weight:700; color:var(--text-bright); margin:4px 0 10px; border-bottom:1px solid var(--border); padding-bottom:6px; }
 .zk-section-title .view-all { float:right; font-size:12px; font-weight:400; color:var(--accent2); text-decoration:none; }
 .zk-section-title .view-all:hover { text-decoration:underline; }
-.big-kill { display:flex; flex-direction:column; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; overflow:hidden; cursor:pointer; transition:border-color .12s, transform .12s; }
-.big-kill:hover { border-color:var(--accent2); transform:translateY(-2px); }
-.big-kill .bk-name { padding:7px 8px 2px; color:var(--text-bright); font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.big-kill .bk-img { display:flex; justify-content:center; align-items:center; height:110px; background:#0d1117; }
-.big-kill .bk-img img { max-width:104px; max-height:104px; }
-.big-kill .bk-sys { padding:0 8px; font-size:10px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.big-kill .bk-val { padding:5px 8px 8px; color:var(--gold); font-size:13px; font-weight:700; }
+.big-kill { display:flex; flex-direction:column; cursor:pointer; transition:opacity .15s; }
+.big-kill:hover { opacity:.85; }
+.big-kill .bk-img { display:flex; justify-content:center; align-items:center; height:150px; background:#0b1017; border-radius:6px; }
+.big-kill .bk-img img { max-width:128px; max-height:128px; object-fit:contain; }
+.big-kill .bk-name { padding:6px 4px 0; color:var(--text-bright); font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; }
+.big-kill .bk-sys { padding:0 4px; font-size:10px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; }
+.big-kill .bk-val { padding:4px 4px 0; color:var(--gold); font-size:14px; font-weight:700; text-align:center; }
 
 /* rail */
 .zk-card { background:var(--bg-card); border:1px solid var(--border); border-radius:6px; padding:12px; }
@@ -88,8 +88,8 @@ ob_start();
     <div class="kill-card-grid">
     <?php foreach ($shipCards as $rk): ?>
         <div class="big-kill" onclick="location.href='/kill/<?= $rk['killid'] ?>'">
-            <div class="bk-name"><?= e($rk['victimname'] ?: 'Unknown') ?></div>
             <div class="bk-img"><img src="<?= ship_icon($rk['victimshiptypeid'], 128) ?>" loading="lazy" onerror="this.style.display='none'"></div>
+            <div class="bk-name" title="<?= e($rk['victimname'] ?: '') ?>"><?= e($rk['victimname'] ?: 'Unknown') ?></div>
             <div class="bk-sys"><?= e($rk['victimshipname']) ?> &middot; <?= e($rk['solarsystemname']) ?></div>
             <div class="bk-val"><?= isk_compact((string)$rk['value']) ?> ISK</div>
         </div>
@@ -101,8 +101,8 @@ ob_start();
     <div class="kill-card-grid">
     <?php foreach ($structCards as $rk): ?>
         <div class="big-kill" onclick="location.href='/kill/<?= $rk['killid'] ?>'">
-            <div class="bk-name"><?= e($rk['victimname'] ?: $rk['victimshipname']) ?></div>
             <div class="bk-img"><img src="<?= ship_icon($rk['victimshiptypeid'], 128) ?>" loading="lazy" onerror="this.style.display='none'"></div>
+            <div class="bk-name" title="<?= e($rk['victimname'] ?: '') ?>"><?= e($rk['victimname'] ?: $rk['victimshipname']) ?></div>
             <div class="bk-sys"><?= e($rk['victimshipname']) ?> &middot; <?= e($rk['solarsystemname']) ?></div>
             <div class="bk-val"><?= isk_compact((string)$rk['value']) ?> ISK</div>
         </div>
@@ -114,8 +114,8 @@ ob_start();
     <div class="kill-card-grid">
     <?php foreach ($sponsoredCards as $rk): ?>
         <div class="big-kill" onclick="location.href='/kill/<?= $rk['killid'] ?>'">
-            <div class="bk-name"><?= e($rk['victimname'] ?: 'Unknown') ?></div>
             <div class="bk-img"><img src="<?= ship_icon($rk['victimshiptypeid'], 128) ?>" loading="lazy" onerror="this.style.display='none'"></div>
+            <div class="bk-name" title="<?= e($rk['victimname'] ?: '') ?>"><?= e($rk['victimname'] ?: 'Unknown') ?></div>
             <div class="bk-sys"><?= e($rk['victimshipname']) ?> &middot; <?= e($rk['solarsystemname']) ?></div>
             <div class="bk-val"><?= isk_compact((string)$rk['value']) ?> ISK</div>
         </div>
