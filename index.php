@@ -23,6 +23,18 @@ switch ($page) {
     case 'kills':
         require __DIR__ . '/pages/kills.php';
         break;
+    case 'search':
+        require __DIR__ . '/pages/search.php';
+        break;
+    case 'character':
+        require __DIR__ . '/pages/char_kills.php';
+        break;
+    case 'corporation':
+        require __DIR__ . '/pages/corp_kills.php';
+        break;
+    case 'system':
+        require __DIR__ . '/pages/system_kills.php';
+        break;
     case 'stats':
         require __DIR__ . '/pages/stats.php';
         break;

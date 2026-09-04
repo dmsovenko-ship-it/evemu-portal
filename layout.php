@@ -3,7 +3,7 @@ function render_layout($title, $active, $content) {
     $user = current_user();
 ?>
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -14,22 +14,23 @@ function render_layout($title, $active, $content) {
 <nav class="navbar">
     <div class="nav-inner">
         <a href="/" class="nav-brand"><?= SITE_NAME ?></a>
+        <form action="/search" method="get" class="nav-search">
+            <input type="text" name="q" placeholder="Search..." class="nav-search-input" autocomplete="off">
+            <button type="submit" class="nav-search-btn">&#128269;</button>
+        </form>
         <div class="nav-links">
             <a href="/kills" class="<?= $active==='kills'?'active':'' ?>">Killboard</a>
-            <a href="/stats" class="<?= $active==='stats'?'active':'' ?>">Статистика</a>
-            <a href="/players" class="<?= $active==='players'?'active':'' ?>">Игроки</a>
-            <a href="/systems" class="<?= $active==='systems'?'active':'' ?>">Системы</a>
-            <a href="/market" class="<?= $active==='market'?'active':'' ?>">Рынок</a>
+            <a href="/players" class="<?= $active==='players'?'active':'' ?>">Players</a>
+            <a href="/systems" class="<?= $active==='systems'?'active':'' ?>">Systems</a>
             <?php if ($user): ?>
-                <a href="/characters" class="<?= $active==='chars'?'active':'' ?>">Персонажи</a>
+                <a href="/characters" class="<?= $active==='chars'?'active':'' ?>">Characters</a>
                 <?php if ($user['role'] & (ROLE_ADMIN|ROLE_GMH|ROLE_GML)): ?>
-                    <a href="/admin" class="<?= $active==='admin'?'active':'' ?>">Админка</a>
+                    <a href="/admin" class="<?= $active==='admin'?'active':'' ?>">Admin</a>
                 <?php endif; ?>
                 <span class="nav-user"><?= e($user['accountName']) ?></span>
-                <a href="/logout" class="nav-btn-outline">Выход</a>
+                <a href="/logout" class="nav-btn-outline">Logout</a>
             <?php else: ?>
-                <a href="/login" class="nav-btn">Вход</a>
-                <a href="/register" class="nav-btn-outline">Регистрация</a>
+                <a href="/login" class="nav-btn">Login</a>
             <?php endif; ?>
         </div>
     </div>
@@ -38,7 +39,7 @@ function render_layout($title, $active, $content) {
 <?= $content ?>
 </main>
 <footer class="footer">
-    <p><?= SITE_NAME ?> &copy; <?= date('Y') ?></p>
+    <p><?= SITE_NAME ?> Killboard &copy; <?= date('Y') ?></p>
 </footer>
 </body>
 </html>

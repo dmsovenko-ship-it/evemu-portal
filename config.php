@@ -109,3 +109,12 @@ function redirect($url) {
 }
 
 function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
+
+function time_ago($ts) {
+    if ($ts <= 0) return '';
+    $diff = time() - $ts;
+    if ($diff < 60) return $diff . 's ago';
+    if ($diff < 3600) return floor($diff / 60) . 'm ago';
+    if ($diff < 86400) return floor($diff / 3600) . 'h ago';
+    return floor($diff / 86400) . 'd ago';
+}
