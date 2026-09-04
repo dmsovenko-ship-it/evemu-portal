@@ -411,7 +411,7 @@ img[width][height] { max-width: none; object-fit: contain; }
     top: 71px;
     width: 256px;
     height: 256px;
-    z-index: 1;
+    z-index: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -421,7 +421,10 @@ img[width][height] { max-width: none; object-fit: contain; }
     width: 256px;
     height: 256px;
     object-fit: contain;
-    filter: drop-shadow(0 0 22px rgba(0,0,0,.9));
+    /* the evetech render is JPEG (opaque corners) — fade the edges so the
+       square doesn't cover the slot cells on the panel */
+    -webkit-mask-image: radial-gradient(circle at center, #000 52%, transparent 72%);
+    mask-image: radial-gradient(circle at center, #000 52%, transparent 72%);
 }
 /* a slot cell: top-left at (left,top)px, 32x32 */
 .fit-pcell {
@@ -442,9 +445,10 @@ img[width][height] { max-width: none; object-fit: contain; }
     border-radius: 3px;
     z-index: 2;
 }
-.fit-modpic.dropped { outline: 2px solid var(--accent); outline-offset: -2px; }
-.fit-modpic.destroyed { outline: 2px solid var(--danger); outline-offset: -2px; }
-.fit-modpic.partial { outline: 2px solid var(--warn); outline-offset: -2px; }
+/* subtle status tint without an intrusive outline */
+.fit-modpic.dropped { box-shadow: inset 0 0 0 1px rgba(102,204,136,.6); }
+.fit-modpic.destroyed { box-shadow: inset 0 0 0 1px rgba(238,68,68,.6); }
+.fit-modpic.partial { box-shadow: inset 0 0 0 1px rgba(238,136,68,.6); }
 .fit-drones {
     position: absolute;
     z-index: 3;
