@@ -221,59 +221,105 @@ ob_start();
   <div class="kill-main">
     <?php if (!empty($slots) || $hullValue > 0): ?>
     <?php
-    // EVE-fitting-window overlay. Ship render is centered; slot cells hug the
-    // hull edges the way the fitting window arranges them:
-    //   High slots — top centre; Low slots — bottom centre;
-    //   Mid slots — split left/right flanks; Rig/Sub/Drone — bottom strip.
-    $slotCell = function($it, $extra = '') use (&$itemNames) {
+    // ── Classic EVE fitting-window schematic ─────────────────────────────
+    // Ship render centered (nose up). Slot cells placed around the hull:
+    //   High — arc along the top; Low — arc along the bottom;
+    //   Mid — column on the right; Rigs/subs (tuning) — column on the left.
+    // One cell per hull slot (from KillDetail hipslots/midslots/... ), filled
+    // cells get the module icon, empty cells are plain. Dropped = green,
+    // destroyed = red borders.
+    $hH = (int)($k['hipslots'] ?? 0);   // may be absent until server rebuild
+    $hM = (int)($k['midslots'] ?? 0);
+    $hL = (int)($k['lowslots'] ?? 0);
+    $hR = (int)($k['rigslots'] ?? 0);
+    $hS = (int)($k['subslots'] ?? 0);
+    // fallback: if API didn't return slot counts yet, infer from the fitted set
+    if ($hH + $hM + $hL + $hR == 0) {
+        foreach ($slots as $bt => $arr) {
+            $c = count($arr);
+            if ($bt == 'High') $hH = max($hH, $c);
+            elseif ($bt == 'Mid') $hM = max($hM, $c);
+            elseif ($bt == 'Low') $hL = max($hL, $c);
+            elseif ($bt == 'Rig') $hR = max($hR, $c);
+            elseif ($bt == 'Subsystem') $hS = max($hS, $c);
+        }
+    }
+    // maps slot index -> module item (by fitted flag order within the group)
+    $cellMap = function($group, $n) use (&$slots) {
+        $out = [];
+        for ($i = 0; $i < $n; $i++) $out[$i] = null;
+        foreach ($slots[$group] ?? [] as $it) {
+            $idx = -1;
+            if ($group == 'High')      $idx = $it['f'] - 27;
+            elseif ($group == 'Mid')   $idx = $it['f'] - 19;
+            elseif ($group == 'Low')   $idx = $it['f'] - 11;
+            elseif ($group == 'Rig')   $idx = $it['f'] - 92;
+            elseif ($group == 'Subsystem') $idx = $it['f'] - 125;
+            if ($idx >= 0 && $idx < $n) $out[$idx] = $it;
+        }
+        return $out;
+    };
+    $renderCell = function($it) use (&$itemNames) {
+        if ($it === null) return '<div class="fit-cell empty"></div>';
         $nm = $itemNames[$it['t']] ?? 'Unknown';
         $cls = ($it['d'] > 0 && $it['x'] == 0) ? 'dropped' : (($it['d'] > 0) ? 'partial' : 'destroyed');
-        return '<div class="fit-slot ' . $cls . $extra . '" title="' . e($nm)
+        return '<div class="fit-cell ' . $cls . '" title="' . e($nm)
             . ($it['q'] > 1 ? ' x' . $it['q'] : '')
             . (($it['d'] > 0 && $it['x'] > 0) ? ' (D' . $it['d'] . '/X' . $it['x'] . ')' : '') . '">'
-            . '<img src="' . ship_type_icon($it['t'], 32) . '" width="32" height="32" onerror="this.style.display=\'none\'">'
+            . '<img src="' . ship_type_icon($it['t'], 32) . '" width="30" height="30" onerror="this.style.display=\'none\'">'
             . '</div>';
     };
-    $midL = []; $midR = []; $midIdx = 0;
-    foreach ($slots['Mid'] ?? [] as $it) { ($midIdx++ % 2 == 0) ? $midL[] = $it : $midR[] = $it; }
-    $bottom = [];
-    foreach (['Rig','Subsystem','Drone Bay'] as $bt)
-        foreach ($slots[$bt] ?? [] as $it) $bottom[] = $it;
+    $hiCells = $cellMap('High', $hH);
+    $loCells = $cellMap('Low', $hL);
+    $mdCells = $cellMap('Mid', $hM);
+    $rgCells = $cellMap('Rig', $hR);
+    $sbCells = $cellMap('Subsystem', $hS);
+    // drones (Drone Bay) shown as a small badge group below-left
+    $droneItems = $slots['Drone Bay'] ?? [];
     ?>
-    <div class="fit-arena">
-        <div class="fit-hull"><img src="<?= ship_icon($k['victimshiptypeid'], 256) ?>" alt="<?= e($k['victimshipname']) ?>" onerror="this.style.display='none'"></div>
-        <div class="fit-hull-name"><?= e($k['victimshipname']) ?></div>
+    <div class="fit-window">
+        <!-- ship -->
+        <div class="fit-ship"><img src="<?= ship_icon($k['victimshiptypeid'], 256) ?>" alt="<?= e($k['victimshipname']) ?>" onerror="this.style.display='none'"></div>
+        <div class="fit-ship-name"><?= e($k['victimshipname']) ?></div>
 
-        <?php if (!empty($slots['High'])): ?>
-        <div class="fit-stack fit-stack-top">
-            <span class="fit-stack-tag">High</span>
-            <?php foreach ($slots['High'] as $it) echo $slotCell($it); ?>
+        <!-- HIGH: arc along the top -->
+        <?php if ($hH): ?>
+        <div class="fit-arc fit-arc-top">
+            <?php foreach ($hiCells as $cell) echo $renderCell($cell); ?>
+            <span class="fit-arc-tag">HIGH</span>
         </div>
         <?php endif; ?>
 
-        <?php if (!empty($slots['Low'])): ?>
-        <div class="fit-stack fit-stack-bottom">
-            <span class="fit-stack-tag">Low</span>
-            <?php foreach ($slots['Low'] as $it) echo $slotCell($it); ?>
+        <!-- LOW: arc along the bottom -->
+        <?php if ($hL): ?>
+        <div class="fit-arc fit-arc-bottom">
+            <span class="fit-arc-tag">LOW</span>
+            <?php foreach ($loCells as $cell) echo $renderCell($cell); ?>
         </div>
         <?php endif; ?>
 
-        <?php if ($midL): ?>
-        <div class="fit-stack fit-stack-left">
-            <span class="fit-stack-tag">Mid</span>
-            <?php foreach ($midL as $it) echo $slotCell($it); ?>
-        </div>
-        <?php endif; ?>
-        <?php if ($midR): ?>
-        <div class="fit-stack fit-stack-right">
-            <span class="fit-stack-tag">Mid</span>
-            <?php foreach ($midR as $it) echo $slotCell($it); ?>
+        <!-- MID: right column -->
+        <?php if ($hM): ?>
+        <div class="fit-col fit-col-right">
+            <span class="fit-arc-tag">MID</span>
+            <?php foreach ($mdCells as $cell) echo $renderCell($cell); ?>
         </div>
         <?php endif; ?>
 
-        <?php if ($bottom): ?>
-        <div class="fit-stack fit-stack-bottom-rig">
-            <?php foreach ($bottom as $it) echo $slotCell($it); ?>
+        <!-- RIG/SUB (tuning): left column -->
+        <?php if ($hR || $hS): ?>
+        <div class="fit-col fit-col-left">
+            <span class="fit-arc-tag">TUNING</span>
+            <?php foreach ($rgCells as $cell) echo $renderCell($cell); ?>
+            <?php foreach ($sbCells as $cell) echo $renderCell($cell); ?>
+        </div>
+        <?php endif; ?>
+
+        <!-- drones -->
+        <?php if ($droneItems): ?>
+        <div class="fit-drones">
+            <span class="fit-arc-tag">DRONES</span>
+            <?php foreach ($droneItems as $it) echo $renderCell($it); ?>
         </div>
         <?php endif; ?>
     </div>

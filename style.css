@@ -366,25 +366,25 @@ img { max-width: 100%; }
 .stat-value { color: var(--text-bright); font-weight: 600; }
 .stat-value.isk { color: var(--gold); }
 
-/* ── EVE-fitting-window fit overlay ──────────────────────
-   Dark schematic canvas, the destroyed hull rendered large in the centre,
-   module slot cells hugging the edges exactly like the in-game fitting
-   window: High along the top, Low along the bottom, Mid split to the left
-   and right flanks, rigs/subs/drones tucked at the very bottom.           */
-.fit-arena {
+/* ── Classic EVE fitting-window schematic ────────────────
+   Square dark canvas; destroyed hull large in the middle (nose up).
+   Slot cells arranged around it exactly like the in-game fitting window:
+   High cells arc along the top, Low cells along the bottom, Mid cells run
+   down the right side, rigs/subs run down the left. One cell per hull slot
+   (empty cells included). Dropped=green, destroyed=red, partial=amber.   */
+.fit-window {
     position: relative;
     width: 100%;
-    max-width: 620px;
+    max-width: 560px;
     margin: 0 auto;
-    height: 420px;
+    height: 520px;
     border: 1px solid var(--border);
     border-radius: 6px;
-    background:
-        radial-gradient(ellipse at center, #0f1722 0%, #090d13 75%);
+    background: radial-gradient(ellipse at center, #0f1722 0%, #080c12 78%);
     overflow: hidden;
     user-select: none;
 }
-.fit-hull {
+.fit-ship {
     position: absolute;
     inset: 0;
     display: flex;
@@ -393,85 +393,89 @@ img { max-width: 100%; }
     z-index: 0;
     pointer-events: none;
 }
-.fit-hull img {
-    max-width: 62%;
-    max-height: 74%;
+.fit-ship img {
+    max-width: 54%;
+    max-height: 60%;
     object-fit: contain;
-    opacity: .94;
-    filter: drop-shadow(0 0 22px rgba(0,0,0,.95));
+    opacity: .95;
+    filter: drop-shadow(0 0 26px rgba(0,0,0,.95));
 }
-.fit-hull-name {
+.fit-ship-name {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 2px;
+    top: 50%;
+    margin-top: 96px;
     text-align: center;
-    font-size: 11px;
+    font-size: 12px;
+    font-weight: 600;
     color: var(--text-dim);
     z-index: 1;
     text-shadow: 0 1px 3px #000;
+    pointer-events: none;
 }
-/* slot stacks pinned to canvas edges */
-.fit-stack {
+/* slot groups */
+.fit-arc {
     position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    z-index: 2;
+    padding: 4px 10px;
+}
+.fit-arc-tag {
+    font-size: 9px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    background: rgba(10,14,20,.72);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 6px;
+    white-space: nowrap;
+}
+.fit-arc-top {
+    top: 10px;
+    left: 8%;
+    right: 8%;
+    /* gentle upward arc illusion: first/last rows pulled inward handled by wrap */
+    flex-wrap: wrap;
+}
+.fit-arc-bottom {
+    bottom: 10px;
+    left: 8%;
+    right: 8%;
+    flex-wrap: wrap;
+}
+.fit-col {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    z-index: 2;
+    padding: 4px;
+}
+.fit-col-right { right: 8px; }
+.fit-col-left  { left: 8px; }
+.fit-drones {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
     display: flex;
     align-items: center;
     gap: 5px;
     z-index: 2;
 }
-.fit-stack-tag {
-    font-size: 9px;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: .4px;
-    background: rgba(10,14,20,.7);
-    border-radius: 2px;
-    padding: 1px 4px;
-    white-space: nowrap;
-}
-.fit-stack-top {
-    top: 8px;
-    left: 50%;
-    transform: translateX(-50%);
-    flex-wrap: wrap;
-    justify-content: center;
-    max-width: 92%;
-}
-.fit-stack-bottom {
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    flex-wrap: wrap;
-    justify-content: center;
-    max-width: 92%;
-}
-.fit-stack-bottom-rig {
-    bottom: 6px;
-    left: 50%;
-    transform: translateX(-50%);
-    flex-wrap: wrap;
-    justify-content: center;
-    max-width: 92%;
-    opacity: .92;
-}
-.fit-stack-left {
-    left: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    flex-direction: column;
-}
-.fit-stack-right {
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    flex-direction: column;
-}
-/* a single slot cell */
-.fit-slot {
-    width: 36px;
-    height: 36px;
+/* one slot cell */
+.fit-cell {
+    width: 34px;
+    height: 34px;
     border-radius: 3px;
-    background: rgba(13,17,23,.85);
+    background: rgba(13,17,23,.88);
     border: 2px solid var(--border);
     display: flex;
     align-items: center;
@@ -480,11 +484,16 @@ img { max-width: 100%; }
     box-shadow: 0 0 6px rgba(0,0,0,.7);
     transition: border-color .1s, transform .1s;
 }
-.fit-slot:hover { border-color: var(--accent2); transform: scale(1.07); z-index: 5; }
-.fit-slot img { width: 30px; height: 30px; border-radius: 2px; }
-.fit-slot.destroyed { border-color: var(--danger); }
-.fit-slot.dropped   { border-color: var(--accent); }
-.fit-slot.partial   { border-color: var(--warn); }
+.fit-cell.empty {
+    border-style: dashed;
+    border-color: #2a3344;
+    background: rgba(13,17,23,.35);
+}
+.fit-cell:hover { border-color: var(--accent2); transform: scale(1.08); z-index: 5; }
+.fit-cell img { width: 28px; height: 28px; border-radius: 2px; }
+.fit-cell.destroyed { border-color: var(--danger); }
+.fit-cell.dropped   { border-color: var(--accent); }
+.fit-cell.partial   { border-color: var(--warn); }
 
 .fit-caption {
     padding: 6px 16px;
