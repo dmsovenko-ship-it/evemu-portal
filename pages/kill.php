@@ -252,6 +252,16 @@ $eftFitting = '[' . e($k['victimshipname']) . ', ' . e($k['victimname']) . "'s "
         <summary style="cursor:pointer;color:var(--text-bright);font-size:13px;font-weight:600">EFT Fitting</summary>
         <pre style="margin-top:8px;padding:8px;background:#0d1117;border-radius:4px;font-size:11px;color:var(--text);overflow-x:auto;white-space:pre-wrap"><?= e($eftFitting) ?></pre>
     </details>
+    <?php
+    $kmXml = api_get('/char/KillMail.xml.aspx?killid=' . $killID);
+    $killmailText = '';
+    if ($kmXml && $kmXml->result && $kmXml->result->killmail)
+        $killmailText = (string)$kmXml->result->killmail;
+    ?>
+    <details style="background:var(--bg-card);border:1px solid var(--border);border-radius:6px;padding:12px;flex:1;min-width:300px">
+        <summary style="cursor:pointer;color:var(--text-bright);font-size:13px;font-weight:600">Original Killmail</summary>
+        <pre style="margin-top:8px;padding:8px;background:#0d1117;border-radius:4px;font-size:11px;color:var(--text);overflow-x:auto;white-space:pre-wrap"><?= e($killmailText) ?></pre>
+    </details>
 </div>
 
 <?php
