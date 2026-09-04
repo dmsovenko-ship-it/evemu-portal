@@ -219,18 +219,22 @@ ob_start();
 
 <div class="kill-layout">
   <div class="kill-main">
-    <div class="ship-render-wrap">
-        <img src="<?= ship_icon($k['victimshiptypeid'], 256) ?>" alt="<?= e($k['victimshipname']) ?>" onerror="this.style.display='none'">
-    </div>
-
     <?php if (!empty($slots) || $hullValue > 0): ?>
-    <div class="fit-visual">
-        <?php foreach (['High','Mid','Low','Rig','Subsystem','Drone Bay','Cargo','Other'] as $slotType):
-            if (empty($slots[$slotType])) continue; ?>
-        <div class="fit-slot-row">
-            <div class="fit-slot-label"><?= $slotType ?></div>
-            <div class="fit-slot-icons">
-            <?php foreach ($slots[$slotType] as $it):
+    <div class="fit-arena">
+        <div class="fit-ship-center">
+            <img src="<?= ship_icon($k['victimshiptypeid'], 256) ?>" alt="<?= e($k['victimshipname']) ?>" onerror="this.style.display='none'">
+        </div>
+        <?php
+        // overlay bands, EVE-fitting style: High above, Mid middle, Low lower,
+        // Rig/Sub/Drone at the bottom. Cargo is not "fitted" — table only.
+        $fitBands = ['High','Mid','Low'];
+        $bandKeys = ['High'=>'band-high','Mid'=>'band-mid','Low'=>'band-low'];
+        foreach ($fitBands as $bt):
+            if (empty($slots[$bt])) continue; ?>
+        <div class="fit-band <?= $bandKeys[$bt] ?>">
+            <span class="fit-band-label"><?= $bt ?></span>
+            <div class="fit-band-icons">
+            <?php foreach ($slots[$bt] as $it):
                 $nm = $itemNames[$it['t']] ?? 'Unknown';
                 $cls = ($it['d'] > 0 && $it['x'] == 0) ? 'dropped' : (($it['d'] > 0) ? 'partial' : 'destroyed');
                 $qtyNote = ($it['d'] > 0 && $it['x'] > 0) ? ' (D'.$it['d'].'/X'.$it['x'].')' : ($it['q'] > 1 ? ' x'.$it['q'] : '');
@@ -242,6 +246,26 @@ ob_start();
             </div>
         </div>
         <?php endforeach; ?>
+        <?php
+        // bottom row: rigs, subsystems, drones (if any)
+        $bottom = [];
+        foreach (['Rig','Subsystem','Drone Bay'] as $bt)
+            if (!empty($slots[$bt])) foreach ($slots[$bt] as $it) $bottom[] = [$bt, $it];
+        if ($bottom): ?>
+        <div class="fit-band band-bottom">
+            <span class="fit-band-label">Rig/Sub/Drone</span>
+            <div class="fit-band-icons">
+            <?php foreach ($bottom as [$bt, $it]):
+                $nm = $itemNames[$it['t']] ?? 'Unknown';
+                $cls = ($it['d'] > 0 && $it['x'] == 0) ? 'dropped' : (($it['d'] > 0) ? 'partial' : 'destroyed');
+                ?>
+                <div class="fit-slot <?= $cls ?>" title="<?= e($bt . ': ' . $nm) ?>">
+                    <img src="<?= ship_type_icon($it['t'], 32) ?>" width="32" height="32" onerror="this.style.display='none'">
+                </div>
+            <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 
     <div class="section-title">Items</div>

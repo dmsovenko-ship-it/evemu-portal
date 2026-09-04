@@ -366,71 +366,102 @@ img { max-width: 100%; }
 .stat-value { color: var(--text-bright); font-weight: 600; }
 .stat-value.isk { color: var(--gold); }
 
-/* ── Ship render in kill detail ────────────────────────── */
-.ship-render-wrap {
-    text-align: center;
-    padding: 16px;
-    border-bottom: 1px solid var(--border);
-    background: rgba(0,0,0,.1);
+/* ── Ship fit schematic (kill detail) ────────────────────
+   EVE-fitting-window style: transparent ship render centered on a dark
+   canvas, module icons laid out in slot bands around it.
+   High band sits above the hull, Mid across the middle, Low below,
+   Rig/Sub/Drone strip along the bottom edge. Cargo is table-only.        */
+.fit-arena {
+    position: relative;
+    width: 100%;
+    max-width: 620px;
+    margin: 0 auto;
+    height: 460px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background:
+        radial-gradient(ellipse at center, #101820 0%, #0b1017 70%);
+    overflow: hidden;
+    user-select: none;
 }
-.ship-render-wrap img {
-    max-width: 256px;
-    max-height: 256px;
-    border-radius: 4px;
-    background: transparent;
-}
-
-/* ── Visual fitting display ─────────────────────────────── */
-.fit-visual {
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-}
-.fit-slot-row {
+.fit-arena .fit-ship-center {
+    position: absolute;
+    inset: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 6px;
+    justify-content: center;
+    z-index: 0;
+    pointer-events: none;
 }
-.fit-slot-label {
-    width: 60px;
-    font-size: 11px;
+.fit-arena .fit-ship-center img {
+    max-width: 70%;
+    max-height: 70%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 18px rgba(0,0,0,.9));
+    opacity: .92;
+}
+/* absolute slot bands */
+.fit-arena .fit-band {
+    position: absolute;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 2px 6px;
+    z-index: 2;
+}
+.fit-arena .band-high    { top: 6px; }
+.fit-arena .band-mid     { top: 50%; transform: translateY(-50%); }
+.fit-arena .band-low     { bottom: 40px; }
+.fit-arena .band-bottom  { bottom: 2px; }
+.fit-arena .fit-band-label {
+    font-size: 9px;
     color: var(--text-dim);
     text-transform: uppercase;
-    letter-spacing: .3px;
-    flex-shrink: 0;
+    letter-spacing: .4px;
+    background: rgba(10,14,20,.75);
+    border-radius: 2px;
+    padding: 1px 4px;
+    white-space: nowrap;
 }
-.fit-slot-icons {
+.fit-arena .fit-band-icons {
     display: flex;
     gap: 4px;
     flex-wrap: wrap;
+    justify-content: center;
 }
-.fit-slot {
-    width: 36px;
-    height: 36px;
+/* slot cell (module icon in a dark tile) */
+.fit-arena .fit-slot {
+    width: 34px;
+    height: 34px;
     border-radius: 3px;
-    background: var(--bg-input);
+    background: rgba(13,17,23,.82);
     border: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: default;
-    transition: border-color .1s;
+    box-shadow: 0 0 6px rgba(0,0,0,.6);
+    transition: border-color .1s, transform .1s;
 }
-.fit-slot:hover {
+.fit-arena .fit-slot:hover {
     border-color: var(--accent2);
+    transform: scale(1.06);
 }
-.fit-slot img {
-    width: 32px;
-    height: 32px;
+.fit-arena .fit-slot img {
+    width: 30px;
+    height: 30px;
     border-radius: 2px;
 }
-.fit-slot.destroyed {
-    border-color: var(--danger);
-    opacity: .7;
-}
-.fit-slot.dropped {
-    border-color: var(--accent);
-}
+.fit-arena .fit-slot.destroyed { border-color: var(--danger); }
+.fit-arena .fit-slot.dropped   { border-color: var(--accent); }
+.fit-arena .fit-slot.partial   { border-color: var(--warn); }
+
+/* keep the old fit-slot tile styling usable outside the arena too */
+.fit-slot.destroyed { border-color: var(--danger); }
+.fit-slot.dropped   { border-color: var(--accent); }
 
 /* ── Items section ─────────────────────────────────────── */
 .section-title {
