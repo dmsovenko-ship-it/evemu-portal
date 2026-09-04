@@ -416,21 +416,23 @@ img[width][height] { max-width: none; object-fit: contain; }
 .fit-info {
     width: 100%;
     border-collapse: collapse;
-    font-size: 12px;
+    font-size: 14px;
 }
 .fit-info th {
     text-align: left;
     color: var(--text-dim);
-    font-weight: 500;
-    padding: 3px 8px 3px 0;
+    font-weight: 700;
+    padding: 4px 10px 4px 0;
     vertical-align: top;
     white-space: nowrap;
 }
 .fit-info td {
     color: var(--text);
-    padding: 3px 0;
+    font-weight: 600;
+    padding: 4px 0;
     vertical-align: top;
 }
+.fit-info td a { font-weight: 600; }
 .fit-info .fit-info-destroyed td { color: var(--danger); }
 .fit-info .fit-info-dropped td { color: var(--accent); }
 .fit-bg {

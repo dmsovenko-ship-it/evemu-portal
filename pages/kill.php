@@ -341,7 +341,8 @@ ob_start();
       <div class="fit-side">
         <table class="fit-info">
             <tbody>
-            <tr><th>Ship:</th><td><?= e($k['victimshipname']) ?: e($k['victimshiptypeid']) ?></td></tr>
+            <tr><th>Ship:</th><td><a href="/ship/<?= $k['victimshiptypeid'] ?>"><?= e($k['victimshipname']) ?: e($k['victimshiptypeid']) ?></a></td></tr>
+            <tr><th>Type:</th><td><?php if (!empty($k['victimgroupname'])): ?><a href="/group/<?= $k['victimgroupid'] ?>"><?= e($k['victimgroupname']) ?></a><?php else: ?>&mdash;<?php endif; ?></td></tr>
             <tr><th>System:</th><td><a href="/system/<?= $k['systemid'] ?>"><?= e($k['systemname']) ?></a> <span style="color:<?= security_color($sec) ?>">(<?= number_format($sec,1) ?>)</span> / <a href="/region/<?= $k['regionid'] ?>"><?= e($k['regionname']) ?></a></td></tr>
             <tr><th>Time:</th><td><?= date('Y-m-d H:i', $ts) ?></td></tr>
             <tr><th>Damage:</th><td><?= number_format($victimDmg) ?></td></tr>

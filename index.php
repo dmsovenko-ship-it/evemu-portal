@@ -39,6 +39,14 @@ switch ($page) {
         $id = $sub;
         require __DIR__ . '/pages/system_kills.php';
         break;
+    case 'ship':
+        $id = $sub;
+        require __DIR__ . '/pages/ship_kills.php';
+        break;
+    case 'group':
+        $id = $sub;
+        require __DIR__ . '/pages/group_kills.php';
+        break;
     case 'stats':
         require __DIR__ . '/pages/stats.php';
         break;
