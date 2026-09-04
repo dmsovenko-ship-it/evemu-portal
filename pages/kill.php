@@ -104,13 +104,13 @@ ob_start();
 <div class="kill-detail-hero">
     <div class="kill-victim">
         <div class="victim-portrait">
-            <img src="https://images.eveonline.com/Character/<?= $k['victimcharacterid'] ?>_128.jpg"
+            <img src="<?= char_portrait($k['victimcharacterid'], 128) ?>"
                  onerror="this.src='https://images.zkillboard.com/types/<?= $k['victimshiptypeid'] ?>/render/128'" alt="">
         </div>
         <div class="victim-info">
             <h2><?= e($k['victimname'] ?: 'Unknown') ?></h2>
             <div class="victim-corp">
-                <img src="https://images.eveonline.com/Corporation/<?= $k['victimcorporationid'] ?>_32.png"
+                <img src="<?= corp_logo($k['victimcorporationid'], 32) ?>"
                      onerror="this.style.display='none'" alt="">
                 <?= e($k['finalname'] ? '' : '') ?>
             </div>
@@ -178,7 +178,7 @@ ob_start();
 
 <div class="section-title">Атакующий</div>
 <div class="attacker-row">
-    <img src="https://images.eveonline.com/Character/<?= $k['finalcharacterid'] ?>_64.jpg"
+    <img src="<?= char_portrait($k['finalcharacterid'], 64) ?>"
          width="64" height="64" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22><rect fill=%22%23111%22 width=%2264%22 height=%2264%22/><text x=%2232%22 y=%2236%22 text-anchor=%22middle%22 fill=%22%23556%22 font-size=%2220%22>?</text></svg>'" alt="">
     <div>
         <div class="attacker-name"><?= e($k['finalname'] ?: 'Unknown') ?></div>

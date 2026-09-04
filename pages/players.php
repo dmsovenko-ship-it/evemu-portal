@@ -24,7 +24,7 @@ ob_start();
     ?>
     <tr>
         <td style="width:40px">
-            <img src="https://images.eveonline.com/Character/<?= $c['characterid'] ?>_64.jpg"
+            <img src="<?= char_portrait($c['characterid'], 64) ?>"
                  width="32" height="32" style="border-radius:3px;background:#111"
                  onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22><rect fill=%22%23111%22 width=%2232%22 height=%2232%22/></svg>'">
         </td>

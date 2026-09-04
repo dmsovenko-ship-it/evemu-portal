@@ -69,7 +69,17 @@ function role_name($role) {
 
 function ship_icon($typeID, $size = 128) {
     if (!$typeID) return '';
-    return ZKILLBOARD_SHIPS . '/' . $typeID . '_' . $size . '.png';
+    return '/img.php?url=' . urlencode(ZKILLBOARD_SHIPS . '/' . $typeID . '_' . $size . '.png');
+}
+
+function char_portrait($charID, $size = 128) {
+    if (!$charID) return '';
+    return '/img.php?url=' . urlencode('https://images.eveonline.com/Character/' . $charID . '_' . $size . '.jpg');
+}
+
+function corp_logo($corpID, $size = 32) {
+    if (!$corpID) return '';
+    return '/img.php?url=' . urlencode('https://images.eveonline.com/Corporation/' . $corpID . '_' . $size . '.png');
 }
 
 function filetime_to_unix($filetime) {
