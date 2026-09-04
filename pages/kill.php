@@ -220,37 +220,62 @@ ob_start();
 <div class="kill-layout">
   <div class="kill-main">
     <?php if (!empty($slots) || $hullValue > 0): ?>
-    <div class="fit-layout">
-        <!-- ship column (zkillboard style) -->
-        <div class="fit-ship-col">
-            <div class="fit-ship-render">
-                <img src="<?= ship_icon($k['victimshiptypeid'], 256) ?>" alt="<?= e($k['victimshipname']) ?>" onerror="this.style.display='none'">
-            </div>
-            <div class="fit-ship-name"><?= e($k['victimshipname']) ?></div>
+    <?php
+    // EVE-fitting-window overlay. Ship render is centered; slot cells hug the
+    // hull edges the way the fitting window arranges them:
+    //   High slots — top centre; Low slots — bottom centre;
+    //   Mid slots — split left/right flanks; Rig/Sub/Drone — bottom strip.
+    $slotCell = function($it, $extra = '') use (&$itemNames) {
+        $nm = $itemNames[$it['t']] ?? 'Unknown';
+        $cls = ($it['d'] > 0 && $it['x'] == 0) ? 'dropped' : (($it['d'] > 0) ? 'partial' : 'destroyed');
+        return '<div class="fit-slot ' . $cls . $extra . '" title="' . e($nm)
+            . ($it['q'] > 1 ? ' x' . $it['q'] : '')
+            . (($it['d'] > 0 && $it['x'] > 0) ? ' (D' . $it['d'] . '/X' . $it['x'] . ')' : '') . '">'
+            . '<img src="' . ship_type_icon($it['t'], 32) . '" width="32" height="32" onerror="this.style.display=\'none\'">'
+            . '</div>';
+    };
+    $midL = []; $midR = []; $midIdx = 0;
+    foreach ($slots['Mid'] ?? [] as $it) { ($midIdx++ % 2 == 0) ? $midL[] = $it : $midR[] = $it; }
+    $bottom = [];
+    foreach (['Rig','Subsystem','Drone Bay'] as $bt)
+        foreach ($slots[$bt] ?? [] as $it) $bottom[] = $it;
+    ?>
+    <div class="fit-arena">
+        <div class="fit-hull"><img src="<?= ship_icon($k['victimshiptypeid'], 256) ?>" alt="<?= e($k['victimshipname']) ?>" onerror="this.style.display='none'"></div>
+        <div class="fit-hull-name"><?= e($k['victimshipname']) ?></div>
+
+        <?php if (!empty($slots['High'])): ?>
+        <div class="fit-stack fit-stack-top">
+            <span class="fit-stack-tag">High</span>
+            <?php foreach ($slots['High'] as $it) echo $slotCell($it); ?>
         </div>
-        <!-- module columns by slot group -->
-        <div class="fit-groups">
-        <?php
-        $groupOrder = ['High','Mid','Low','Rig','Subsystem','Drone Bay','Cargo'];
-        foreach ($groupOrder as $bt):
-            if (empty($slots[$bt])) continue; ?>
-            <div class="fit-group">
-                <div class="fit-group-label"><?= $bt ?> Slots</div>
-                <div class="fit-group-modules">
-                <?php foreach ($slots[$bt] as $it):
-                    $nm = $itemNames[$it['t']] ?? 'Unknown';
-                    $cls = ($it['d'] > 0 && $it['x'] == 0) ? 'dropped' : (($it['d'] > 0) ? 'partial' : 'destroyed');
-                    $cnt = max($it['d'], $it['x'], 1);
-                    ?>
-                    <div class="fit-module <?= $cls ?>" title="<?= e($nm) ?><?= $it['q']>1?' x'.$it['q']:'' ?><?= ($it['d']>0&&$it['x']>0)?' (D'.$it['d'].'/X'.$it['x'].')':'' ?>">
-                        <img src="<?= ship_type_icon($it['t'], 32) ?>" width="32" height="32" onerror="this.style.display='none'">
-                        <?php if ($cnt > 1): ?><span class="fit-module-qty"><?= $cnt ?></span><?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
-                </div>
-            </div>
-        <?php endforeach; ?>
+        <?php endif; ?>
+
+        <?php if (!empty($slots['Low'])): ?>
+        <div class="fit-stack fit-stack-bottom">
+            <span class="fit-stack-tag">Low</span>
+            <?php foreach ($slots['Low'] as $it) echo $slotCell($it); ?>
         </div>
+        <?php endif; ?>
+
+        <?php if ($midL): ?>
+        <div class="fit-stack fit-stack-left">
+            <span class="fit-stack-tag">Mid</span>
+            <?php foreach ($midL as $it) echo $slotCell($it); ?>
+        </div>
+        <?php endif; ?>
+        <?php if ($midR): ?>
+        <div class="fit-stack fit-stack-right">
+            <span class="fit-stack-tag">Mid</span>
+            <?php foreach ($midR as $it) echo $slotCell($it); ?>
+        </div>
+        <?php endif; ?>
+
+        <?php if ($bottom): ?>
+        <div class="fit-stack fit-stack-bottom-rig">
+            <?php foreach ($bottom as $it) echo $slotCell($it); ?>
+        </div>
+        <?php endif; ?>
     </div>
     <div class="fit-caption">
         <span class="dot dropped"></span> Dropped &nbsp;
