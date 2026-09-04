@@ -1,6 +1,7 @@
 <?php
 define('API_BASE', 'http://127.0.0.1:26002');
 define('ZKILLBOARD_SHIPS', 'https://images.zkillboard.com/renders');
+define('IMAGE_SERVER', 'http://127.0.0.1:26001');
 define('SITE_NAME', 'EVEmu');
 define('SESSION_LIFETIME', 86400);
 
@@ -74,12 +75,17 @@ function ship_icon($typeID, $size = 128) {
 
 function char_portrait($charID, $size = 128) {
     if (!$charID) return '';
-    return '/img.php?url=' . urlencode('https://images.eveonline.com/Character/' . $charID . '_' . $size . '.jpg');
+    return IMAGE_SERVER . '/Character/' . $charID . '_' . $size . '.jpg';
 }
 
 function corp_logo($corpID, $size = 32) {
     if (!$corpID) return '';
-    return '/img.php?url=' . urlencode('https://images.eveonline.com/Corporation/' . $corpID . '_' . $size . '.png');
+    return IMAGE_SERVER . '/Corporation/' . $corpID . '_' . $size . '.png';
+}
+
+function alliance_logo($allianceID, $size = 32) {
+    if (!$allianceID) return '';
+    return IMAGE_SERVER . '/Alliance/' . $allianceID . '_' . $size . '.png';
 }
 
 function filetime_to_unix($filetime) {
