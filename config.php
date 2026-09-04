@@ -1,7 +1,7 @@
 <?php
 define('API_BASE', 'http://127.0.0.1:26002');
-define('ZKILLBOARD_SHIPS', 'https://images.zkillboard.com/renders');
-define('ZKILLBOARD_TYPES', 'https://images.zkillboard.com/types');
+define('EVE_RENDER', 'https://images.evetech.net/types');
+define('EVE_ICON', 'https://images.evetech.net/types');
 define('IMAGE_SERVER', 'http://127.0.0.1:26001');
 define('SITE_NAME', 'EVEmu');
 define('PORTAL_VERSION', '1.0.0');
@@ -72,12 +72,12 @@ function role_name($role) {
 
 function ship_icon($typeID, $size = 32) {
     if (!$typeID) return '';
-    return '/img.php?url=' . urlencode(ZKILLBOARD_SHIPS . '/' . $typeID . '_' . $size . '.png');
+    return '/img.php?url=' . urlencode(EVE_RENDER . '/' . $typeID . '/render?size=' . $size);
 }
 
 function ship_type_icon($typeID, $size = 32) {
     if (!$typeID) return '';
-    return '/img.php?url=' . urlencode(ZKILLBOARD_TYPES . '/' . $typeID . '/icon/' . $size);
+    return '/img.php?url=' . urlencode(EVE_ICON . '/' . $typeID . '/icon?size=' . $size);
 }
 
 function char_portrait($charID, $size = 64) {
