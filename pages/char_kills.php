@@ -36,12 +36,12 @@ $page_num = min($page_num, $total_pages);
 $offset = ($page_num - 1) * $perPage;
 $paginated = array_slice($activeKills, $offset, $perPage);
 
-$charName = $charInfo ? (string)($charInfo->characterName ?? 'Unknown') : 'Unknown';
-$corpName = $charInfo ? (string)($charInfo->corporationName ?? '') : '';
-$corpID = $charInfo ? (int)($charInfo->corporationID ?? 0) : 0;
-$corpTicker = $charInfo ? (string)($charInfo->corporationTicker ?? '') : '';
-$sp = $charInfo ? (int)($charInfo->skillPoints ?? 0) : 0;
-$sec = $charInfo ? (float)($charInfo->securityStatus ?? 0) : 0;
+$charName = $charInfo ? (string)($charInfo->charactername ?? 'Unknown') : 'Unknown';
+$corpName = $charInfo ? (string)($charInfo->corporationname ?? '') : '';
+$corpID = $charInfo ? (int)($charInfo->corporationid ?? 0) : 0;
+$corpTicker = $charInfo ? (string)($charInfo->ticker ?? '') : '';
+$sp = $charInfo ? (int)($charInfo->skillpoints ?? 0) : 0;
+$sec = $charInfo ? (float)($charInfo->securityrating ?? 0) : 0;
 $race = $charInfo ? (string)($charInfo->raceName ?? '') : '';
 
 ob_start();
