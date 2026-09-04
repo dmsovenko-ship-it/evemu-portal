@@ -23,12 +23,10 @@
 }
 
 body {
-    background-color: #06070c;
-    background-image:
-        radial-gradient(ellipse 70% 55% at 15% 0%, rgba(40,80,140,.12), transparent 60%),
-        radial-gradient(ellipse 60% 45% at 90% 8%, rgba(90,70,160,.10), transparent 55%),
-        radial-gradient(ellipse 75% 60% at 50% 105%, rgba(30,90,80,.08), transparent 60%),
-        radial-gradient(ellipse 120% 90% at 50% 50%, #0a0e18 0%, #05060b 70%, #020204 100%);
+    background-color: #05060b;
+    background-image: url('/img/space_bg.png');
+    background-size: cover;
+    background-position: center;
     background-attachment: fixed;
     color: var(--text);
     font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
