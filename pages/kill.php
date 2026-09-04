@@ -302,15 +302,31 @@ ob_start();
     }
     ?>
     <div class="fit-window">
-        <div class="fit-ship"><img src="<?= ship_icon($k['victimshiptypeid'], 256) ?>" alt="<?= e($k['victimshipname']) ?>" onerror="this.style.display='none'"></div>
-        <div class="fit-ship-name"><?= e($k['victimshipname']) ?></div>
+        <!-- EDAN universal silhouette behind everything -->
+        <img class="fit-bg" src="/img/fitmap/fit_dummy2.png" alt="">
 
         <?php foreach ($fitCells as [$g, $idx, $item]):
-            $pos = $EDAN[$g][$idx] ?? null; if (!$pos) continue;   // [left, top]
-            $xp = round(($pos[0] / $CW) * 100, 2);
-            $yp = round(($pos[1] / $CH) * 100, 2);
+            $pos = $EDAN[$g][$idx] ?? null; if (!$pos) continue;   // [left, top] px of the slot picture
+            // sotzone maps: High -> slot_1_*.gif, Mid -> slot_2_*.gif, Low -> slot_3_*.gif.
+            // rigs/subs have no slot picture (icon only).
+            $slotGif = '';
+            if ($g == 'High') $slotGif = "/img/fitmap/slot_1_{$idx}_0.gif";
+            elseif ($g == 'Mid') $slotGif = "/img/fitmap/slot_2_{$idx}_0.gif";
+            elseif ($g == 'Low') $slotGif = "/img/fitmap/slot_3_{$idx}_0.gif";
+            $l = $pos[0]; $t = $pos[1];
             ?>
-            <div class="fit-pcell" style="left:<?= $xp ?>%;top:<?= $yp ?>%"><?= $renderCell($item) ?></div>
+            <div class="fit-pcell" style="left:<?= round(($l/$CW)*100,2) ?>%;top:<?= round(($t/$CH)*100,2) ?>%">
+                <?php if ($slotGif): ?><img class="fit-slotpic" src="<?= $slotGif ?>" alt=""><?php endif; ?>
+                <?php if ($item): ?>
+                    <?php
+                    $nm = $itemNames[$item['t']] ?? 'Unknown';
+                    $cls = ($item['d'] > 0 && $item['x'] == 0) ? 'dropped' : (($item['d'] > 0) ? 'partial' : 'destroyed');
+                    ?>
+                    <img class="fit-modpic <?= $cls ?>" src="<?= ship_type_icon($item['t'], 32) ?>"
+                         title="<?= e($nm) ?><?= $item['q']>1?' x'.$item['q']:'' ?><?= ($item['d']>0&&$item['x']>0)?' (D'.$item['d'].'/X'.$item['x'].')':'' ?>"
+                         onerror="this.style.display='none'">
+                <?php endif; ?>
+            </div>
         <?php endforeach; ?>
 
         <?php if ($droneItems): ?>
