@@ -44,24 +44,50 @@ if ($blob && strlen($blob) > 10) {
 }
 
 $itemNames = [];
+$itemPrice = [];
 $ids = [];
 foreach ($items as $it) $ids[] = $it['t'];
+// hull itself is also priced (added below as a "Ship" entry)
+$ids[] = (int)$k['victimshiptypeid'];
 $ids = array_unique(array_filter($ids));
 if ($ids) {
     $nxml = api_get('/char/Resolve.xml.aspx?ids=' . implode(',', $ids));
     if ($nxml && $nxml->result && $nxml->result->names)
-        foreach ($nxml->result->names->row as $nr)
+        foreach ($nxml->result->names->row as $nr) {
             $itemNames[(int)$nr['id']] = (string)$nr['name'];
+            if (isset($nr['price']) && $nr['price'] !== '')
+                $itemPrice[(int)$nr['id']] = (float)$nr['price'];
+        }
 }
+// price fallback helper (also accepts basePrice — but Resolve already falls back server-side)
+$priceOf = function($typeID) use (&$itemPrice) { return $itemPrice[$typeID] ?? 0.0; };
 
+// Group blob items into slot buckets, keeping per-slot ascending flag order
+// (High 27→34, Mid 19→26, Low 11→18, Rig 92+, ...). A stack may be split between
+// dropped (d) and destroyed (x); keep one row with both counts for correct ISK math.
 $slots = [];
 foreach ($items as $it) {
-    if ($it['t'] == (int)$k['victimshiptypeid'] && $it['f'] == 0) continue; // the hull itself
+    if ($it['t'] == (int)$k['victimshiptypeid'] && $it['f'] == 0) continue; // hull added separately
     $slot = get_slot_name($it['f']);
-    $status = ($it['d'] > 0) ? 'dropped' : (($it['x'] > 0) ? 'destroyed' : 'destroyed');
-    $slots[$slot][] = ['item' => $it, 'status' => $status];
+    $slots[$slot][] = $it;
 }
 uksort($slots, function($a, $b) { return slot_sort_order($a) - slot_sort_order($b); });
+foreach ($slots as &$row) {
+    usort($row, function($a, $b) { return $a['f'] - $b['f']; });
+}
+unset($row);
+
+// Grand ISK totals (zkillboard-style): ship hull is always destroyed.
+$totDropped = 0.0; $totDestroyed = 0.0;
+$hullValue = $priceOf((int)$k['victimshiptypeid']);
+$totDestroyed += $hullValue;
+foreach ($slots as $slotItems)
+    foreach ($slotItems as $it) {
+        $p = $priceOf($it['t']);
+        $totDropped   += $p * $it['d'];
+        $totDestroyed += $p * $it['x'];
+    }
+$totAll = $totDropped + $totDestroyed;
 
 // ---- SVG map helpers ----
 function svg_axes(&$nodes, $pad = 12) {
@@ -195,16 +221,19 @@ ob_start();
         <img src="<?= ship_icon($k['victimshiptypeid'], 256) ?>" alt="<?= e($k['victimshipname']) ?>" onerror="this.style.display='none'">
     </div>
 
-    <?php if (!empty($slots)): ?>
+    <?php if (!empty($slots) || $hullValue > 0): ?>
     <div class="fit-visual">
         <?php foreach (['High','Mid','Low','Rig','Subsystem','Drone Bay','Cargo','Other'] as $slotType):
             if (empty($slots[$slotType])) continue; ?>
         <div class="fit-slot-row">
             <div class="fit-slot-label"><?= $slotType ?></div>
             <div class="fit-slot-icons">
-            <?php foreach ($slots[$slotType] as $si):
-                $it = $si['item']; $nm = $itemNames[$it['t']] ?? 'Unknown'; ?>
-                <div class="fit-slot <?= $si['status'] ?>" title="<?= e($nm) ?><?= $it['q']>1?' x'.$it['q']:'' ?>">
+            <?php foreach ($slots[$slotType] as $it):
+                $nm = $itemNames[$it['t']] ?? 'Unknown';
+                $cls = ($it['d'] > 0 && $it['x'] == 0) ? 'dropped' : (($it['d'] > 0) ? 'partial' : 'destroyed');
+                $qtyNote = ($it['d'] > 0 && $it['x'] > 0) ? ' (D'.$it['d'].'/X'.$it['x'].')' : ($it['q'] > 1 ? ' x'.$it['q'] : '');
+                ?>
+                <div class="fit-slot <?= $cls ?>" title="<?= e($nm . $qtyNote) ?>">
                     <img src="<?= ship_type_icon($it['t'], 32) ?>" width="32" height="32" onerror="this.style.display='none'">
                 </div>
             <?php endforeach; ?>
@@ -215,20 +244,47 @@ ob_start();
 
     <div class="section-title">Items</div>
     <table class="items-table">
-        <thead><tr><th></th><th>Item</th><th>Qty</th><th>Status</th></tr></thead>
+        <thead><tr><th></th><th>Item</th><th>Qty</th><th>Dropped</th><th>Destroyed</th><th style="text-align:right">Value</th></tr></thead>
         <tbody>
+        <tr>
+            <td style="width:32px"><img src="<?= ship_icon($k['victimshiptypeid'], 32) ?>" width="32" height="32" onerror="this.style.display='none'"></td>
+            <td><?= e($k['victimshipname']) ?: e($k['victimshiptypeid']) ?></td>
+            <td>1</td>
+            <td class="dropped">0</td>
+            <td class="destroyed">1</td>
+            <td class="destroyed" style="text-align:right"><?= isk_compact($hullValue) ?></td>
+        </tr>
         <?php foreach ($slots as $slotName => $slotItems): ?>
-        <tr><td colspan="4" class="slot-header"><?= e($slotName) ?> Slots</td></tr>
-        <?php foreach ($slotItems as $si):
-            $it = $si['item']; $nm = $itemNames[$it['t']] ?? 'Unknown #'.$it['t'];
-            $qty = $it['q'] * max(1, $it['x']);
-        ?>
+        <tr><td colspan="6" class="slot-header"><?= e($slotName) ?> Slots</td></tr>
+        <?php foreach ($slotItems as $it):
+            $nm = $itemNames[$it['t']] ?? 'Unknown #'.$it['t'];
+            $qty = max(1, $it['q']);
+            $val = $priceOf($it['t']);
+            $isSplit = ($it['d'] > 0 && $it['x'] > 0);
+            $rowCls = ($it['d'] > 0 && $it['x'] == 0) ? 'dropped' : (($it['x'] > 0) ? 'destroyed' : 'destroyed');
+            ?>
         <tr>
             <td style="width:32px"><img src="<?= ship_type_icon($it['t'], 32) ?>" width="32" height="32" onerror="this.style.display='none'"></td>
-            <td><?= e($nm) ?></td><td><?= $qty > 1 ? $qty : '' ?></td>
-            <td class="<?= $si['status'] ?>"><?= $si['status']==='destroyed' ? 'Destroyed' : 'Dropped' ?></td>
+            <td><?= e($nm) ?></td>
+            <td><?= $qty ?></td>
+            <td class="dropped"><?= $it['d'] ?></td>
+            <td class="destroyed"><?= $it['x'] ?></td>
+            <td style="text-align:right" class="<?= $rowCls ?>">
+                <?php if ($isSplit): ?>
+                    <span class="dropped"><?= isk_compact($val * $it['d']) ?></span> /
+                    <span class="destroyed"><?= isk_compact($val * $it['x']) ?></span>
+                <?php else: ?>
+                    <?= isk_compact($val * max($it['d'], $it['x'])) ?>
+                <?php endif; ?>
+            </td>
         </tr>
         <?php endforeach; endforeach; ?>
+        <tr class="totals-row">
+            <td colspan="3" style="text-align:right"><strong>Total</strong></td>
+            <td class="dropped"><strong><?= isk_compact($totDropped) ?></strong></td>
+            <td class="destroyed"><strong><?= isk_compact($totDestroyed) ?></strong></td>
+            <td style="text-align:right"><strong><?= isk_compact($totAll) ?></strong></td>
+        </tr>
         </tbody>
     </table>
     <?php endif; ?>
@@ -268,8 +324,8 @@ ob_start();
     // EFT fitting
     $eftLines = [];
     foreach ($slots as $slotName => $slotItems)
-        foreach ($slotItems as $si) {
-            $it = $si['item']; $nm = $itemNames[$it['t']] ?? null;
+        foreach ($slotItems as $it) {
+            $nm = $itemNames[$it['t']] ?? null;
             if ($nm) $eftLines[] = $nm . ($it['q'] > 1 ? ' x' . $it['q'] : '');
         }
     $eft = '[' . e($k['victimshipname']) . ', ' . e($k['victimname']) . "'s " . e($k['victimshipname']) . ']' . "\n" . implode("\n", $eftLines);
