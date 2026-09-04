@@ -301,6 +301,14 @@ ob_start();
     }
     ?>
     <div class="fit-window">
+        <!-- panel background + slot-group strip labels (zkillboard assets) -->
+        <img class="fit-bg" src="/img/panel/tyrannis.png" alt="">
+        <?php if ($hH): ?><img class="fit-bg" src="/img/panel/8h.png" alt=""><?php endif; ?>
+        <?php if ($hM): ?><img class="fit-bg" src="/img/panel/6m.png" alt=""><?php endif; ?>
+        <?php if ($hL): ?><img class="fit-bg" src="/img/panel/3l.png" alt=""><?php endif; ?>
+        <?php if ($hR): ?><img class="fit-bg" src="/img/panel/3r.png" alt=""><?php endif; ?>
+        <?php if ($hS): ?><img class="fit-bg" src="/img/panel/4s.png" alt=""><?php endif; ?>
+
         <!-- ship render behind the slots -->
         <div class="fit-shipbox"><img src="<?= ship_icon($k['victimshiptypeid'], 256) ?>" alt="<?= e($k['victimshipname']) ?>" onerror="this.style.display='none'"></div>
 
