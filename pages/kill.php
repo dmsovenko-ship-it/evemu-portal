@@ -276,7 +276,6 @@ ob_start();
     $sbCells = $cellMap('Subsystem', $hS);
     // drones (Drone Bay) shown as a small badge group below-left
     $droneItems = $slots['Drone Bay'] ?? [];
-    ?>
     // ── Place cells on the ring around the ship ────────────────────────
     // a = angle in degrees, 0 = up, 90 = right, 180 = down, 270 = left.
     // Each group spans its own arc; cells are spread evenly across it.
