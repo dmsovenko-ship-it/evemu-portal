@@ -379,57 +379,63 @@ img[width][height] { max-width: none; object-fit: contain; }
 .stat-value { color: var(--text-bright); font-weight: 600; }
 .stat-value.isk { color: var(--gold); }
 
-/* ── EVE fitting window — 1:1 sotzone/EDAN fitmap ───────
-   Canvas with the universal ship silhouette (fit_dummy2.png, 356x360) as
-   background. Slot pictures (48x50 gifs) sit at the fixed EDAN coordinates
-   (High over top, Mid right, Low bottom, rigs upper-left, subs lower-left).
-   Module icons (32px) are centred inside their slot picture.                 */
+/* ── Modern fitting panel (zkillboard style) ─────────────
+   398x398 canvas. Ship render (256px) centred behind. Slot cells (32px)
+   laid around it at zkillboard's fixed coordinates: High over the top, Low
+   along the bottom, Mid down the left, Rig lower-centre, Subsystem upper-
+   left. Filled cells hold the module icon; empty cells are faint boxes.  */
 .fit-window {
     position: relative;
-    width: 358px;
-    height: 360px;
+    width: 398px;
+    height: 398px;
     max-width: 100%;
     margin: 0 auto;
-    background: #06090e;
+    background: #0a0e14;
     border: 1px solid var(--border);
     border-radius: 6px;
     overflow: hidden;
     user-select: none;
 }
-.fit-bg {
+.fit-shipbox {
     position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: fill;
+    left: 72px;
+    top: 71px;
+    width: 256px;
+    height: 256px;
     z-index: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     pointer-events: none;
 }
-/* a slot position: its TOP-LEFT corner sits at (left,top)px — matching EDAN
-   coordinates. Slot pictures are drawn at their natural size (they vary:
-   35-49px wide, 42-50px tall); the module icon (32px) centres in the slot. */
+.fit-shipbox img {
+    width: 256px;
+    height: 256px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 22px rgba(0,0,0,.9));
+}
+/* a slot cell: top-left at (left,top)px, 32x32 */
 .fit-pcell {
     position: absolute;
-    z-index: 2;
-}
-.fit-slotpic {
-    display: block;
-    z-index: 1;
-}
-.fit-modpic {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
     width: 32px;
     height: 32px;
     z-index: 2;
-    border-radius: 2px;
-    box-shadow: 0 0 0 2px rgba(0,0,0,.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(20,26,36,.45);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 3px;
 }
-.fit-modpic.dropped { outline: 2px solid var(--accent); }
-.fit-modpic.destroyed { outline: 2px solid var(--danger); }
-.fit-modpic.partial { outline: 2px solid var(--warn); }
+.fit-modpic {
+    width: 32px;
+    height: 32px;
+    border-radius: 3px;
+    z-index: 2;
+}
+.fit-modpic.dropped { outline: 2px solid var(--accent); outline-offset: -2px; }
+.fit-modpic.destroyed { outline: 2px solid var(--danger); outline-offset: -2px; }
+.fit-modpic.partial { outline: 2px solid var(--warn); outline-offset: -2px; }
 .fit-drones {
     position: absolute;
     z-index: 3;
@@ -437,7 +443,7 @@ img[width][height] { max-width: none; object-fit: contain; }
     align-items: center;
     gap: 4px;
     left: 50%;
-    bottom: 2px;
+    bottom: 4px;
     transform: translateX(-50%);
 }
 .fit-arc-tag {

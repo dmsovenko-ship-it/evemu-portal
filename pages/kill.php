@@ -276,20 +276,20 @@ ob_start();
     $sbCells = $cellMap('Subsystem', $hS);
     // drones (Drone Bay) shown as a small badge group below-left
     $droneItems = $slots['Drone Bay'] ?? [];
-    // ── Fixed EDAN-style fitting map (canvas 358x360, slot positions in px) ──
-    // Universal slot layout: prefix = slot type, index = position along arc.
-    //   0_* High (8) — arc over the top     4_* Low (8) — arc along the bottom
-    //   2_* Mid  (8) — arc down the right   5_* Rig (3) — upper-left
-    //   8_* Sub  (5) — lower-left           d   = drone bay strip
-    $EDAN = [
-        'High' => [[77,43],[100,30],[123,21],[149,17],[173,17],[199,21],[223,30],[245,43]],
-        'Mid'  => [[280,80],[293,103],[302,127],[306,152],[306,175],[302,200],[293,225],[280,246]],
-        'Low'  => [[77,283],[99,296],[123,304],[148,308],[173,308],[199,304],[222,296],[244,283]],
-        'Rig'  => [[22,122],[32,97],[47,74]],
-        'Sub'  => [[46,253],[31,232],[21,207],[16,181],[15,155]],
+    // ── Modern zkillboard fitting panel (canvas 398x398, slot px coords) ──
+    // Ship render 256px centered (left:72 top:71). Slot cells 32px laid around
+    // it: High arc over the top, Low arc along the bottom, Mid down the left
+    // flank, Rig at the lower middle, Subsystem up the left-centre. Empty slots
+    // are just faint boxes. Coordinates taken from zkillboard's Fitting_Panel.
+    $SLOTS = [
+        'High' => [[73,60],[102,42],[134,27],[169,21],[203,22],[238,30],[270,45],[295,64]],
+        'Mid'  => [[26,140],[24,176],[23,212],[30,245],[46,278],[69,304],[100,328],[133,342]],
+        'Low'  => [[344,143],[350,178],[349,213],[340,246],[323,277],[300,304],[268,324],[234,338]],
+        'Rig'  => [[148,259],[185,267],[221,259]],
+        'Sub'  => [[117,131],[147,108],[184,98],[221,107],[250,131]],
     ];
-    // canvas fixed 358 wide / 360 tall — same as EDAN reference
-    $CW = 358; $CH = 360;
+    // canvas fixed 398x398
+    $CW = 398; $CH = 398;
     $fitCells = [];   // ordered list of [slotGroup, index, item|null]
     foreach (['High','Mid','Low'] as $g) {
         $cnt = ($g=='High')?$hH:(($g=='Mid')?$hM:$hL);
@@ -301,19 +301,14 @@ ob_start();
     }
     ?>
     <div class="fit-window">
-        <!-- EDAN universal silhouette behind everything -->
-        <img class="fit-bg" src="/img/fitmap/fit_dummy2.png" alt="">
+        <!-- ship render behind the slots -->
+        <div class="fit-shipbox"><img src="<?= ship_icon($k['victimshiptypeid'], 256) ?>" alt="<?= e($k['victimshipname']) ?>" onerror="this.style.display='none'"></div>
 
         <?php foreach ($fitCells as [$g, $idx, $item]):
-            $pos = $EDAN[$g][$idx] ?? null; if (!$pos) continue;   // [left, top] px of the slot picture
-            $slotGif = '';
-            if ($g == 'High') $slotGif = "/img/fitmap/slot_1_{$idx}_0.gif";
-            elseif ($g == 'Mid') $slotGif = "/img/fitmap/slot_2_{$idx}_0.gif";
-            elseif ($g == 'Low') $slotGif = "/img/fitmap/slot_3_{$idx}_0.gif";
+            $pos = $SLOTS[$g][$idx] ?? null; if (!$pos) continue;   // [left, top] px
             $l = $pos[0]; $t = $pos[1];
             ?>
             <div class="fit-pcell" style="left:<?= $l ?>px;top:<?= $t ?>px">
-                <?php if ($slotGif): ?><img class="fit-slotpic" src="<?= $slotGif ?>" alt=""><?php endif; ?>
                 <?php if ($item): ?>
                     <?php
                     $nm = $itemNames[$item['t']] ?? 'Unknown';
