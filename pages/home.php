@@ -1,219 +1,212 @@
 <?php
 require_once __DIR__ . '/../layout.php';
 
-$top7d = api_get('/server/TopKills.xml.aspx?period=7d');
-$top24h = api_get('/server/TopKills.xml.aspx?period=24h');
-$allKills = api_get('/char/AllKills.xml.aspx');
 $serverStatus = api_get('/server/ServerStatus.xml.aspx');
+$valuables = api_get('/server/TopValuables.xml.aspx?period=7d&limit=30');
+$activity = api_get('/server/Activity.xml.aspx?period=7d');
+$allKills = api_get('/char/AllKills.xml.aspx');
 
-$top7dKills = [];
-if ($top7d && $top7d->result && $top7d->result->kills)
-    foreach ($top7d->result->kills->row as $r) $top7dKills[] = $r;
-
-$top24hKills = [];
-if ($top24h && $top24h->result && $top24h->result->kills)
-    foreach ($top24h->result->kills->row as $r) $top24hKills[] = $r;
-
-$recentKills = [];
-if ($allKills && $allKills->result && $allKills->result->kills)
-    foreach ($allKills->result->kills->row as $r) $recentKills[] = $r;
-
-$onlinePlayers = 0;
-$totalAccounts = 0;
-$totalCharacters = 0;
+$onlinePlayers = 0; $totalAccounts = 0; $totalCharacters = 0;
 if ($serverStatus && $serverStatus->result) {
     $onlinePlayers = (int)($serverStatus->result->onlineplayers ?? 0);
     $totalAccounts = (int)($serverStatus->result->accountcount ?? 0);
     $totalCharacters = (int)($serverStatus->result->charactercount ?? 0);
 }
 
+// bucket TopValuables rows by ship / structure / sponsored
+$killsAll = [];
+if ($valuables && $valuables->result && $valuables->result->kills)
+    foreach ($valuables->result->kills->row as $r) $killsAll[] = $r;
+$shipCards = []; $structCards = []; $sponsoredCards = [];
+$used = [];
+foreach ($killsAll as $i => $rk) {
+    $cat = (int)$rk['categoryid'];
+    if ($cat === 6 && count($shipCards) < 6)      { $shipCards[] = $rk; $used[] = $i; }
+    elseif ($cat !== 6 && count($structCards) < 6){ $structCards[] = $rk; $used[] = $i; }
+}
+foreach ($killsAll as $i => $rk) {
+    if (in_array($i, $used, true)) continue;
+    if (count($sponsoredCards) < 6) { $sponsoredCards[] = $rk; $used[] = $i; }
+}
+
+$recentKills = [];
+if ($allKills && $allKills->result && $allKills->result->kills)
+    foreach ($allKills->result->kills->row as $r) $recentKills[] = $r;
+
+// activity sidebar
+$act = null;
+if ($activity && $activity->result) $act = $activity->result;
+function act_rows($act, $tag) {
+    $out = [];
+    if ($act && !empty($act->$tag)) foreach ($act->$tag->row as $r) $out[] = $r;
+    return $out;
+}
+
 ob_start();
 ?>
+<style>
+.home-zk { display:grid; grid-template-columns:1fr 300px; gap:20px; align-items:start; }
+.zk-main { min-width:0; }
+.zk-rail { display:flex; flex-direction:column; gap:14px; }
+
+.kill-card-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:20px; }
+.zk-section-title { font-size:16px; font-weight:700; color:var(--text-bright); margin:4px 0 10px; border-bottom:1px solid var(--border); padding-bottom:6px; }
+.zk-section-title .view-all { float:right; font-size:12px; font-weight:400; color:var(--accent2); text-decoration:none; }
+.zk-section-title .view-all:hover { text-decoration:underline; }
+.big-kill { display:flex; flex-direction:column; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; overflow:hidden; cursor:pointer; transition:border-color .12s, transform .12s; }
+.big-kill:hover { border-color:var(--accent2); transform:translateY(-2px); }
+.big-kill .bk-name { padding:7px 8px 2px; color:var(--text-bright); font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.big-kill .bk-img { display:flex; justify-content:center; align-items:center; height:110px; background:#0d1117; }
+.big-kill .bk-img img { max-width:104px; max-height:104px; }
+.big-kill .bk-sys { padding:0 8px; font-size:10px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.big-kill .bk-val { padding:5px 8px 8px; color:var(--gold); font-size:13px; font-weight:700; }
+
+/* rail */
+.zk-card { background:var(--bg-card); border:1px solid var(--border); border-radius:6px; padding:12px; }
+.zk-card h3 { font-size:13px; color:var(--text-bright); margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:6px; }
+.zk-stat { display:flex; justify-content:space-between; padding:2px 0; font-size:12px; }
+.zk-stat .l { color:var(--text-dim); } .zk-stat .v { color:var(--text-bright); font-weight:600; }
+.zk-top { display:flex; align-items:center; gap:6px; padding:3px 0; font-size:12px; }
+.zk-top .rk { color:var(--text-dim); width:16px; text-align:right; }
+.zk-top .nm { flex:1; color:var(--accent2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.zk-top .ct { color:var(--text); font-weight:600; }
+.zk-top a.nm:hover { text-decoration:underline; }
+@media (max-width:1100px){ .kill-card-grid{grid-template-columns:repeat(2,1fr);} }
+@media (max-width:800px){ .home-zk{grid-template-columns:1fr;} .kill-card-grid{grid-template-columns:repeat(2,1fr);} }
+</style>
 
 <div class="stat-cards">
-    <div class="stat-card">
-        <div class="stat-num" style="color:<?= $onlinePlayers > 0 ? 'var(--accent)' : 'var(--danger)' ?>"><?= number_format($onlinePlayers) ?></div>
-        <div class="stat-label">Online Now</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-num"><?= number_format($totalAccounts) ?></div>
-        <div class="stat-label">Accounts</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-num"><?= number_format($totalCharacters) ?></div>
-        <div class="stat-label">Characters</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-num" style="color:var(--warn)"><?= number_format(count($recentKills)) ?></div>
-        <div class="stat-label">Total Kills</div>
-    </div>
+    <div class="stat-card"><div class="stat-num" style="color:<?= $onlinePlayers>0?'var(--accent)':'var(--danger)' ?>"><?= number_format($onlinePlayers) ?></div><div class="stat-label">Online Now</div></div>
+    <div class="stat-card"><div class="stat-num"><?= number_format($totalAccounts) ?></div><div class="stat-label">Accounts</div></div>
+    <div class="stat-card"><div class="stat-num"><?= number_format($totalCharacters) ?></div><div class="stat-label">Characters</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--warn)"><?= number_format(count($recentKills)) ?></div><div class="stat-label">Total Kills</div></div>
 </div>
 
-<div class="home-layout">
-    <div class="home-main">
-
-        <?php if (!empty($top7dKills)): ?>
-        <div class="top-kills-card">
-            <div class="top-kills-header">
-                <h3>Most Valuable Kills &mdash; Last 7 Days</h3>
-                <a href="/kills?period=7d" class="section-link">View All &rarr;</a>
-            </div>
-            <table class="kill-table">
-                <thead>
-                    <tr>
-                        <th class="k-icon"></th>
-                        <th class="k-system">System</th>
-                        <th class="k-victim">Victim</th>
-                        <th class="k-ship">Ship</th>
-                        <th class="k-value">Damage</th>
-                        <th class="k-icon"></th>
-                        <th class="k-killer">Final Blow</th>
-                        <th class="k-ship">Ship</th>
-                        <th class="k-time">When</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php foreach (array_slice($top7dKills, 0, 10) as $k):
-                    $ts = filetime_to_unix((string)$k['killtime']);
-                    $sec = (float)$k['finalsecuritystatus'];
-                    $dmg = (int)$k['victimdamagetaken'];
-                ?>
-                <tr class="kill-row" onclick="location.href='/kill/<?= $k['killid'] ?>'">
-                    <td class="k-icon"><img src="<?= ship_icon($k['victimshiptypeid'], 32) ?>" width="32" height="32" loading="lazy" onerror="this.style.display='none'"></td>
-                    <td class="k-system"><a href="/system/<?= $k['solarsystemid'] ?? '' ?>" onclick="event.stopPropagation()"><span class="sec" style="color:<?= security_color($sec) ?>"><?= number_format($sec, 1) ?></span> <?= e($k['solarsystemname']) ?></a></td>
-                    <td class="k-victim"><a href="/character/<?= $k['victimcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['victimname']) ?></a></td>
-                    <td class="k-ship"><?= e($k['victimshipname']) ?></td>
-                    <td class="k-value"><?= number_format($dmg) ?></td>
-                    <td class="k-icon"><img src="<?= ship_icon($k['finalshiptypeid'], 32) ?>" width="32" height="32" loading="lazy" onerror="this.style.display='none'"></td>
-                    <td class="k-killer"><a href="/character/<?= $k['finalcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['finalname']) ?></a></td>
-                    <td class="k-ship"><?= e($k['finalshipname']) ?></td>
-                    <td class="k-time" title="<?= date('Y-m-d H:i:s', $ts) ?>"><?= time_ago($ts) ?></td>
-                </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
+<div class="home-zk">
+  <div class="zk-main">
+    <div class="zk-section-title">Most Valuable Ships <a class="view-all" href="/kills?period=7d">View All &rarr;</a></div>
+    <div class="kill-card-grid">
+    <?php foreach ($shipCards as $rk): ?>
+        <div class="big-kill" onclick="location.href='/kill/<?= $rk['killid'] ?>'">
+            <div class="bk-name"><?= e($rk['victimname'] ?: 'Unknown') ?></div>
+            <div class="bk-img"><img src="<?= ship_icon($rk['victimshiptypeid'], 128) ?>" loading="lazy" onerror="this.style.display='none'"></div>
+            <div class="bk-sys"><?= e($rk['victimshipname']) ?> &middot; <?= e($rk['solarsystemname']) ?></div>
+            <div class="bk-val"><?= isk_compact((string)$rk['value']) ?> ISK</div>
         </div>
-        <?php endif; ?>
-
-        <?php if (!empty($top24hKills)): ?>
-        <div class="top-kills-card">
-            <div class="top-kills-header">
-                <h3>Most Valuable Kills &mdash; 24 Hours</h3>
-                <a href="/kills?period=24h" class="section-link">View All &rarr;</a>
-            </div>
-            <table class="kill-table">
-                <thead>
-                    <tr>
-                        <th class="k-icon"></th>
-                        <th class="k-system">System</th>
-                        <th class="k-victim">Victim</th>
-                        <th class="k-ship">Ship</th>
-                        <th class="k-value">Damage</th>
-                        <th class="k-icon"></th>
-                        <th class="k-killer">Final Blow</th>
-                        <th class="k-ship">Ship</th>
-                        <th class="k-time">When</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php foreach (array_slice($top24hKills, 0, 10) as $k):
-                    $ts = filetime_to_unix((string)$k['killtime']);
-                    $sec = (float)$k['finalsecuritystatus'];
-                    $dmg = (int)$k['victimdamagetaken'];
-                ?>
-                <tr class="kill-row" onclick="location.href='/kill/<?= $k['killid'] ?>'">
-                    <td class="k-icon"><img src="<?= ship_icon($k['victimshiptypeid'], 32) ?>" width="32" height="32" loading="lazy" onerror="this.style.display='none'"></td>
-                    <td class="k-system"><a href="/system/<?= $k['solarsystemid'] ?? '' ?>" onclick="event.stopPropagation()"><span class="sec" style="color:<?= security_color($sec) ?>"><?= number_format($sec, 1) ?></span> <?= e($k['solarsystemname']) ?></a></td>
-                    <td class="k-victim"><a href="/character/<?= $k['victimcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['victimname']) ?></a></td>
-                    <td class="k-ship"><?= e($k['victimshipname']) ?></td>
-                    <td class="k-value"><?= number_format($dmg) ?></td>
-                    <td class="k-icon"><img src="<?= ship_icon($k['finalshiptypeid'], 32) ?>" width="32" height="32" loading="lazy" onerror="this.style.display='none'"></td>
-                    <td class="k-killer"><a href="/character/<?= $k['finalcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['finalname']) ?></a></td>
-                    <td class="k-ship"><?= e($k['finalshipname']) ?></td>
-                    <td class="k-time" title="<?= date('Y-m-d H:i:s', $ts) ?>"><?= time_ago($ts) ?></td>
-                </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-        <?php endif; ?>
-
-        <div class="top-kills-card">
-            <div class="top-kills-header">
-                <h3>Recent Kills</h3>
-                <a href="/kills" class="section-link">View All &rarr;</a>
-            </div>
-            <table class="kill-table">
-                <thead>
-                    <tr>
-                        <th class="k-icon"></th>
-                        <th class="k-system">System</th>
-                        <th class="k-victim">Victim</th>
-                        <th class="k-ship">Ship</th>
-                        <th class="k-value">Damage</th>
-                        <th class="k-icon"></th>
-                        <th class="k-killer">Final Blow</th>
-                        <th class="k-ship">Ship</th>
-                        <th class="k-time">When</th>
-                    </tr>
-                </thead>
-                <tbody>
-                <?php foreach (array_slice($recentKills, 0, 20) as $k):
-                    $ts = filetime_to_unix((string)$k['killtime']);
-                    $sec = (float)$k['finalsecuritystatus'];
-                    $dmg = (int)$k['victimdamagetaken'];
-                ?>
-                <tr class="kill-row" onclick="location.href='/kill/<?= $k['killid'] ?>'">
-                    <td class="k-icon"><img src="<?= ship_icon($k['victimshiptypeid'], 32) ?>" width="32" height="32" loading="lazy" onerror="this.style.display='none'"></td>
-                    <td class="k-system"><a href="/system/<?= $k['solarsystemid'] ?? '' ?>" onclick="event.stopPropagation()"><span class="sec" style="color:<?= security_color($sec) ?>"><?= number_format($sec, 1) ?></span> <?= e($k['solarsystemname']) ?></a></td>
-                    <td class="k-victim"><a href="/character/<?= $k['victimcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['victimname']) ?></a></td>
-                    <td class="k-ship"><?= e($k['victimshipname']) ?></td>
-                    <td class="k-value"><?= number_format($dmg) ?></td>
-                    <td class="k-icon"><img src="<?= ship_icon($k['finalshiptypeid'], 32) ?>" width="32" height="32" loading="lazy" onerror="this.style.display='none'"></td>
-                    <td class="k-killer"><a href="/character/<?= $k['finalcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['finalname']) ?></a></td>
-                    <td class="k-ship"><?= e($k['finalshipname']) ?></td>
-                    <td class="k-time" title="<?= date('Y-m-d H:i:s', $ts) ?>"><?= time_ago($ts) ?></td>
-                </tr>
-                <?php endforeach; ?>
-                <?php if (empty($recentKills)): ?>
-                    <tr><td colspan="9" class="empty">No kills recorded yet</td></tr>
-                <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
-
+    <?php endforeach; ?>
+    <?php if (!$shipCards): ?><div style="color:var(--text-dim);grid-column:1/-1">No ship kills in this period</div><?php endif; ?>
     </div>
 
-    <div class="home-sidebar">
-        <div class="sidebar-card">
-            <h3>Quick Links</h3>
-            <div class="sidebar-links">
-                <a href="/kills">All Kills</a>
-                <a href="/kills?period=24h">Kills (24h)</a>
-                <a href="/kills?period=7d">Kills (7 Days)</a>
-                <a href="/kills?period=30d">Kills (30 Days)</a>
-                <a href="/players">Players</a>
-                <a href="/systems">Active Systems</a>
-            </div>
+    <div class="zk-section-title">Most Valuable Structures <a class="view-all" href="/kills?period=7d">View All &rarr;</a></div>
+    <div class="kill-card-grid">
+    <?php foreach ($structCards as $rk): ?>
+        <div class="big-kill" onclick="location.href='/kill/<?= $rk['killid'] ?>'">
+            <div class="bk-name"><?= e($rk['victimname'] ?: $rk['victimshipname']) ?></div>
+            <div class="bk-img"><img src="<?= ship_icon($rk['victimshiptypeid'], 128) ?>" loading="lazy" onerror="this.style.display='none'"></div>
+            <div class="bk-sys"><?= e($rk['victimshipname']) ?> &middot; <?= e($rk['solarsystemname']) ?></div>
+            <div class="bk-val"><?= isk_compact((string)$rk['value']) ?> ISK</div>
         </div>
-        <div class="sidebar-card">
-            <h3>Server Stats</h3>
-            <div class="sidebar-stats">
-                <div class="sidebar-stat">
-                    <span class="sidebar-stat-label">Online</span>
-                    <span class="sidebar-stat-value" style="color:<?= $onlinePlayers > 0 ? 'var(--accent)' : 'var(--danger)' ?>"><?= number_format($onlinePlayers) ?></span>
-                </div>
-                <div class="sidebar-stat">
-                    <span class="sidebar-stat-label">Accounts</span>
-                    <span class="sidebar-stat-value"><?= number_format($totalAccounts) ?></span>
-                </div>
-                <div class="sidebar-stat">
-                    <span class="sidebar-stat-label">Characters</span>
-                    <span class="sidebar-stat-value"><?= number_format($totalCharacters) ?></span>
-                </div>
-            </div>
-        </div>
+    <?php endforeach; ?>
+    <?php if (!$structCards): ?><div style="color:var(--text-dim);grid-column:1/-1">No structure kills in this period</div><?php endif; ?>
     </div>
+
+    <div class="zk-section-title">Sponsored Killmails <a class="view-all" href="/kills?period=7d">View All &rarr;</a></div>
+    <div class="kill-card-grid">
+    <?php foreach ($sponsoredCards as $rk): ?>
+        <div class="big-kill" onclick="location.href='/kill/<?= $rk['killid'] ?>'">
+            <div class="bk-name"><?= e($rk['victimname'] ?: 'Unknown') ?></div>
+            <div class="bk-img"><img src="<?= ship_icon($rk['victimshiptypeid'], 128) ?>" loading="lazy" onerror="this.style.display='none'"></div>
+            <div class="bk-sys"><?= e($rk['victimshipname']) ?> &middot; <?= e($rk['solarsystemname']) ?></div>
+            <div class="bk-val"><?= isk_compact((string)$rk['value']) ?> ISK</div>
+        </div>
+    <?php endforeach; ?>
+    <?php if (!$sponsoredCards): ?><div style="color:var(--text-dim);grid-column:1/-1">No sponsored killmails in this period</div><?php endif; ?>
+    </div>
+
+    <div class="zk-section-title">Recent Kills <a class="view-all" href="/kills">View All &rarr;</a></div>
+    <table class="kill-table" style="font-size:13px">
+        <thead><tr><th></th><th>System</th><th>Victim</th><th>Ship</th><th>Damage</th><th></th><th>Final Blow</th><th>Ship</th><th>When</th></tr></thead>
+        <tbody>
+        <?php foreach (array_slice($recentKills, 0, 20) as $k):
+            $rts = filetime_to_unix((string)$k['killtime']);
+            $rsec = (float)$k['finalsecuritystatus']; ?>
+        <tr class="kill-row" onclick="location.href='/kill/<?= $k['killid'] ?>'">
+            <td class="k-icon"><img src="<?= ship_icon($k['victimshiptypeid'], 32) ?>" width="32" height="32" loading="lazy" onerror="this.style.display='none'"></td>
+            <td class="k-system"><span class="sec" style="color:<?= security_color($rsec) ?>"><?= number_format($rsec,1) ?></span> <?= e($k['solarsystemname']) ?></td>
+            <td class="k-victim"><a href="/character/<?= $k['victimcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['victimname']) ?></a></td>
+            <td class="k-ship"><?= e($k['victimshipname']) ?></td>
+            <td class="k-value"><?= number_format((int)$k['victimdamagetaken']) ?></td>
+            <td class="k-icon"><img src="<?= ship_icon($k['finalshiptypeid'], 32) ?>" width="32" height="32" loading="lazy" onerror="this.style.display='none'"></td>
+            <td class="k-killer"><a href="/character/<?= $k['finalcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['finalname']) ?></a></td>
+            <td class="k-ship"><?= e($k['finalshipname']) ?></td>
+            <td class="k-time" title="<?= date('Y-m-d H:i:s', $rts) ?>"><?= time_ago($rts) ?></td>
+        </tr>
+        <?php endforeach; ?>
+        <?php if (!$recentKills): ?><tr><td colspan="9" class="empty">No kills recorded yet</td></tr><?php endif; ?>
+        </tbody>
+    </table>
+  </div>
+
+  <div class="zk-rail">
+    <?php $s = $act && !empty($act->summary) ? $act->summary : null; ?>
+    <?php if ($s): ?>
+    <div class="zk-card">
+        <h3>Current Activity <span style="color:var(--text-dim);font-weight:400;font-size:11px">(Last 7 days)</span></h3>
+        <div class="zk-stat"><span class="l">Total Kills</span><span class="v"><?= number_format((int)$s['total']) ?></span></div>
+        <div class="zk-stat"><span class="l">Characters</span><span class="v"><?= number_format((int)$s['characters']) ?></span></div>
+        <div class="zk-stat"><span class="l">Corporations</span><span class="v"><?= number_format((int)$s['corporations']) ?></span></div>
+        <div class="zk-stat"><span class="l">Alliances</span><span class="v"><?= number_format((int)$s['alliances']) ?></span></div>
+        <div class="zk-stat"><span class="l">Ships</span><span class="v"><?= number_format((int)$s['ships']) ?></span></div>
+        <div class="zk-stat"><span class="l">Systems</span><span class="v"><?= number_format((int)$s['systems']) ?></span></div>
+        <div class="zk-stat"><span class="l">Regions</span><span class="v"><?= number_format((int)$s['regions']) ?></span></div>
+    </div>
+    <?php endif; ?>
+
+    <?php $rows = act_rows($act, 'characters'); if ($rows): ?>
+    <div class="zk-card"><h3>Top Characters</h3>
+    <?php foreach ($rows as $i => $r): ?>
+        <div class="zk-top"><span class="rk"><?= $i+1 ?></span>
+            <a class="nm" href="/character/<?= $r['id'] ?>"><?= e($r['name'] ?: 'Unknown') ?></a>
+            <span class="ct"><?= number_format((int)$r['count']) ?></span></div>
+    <?php endforeach; ?></div>
+    <?php endif; ?>
+
+    <?php $rows = act_rows($act, 'corporations'); if ($rows): ?>
+    <div class="zk-card"><h3>Top Corporations</h3>
+    <?php foreach ($rows as $i => $r): ?>
+        <div class="zk-top"><span class="rk"><?= $i+1 ?></span>
+            <a class="nm" href="/corporation/<?= $r['id'] ?>"><?= e($r['name'] ?: 'Unknown') ?></a>
+            <span class="ct"><?= number_format((int)$r['count']) ?></span></div>
+    <?php endforeach; ?></div>
+    <?php endif; ?>
+
+    <?php $rows = act_rows($act, 'alliances'); if ($rows): ?>
+    <div class="zk-card"><h3>Top Alliances</h3>
+    <?php foreach ($rows as $i => $r): ?>
+        <div class="zk-top"><span class="rk"><?= $i+1 ?></span>
+            <span class="nm"><?= e($r['name'] ?: 'Unknown') ?></span>
+            <span class="ct"><?= number_format((int)$r['count']) ?></span></div>
+    <?php endforeach; ?></div>
+    <?php endif; ?>
+
+    <?php $rows = act_rows($act, 'ships'); if ($rows): ?>
+    <div class="zk-card"><h3>Top Ships</h3>
+    <?php foreach ($rows as $i => $r): ?>
+        <div class="zk-top"><span class="rk"><?= $i+1 ?></span>
+            <span class="nm"><?= e($r['name'] ?: 'Unknown') ?></span>
+            <span class="ct"><?= number_format((int)$r['count']) ?></span></div>
+    <?php endforeach; ?></div>
+    <?php endif; ?>
+
+    <?php $rows = act_rows($act, 'systems'); if ($rows): ?>
+    <div class="zk-card"><h3>Top Systems</h3>
+    <?php foreach ($rows as $i => $r): ?>
+        <div class="zk-top"><span class="rk"><?= $i+1 ?></span>
+            <a class="nm" href="/system/<?= $r['id'] ?>"><?= e($r['name'] ?: 'Unknown') ?></a>
+            <span class="ct"><?= number_format((int)$r['count']) ?></span></div>
+    <?php endforeach; ?></div>
+    <?php endif; ?>
+  </div>
 </div>
 
 <?php

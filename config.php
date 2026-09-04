@@ -130,13 +130,22 @@ function time_ago($ts) {
     return floor($diff / 86400) . 'd ago';
 }
 
-function format_isk($val) {
-    $val = (float)$val;
+function format_isk($val) {    $val = (float)$val;
     if ($val >= 1e12) return number_format($val / 1e12, 2) . 'T ISK';
     if ($val >= 1e9) return number_format($val / 1e9, 2) . 'B ISK';
     if ($val >= 1e6) return number_format($val / 1e6, 2) . 'M ISK';
     if ($val >= 1e3) return number_format($val / 1e3, 2) . 'K ISK';
     return number_format($val, 2) . ' ISK';
+}
+
+// Compact EVE-ish money like "57.86b" / "1.05t" (dot decimal, no spaces).
+function isk_compact($val) {
+    $val = (float)$val;
+    if ($val >= 1e12) return rtrim(rtrim(number_format($val / 1e12, 2, '.', ''), '0'), '.') . 't';
+    if ($val >= 1e9)  return rtrim(rtrim(number_format($val / 1e9, 2, '.', ''), '0'), '.') . 'b';
+    if ($val >= 1e6)  return rtrim(rtrim(number_format($val / 1e6, 2, '.', ''), '0'), '.') . 'm';
+    if ($val >= 1e3)  return rtrim(rtrim(number_format($val / 1e3, 2, '.', ''), '0'), '.') . 'k';
+    return number_format($val, 0, '.', '');
 }
 
 function format_isk_full($val) {
