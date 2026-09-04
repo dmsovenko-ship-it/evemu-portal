@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../layout.php';
 
-$xml = api_get('/server/ActiveSystems.xml.aspx');
+$xml = api_get('/server/ActiveSystems.xml.aspx', 15);
 $systems = [];
 if ($xml && $xml->result && $xml->result->systems)
     foreach ($xml->result->systems->row as $r) $systems[] = $r;
