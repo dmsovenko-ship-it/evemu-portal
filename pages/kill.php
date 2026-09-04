@@ -152,6 +152,26 @@ ob_start();
 </div>
 
 <?php if (!empty($slots)): ?>
+<div class="fit-visual">
+    <?php foreach (['High', 'Mid', 'Low', 'Rig'] as $slotType): ?>
+        <?php if (!empty($slots[$slotType])): ?>
+        <div class="fit-slot-row">
+            <div class="fit-slot-label"><?= $slotType ?></div>
+            <div class="fit-slot-icons">
+            <?php foreach ($slots[$slotType] as $si):
+                $item = $si['item'];
+                $name = $itemNames[$item['t']] ?? 'Unknown';
+            ?>
+                <div class="fit-slot <?= $si['status'] ?>" title="<?= e($name) ?>">
+                    <img src="<?= ship_type_icon($item['t'], 32) ?>" width="32" height="32" onerror="this.style.display='none'">
+                </div>
+            <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+    <?php endforeach; ?>
+</div>
+
 <div class="section-title">Items</div>
 <table class="items-table">
     <thead><tr><th></th><th>Item</th><th>Qty</th><th>Status</th></tr></thead>

@@ -380,6 +380,58 @@ img { max-width: 100%; }
     background: transparent;
 }
 
+/* ── Visual fitting display ─────────────────────────────── */
+.fit-visual {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+}
+.fit-slot-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+.fit-slot-label {
+    width: 60px;
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    flex-shrink: 0;
+}
+.fit-slot-icons {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+.fit-slot {
+    width: 36px;
+    height: 36px;
+    border-radius: 3px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+    transition: border-color .1s;
+}
+.fit-slot:hover {
+    border-color: var(--accent2);
+}
+.fit-slot img {
+    width: 32px;
+    height: 32px;
+    border-radius: 2px;
+}
+.fit-slot.destroyed {
+    border-color: var(--danger);
+    opacity: .7;
+}
+.fit-slot.dropped {
+    border-color: var(--accent);
+}
+
 /* ── Items section ─────────────────────────────────────── */
 .section-title {
     font-size: 11px;
