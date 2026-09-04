@@ -98,7 +98,7 @@ function alliance_logo($allianceID, $size = 32) {
 function filetime_to_unix($filetime) {
     $ft = (int)$filetime;
     if ($ft <= 0) return 0;
-    return intval(($ft - 11644473600000000) / 10000000);
+    return intval(($ft - 116444736000000000) / 10000000);
 }
 
 function security_color($sec) {
