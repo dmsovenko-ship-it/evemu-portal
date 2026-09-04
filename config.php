@@ -4,6 +4,7 @@ define('ZKILLBOARD_SHIPS', 'https://images.zkillboard.com/renders');
 define('ZKILLBOARD_TYPES', 'https://images.zkillboard.com/types');
 define('IMAGE_SERVER', 'http://127.0.0.1:26001');
 define('SITE_NAME', 'EVEmu');
+define('PORTAL_VERSION', '1.0.0');
 define('SESSION_LIFETIME', 86400);
 
 session_start();
