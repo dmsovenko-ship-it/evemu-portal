@@ -277,45 +277,60 @@ ob_start();
     // drones (Drone Bay) shown as a small badge group below-left
     $droneItems = $slots['Drone Bay'] ?? [];
     ?>
+    // ── Place cells on the ring around the ship ────────────────────────
+    // a = angle in degrees, 0 = up, 90 = right, 180 = down, 270 = left.
+    // Each group spans its own arc; cells are spread evenly across it.
+    $ring = function($cells, $aStart, $aEnd) {
+        $n = count($cells);
+        $out = [];
+        if ($n < 1) return $out;
+        for ($i = 0; $i < $n; $i++) {
+            $a = ($n == 1) ? ($aStart + $aEnd) / 2 : $aStart + ($aEnd - $aStart) * $i / ($n - 1);
+            $out[] = [$cells[$i], $a];
+        }
+        return $out;
+    };
+    // arcs: High wide over the top, Low wide over the bottom,
+    // Mid on the right, tuning (rigs+subs) on the left.
+    $hiPos = $ring($hiCells, -70, 70);        // top
+    $loPos = $ring($loCells, 110, 250);       // bottom
+    $mdPos = $ring($mdCells, 78, 102);        // right
+    $tuCells = array_merge($rgCells, $sbCells);
+    $tuPos = $ring($tuCells, 258, 282);       // left
+    $renderPos = function($pos, $rPct, $tag = '') use (&$renderCell) {
+        [$cell, $a] = $pos;
+        $rad = deg2rad($a);
+        $x = 50 + $rPct * sin($rad);
+        $y = 50 - $rPct * cos($rad);
+        $html = '<div class="fit-pcell" style="left:' . round($x, 2) . '%;top:' . round($y, 2) . '%">' . $renderCell($cell) . '</div>';
+        return $html;
+    };
+    $ringR = 42; // radius of the slot ring in % of canvas
+    ?>
     <div class="fit-window">
-        <!-- ship -->
         <div class="fit-ship"><img src="<?= ship_icon($k['victimshiptypeid'], 256) ?>" alt="<?= e($k['victimshipname']) ?>" onerror="this.style.display='none'"></div>
         <div class="fit-ship-name"><?= e($k['victimshipname']) ?></div>
 
-        <!-- HIGH: arc along the top -->
-        <?php if ($hH): ?>
-        <div class="fit-arc fit-arc-top">
-            <?php foreach ($hiCells as $cell) echo $renderCell($cell); ?>
-            <span class="fit-arc-tag">HIGH</span>
-        </div>
+        <?php if ($hiPos): ?>
+        <div class="fit-ring-label lab-top">HIGH</div>
+        <?php foreach ($hiPos as $p) echo $renderPos($p, $ringR); ?>
         <?php endif; ?>
 
-        <!-- LOW: arc along the bottom -->
-        <?php if ($hL): ?>
-        <div class="fit-arc fit-arc-bottom">
-            <span class="fit-arc-tag">LOW</span>
-            <?php foreach ($loCells as $cell) echo $renderCell($cell); ?>
-        </div>
+        <?php if ($loPos): ?>
+        <div class="fit-ring-label lab-bottom">LOW</div>
+        <?php foreach ($loPos as $p) echo $renderPos($p, $ringR); ?>
         <?php endif; ?>
 
-        <!-- MID: right column -->
-        <?php if ($hM): ?>
-        <div class="fit-col fit-col-right">
-            <span class="fit-arc-tag">MID</span>
-            <?php foreach ($mdCells as $cell) echo $renderCell($cell); ?>
-        </div>
+        <?php if ($mdPos): ?>
+        <div class="fit-ring-label lab-right">MID</div>
+        <?php foreach ($mdPos as $p) echo $renderPos($p, $ringR); ?>
         <?php endif; ?>
 
-        <!-- RIG/SUB (tuning): left column -->
-        <?php if ($hR || $hS): ?>
-        <div class="fit-col fit-col-left">
-            <span class="fit-arc-tag">TUNING</span>
-            <?php foreach ($rgCells as $cell) echo $renderCell($cell); ?>
-            <?php foreach ($sbCells as $cell) echo $renderCell($cell); ?>
-        </div>
+        <?php if ($tuPos): ?>
+        <div class="fit-ring-label lab-left">TUNING</div>
+        <?php foreach ($tuPos as $p) echo $renderPos($p, $ringR); ?>
         <?php endif; ?>
 
-        <!-- drones -->
         <?php if ($droneItems): ?>
         <div class="fit-drones">
             <span class="fit-arc-tag">DRONES</span>

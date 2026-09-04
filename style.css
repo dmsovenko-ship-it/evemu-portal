@@ -367,17 +367,18 @@ img { max-width: 100%; }
 .stat-value.isk { color: var(--gold); }
 
 /* ── Classic EVE fitting-window schematic ────────────────
-   Square dark canvas; destroyed hull large in the middle (nose up).
-   Slot cells arranged around it exactly like the in-game fitting window:
-   High cells arc along the top, Low cells along the bottom, Mid cells run
-   down the right side, rigs/subs run down the left. One cell per hull slot
-   (empty cells included). Dropped=green, destroyed=red, partial=amber.   */
+   Square canvas; destroyed hull large in the middle (nose up). Slot cells
+   sit on a ring around the hull the way the fitting window arranges them:
+   High cells arc over the top, Low over the bottom, Mid on the right,
+   rigs/subs (tuning) on the left. One cell per hull slot (empty dashed cells
+   included). Dropped=green, destroyed=red, partial=amber.                 */
 .fit-window {
     position: relative;
     width: 100%;
+    aspect-ratio: 1 / 1;
     max-width: 560px;
+    max-height: 560px;
     margin: 0 auto;
-    height: 520px;
     border: 1px solid var(--border);
     border-radius: 6px;
     background: radial-gradient(ellipse at center, #0f1722 0%, #080c12 78%);
@@ -394,8 +395,8 @@ img { max-width: 100%; }
     pointer-events: none;
 }
 .fit-ship img {
-    max-width: 54%;
-    max-height: 60%;
+    max-width: 46%;
+    max-height: 50%;
     object-fit: contain;
     opacity: .95;
     filter: drop-shadow(0 0 26px rgba(0,0,0,.95));
@@ -405,77 +406,27 @@ img { max-width: 100%; }
     left: 0;
     right: 0;
     top: 50%;
-    margin-top: 96px;
+    margin-top: 8px;
     text-align: center;
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 11px;
     color: var(--text-dim);
     z-index: 1;
     text-shadow: 0 1px 3px #000;
     pointer-events: none;
 }
-/* slot groups */
-.fit-arc {
+/* absolutely placed cell wrapper: its center sits at left/top */
+.fit-pcell {
     position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    z-index: 2;
-    padding: 4px 10px;
-}
-.fit-arc-tag {
-    font-size: 9px;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    background: rgba(10,14,20,.72);
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    padding: 2px 6px;
-    white-space: nowrap;
-}
-.fit-arc-top {
-    top: 10px;
-    left: 8%;
-    right: 8%;
-    /* gentle upward arc illusion: first/last rows pulled inward handled by wrap */
-    flex-wrap: wrap;
-}
-.fit-arc-bottom {
-    bottom: 10px;
-    left: 8%;
-    right: 8%;
-    flex-wrap: wrap;
-}
-.fit-col {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    z-index: 2;
-    padding: 4px;
-}
-.fit-col-right { right: 8px; }
-.fit-col-left  { left: 8px; }
-.fit-drones {
-    position: absolute;
-    left: 8px;
-    bottom: 8px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
+    width: 34px;
+    height: 34px;
+    transform: translate(-50%, -50%);
     z-index: 2;
 }
-/* one slot cell */
 .fit-cell {
     width: 34px;
     height: 34px;
     border-radius: 3px;
-    background: rgba(13,17,23,.88);
+    background: rgba(13,17,23,.9);
     border: 2px solid var(--border);
     display: flex;
     align-items: center;
@@ -489,11 +440,51 @@ img { max-width: 100%; }
     border-color: #2a3344;
     background: rgba(13,17,23,.35);
 }
-.fit-cell:hover { border-color: var(--accent2); transform: scale(1.08); z-index: 5; }
+.fit-cell:hover { border-color: var(--accent2); transform: scale(1.1); z-index: 5; }
 .fit-cell img { width: 28px; height: 28px; border-radius: 2px; }
 .fit-cell.destroyed { border-color: var(--danger); }
 .fit-cell.dropped   { border-color: var(--accent); }
 .fit-cell.partial   { border-color: var(--warn); }
+/* group labels pinned on the ring */
+.fit-ring-label {
+    position: absolute;
+    z-index: 3;
+    font-size: 9px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    background: rgba(10,14,20,.72);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 6px;
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+}
+.lab-top    { top: 1%; left: 50%; }
+.lab-bottom { top: 99%; left: 50%; }
+.lab-right  { top: 50%; left: 99%; }
+.lab-left   { top: 50%; left: 1%; }
+.fit-drones {
+    position: absolute;
+    left: 50%;
+    bottom: 1%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 3;
+}
+.fit-arc-tag {
+    font-size: 9px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    background: rgba(10,14,20,.72);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 2px 5px;
+    white-space: nowrap;
+}
 
 .fit-caption {
     padding: 6px 16px;
