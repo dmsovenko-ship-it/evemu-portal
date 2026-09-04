@@ -154,16 +154,16 @@ function format_isk_full($val) {
 
 function get_slot_name($flag) {
     $flag = (int)$flag;
-    if ($flag >= 6 && $flag <= 13) return 'High';
+    // EVE item flags (EVE_Flags.h): Low 11-18, Mid 19-26, High 27-34, Rig 92-94/155,
+    // SubSystem 125-133, Cargo 5, Drone Bay 87/89.
+    if ($flag >= 11 && $flag <= 18) return 'Low';
     if ($flag >= 19 && $flag <= 26) return 'Mid';
-    if ($flag >= 27 && $flag <= 34) return 'Low';
+    if ($flag >= 27 && $flag <= 34) return 'High';
     if ($flag >= 92 && $flag <= 94) return 'Rig';
-    if ($flag >= 133 && $flag <= 135) return 'Subsystem';
-    if ($flag === 87) return 'Rig';
-    if ($flag === 5) return 'Cargo';
-    if ($flag === 8) return 'Cargo';
-    if ($flag === 1 || $flag === 89) return 'Drone Bay';
-    if ($flag === 0) return 'Cargo';
+    if ($flag === 155) return 'Rig';
+    if ($flag >= 125 && $flag <= 133) return 'Subsystem';
+    if ($flag === 87 || $flag === 89) return 'Drone Bay';
+    if ($flag === 5 || $flag === 0 || $flag === 8) return 'Cargo';
     return 'Other';
 }
 
