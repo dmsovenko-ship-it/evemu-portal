@@ -288,11 +288,10 @@ ob_start();
         'Rig'  => [[22,122],[32,97],[47,74]],
         'Sub'  => [[46,253],[31,232],[21,207],[16,181],[15,155]],
     ];
-    // canvas 358 wide / 360 tall; also used for aspect ratio
+    // canvas fixed 358 wide / 360 tall — same as EDAN reference
     $CW = 358; $CH = 360;
     $fitCells = [];   // ordered list of [slotGroup, index, item|null]
     foreach (['High','Mid','Low'] as $g) {
-        $n = max((int)$hH, (int)$hM, (int)$hL, 0);
         $cnt = ($g=='High')?$hH:(($g=='Mid')?$hM:$hL);
         for ($i=0;$i<$cnt;$i++) $fitCells[] = [$g, $i, $cellMap($g, max($cnt,1))[$i] ?? null];
     }
@@ -307,15 +306,13 @@ ob_start();
 
         <?php foreach ($fitCells as [$g, $idx, $item]):
             $pos = $EDAN[$g][$idx] ?? null; if (!$pos) continue;   // [left, top] px of the slot picture
-            // sotzone maps: High -> slot_1_*.gif, Mid -> slot_2_*.gif, Low -> slot_3_*.gif.
-            // rigs/subs have no slot picture (icon only).
             $slotGif = '';
             if ($g == 'High') $slotGif = "/img/fitmap/slot_1_{$idx}_0.gif";
             elseif ($g == 'Mid') $slotGif = "/img/fitmap/slot_2_{$idx}_0.gif";
             elseif ($g == 'Low') $slotGif = "/img/fitmap/slot_3_{$idx}_0.gif";
             $l = $pos[0]; $t = $pos[1];
             ?>
-            <div class="fit-pcell" style="left:<?= round(($l/$CW)*100,2) ?>%;top:<?= round(($t/$CH)*100,2) ?>%">
+            <div class="fit-pcell" style="left:<?= $l ?>px;top:<?= $t ?>px">
                 <?php if ($slotGif): ?><img class="fit-slotpic" src="<?= $slotGif ?>" alt=""><?php endif; ?>
                 <?php if ($item): ?>
                     <?php
