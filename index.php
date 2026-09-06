@@ -24,6 +24,9 @@ switch ($page) {
     case 'kills':
         require __DIR__ . '/pages/kills.php';
         break;
+    case 'battles':
+        require __DIR__ . '/pages/battles.php';
+        break;
     case 'search':
         require __DIR__ . '/pages/search.php';
         break;
@@ -33,6 +36,7 @@ switch ($page) {
         break;
     case 'corporation':
         $id = $sub;
+        if ($parts[2] === 'stats') { require __DIR__ . '/pages/corp_stats.php'; break; }
         require __DIR__ . '/pages/corp_kills.php';
         break;
     case 'system':

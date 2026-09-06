@@ -934,6 +934,8 @@ img[width][height] { max-width: none; object-fit: contain; }
 .badge-admin { background: #3a1a2a; color: #ee4466; }
 .badge-gm { background: #2a2a1a; color: #eecc44; }
 .badge-player { background: #1a2a1a; color: #44cc66; }
+.badge-open { background: #1a2a1a; color: #44cc66; }
+.badge-closed { background: #2a1a1a; color: #cc4444; }
 
 /* ── Admin layout ──────────────────────────────────────── */
 .admin-layout { display: flex; gap: 16px; }
@@ -990,6 +992,85 @@ img[width][height] { max-width: none; object-fit: contain; }
     text-transform: uppercase;
     letter-spacing: .3px;
 }
+
+/* ── Corp profile stats + tabs ─────────────────────────── */
+.corp-stats {
+    display: flex;
+    gap: 6px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+.corp-stats .stat {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 14px;
+    text-align: center;
+    min-width: 86px;
+}
+.corp-stats .stat-num { font-size: 18px; }
+.tabs {
+    display: flex;
+    gap: 4px;
+    margin: 14px 0 10px;
+    border-bottom: 1px solid var(--border);
+}
+.tabs .tab {
+    padding: 7px 16px;
+    color: var(--text-dim);
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+}
+.tabs .tab:hover { color: var(--text-bright); }
+.tabs .tab.active {
+    color: var(--accent2);
+    border-bottom-color: var(--accent2);
+}
+.tab-count {
+    font-size: 11px;
+    opacity: .75;
+    margin-left: 4px;
+}
+
+/* ── Corp stats page ───────────────────────────────────── */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 14px;
+    margin-top: 14px;
+}
+.panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+}
+.panel h3 {
+    font-size: 12px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    margin-bottom: 10px;
+}
+.bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    padding: 2px 0;
+}
+.bar-name { width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+.bar {
+    flex: 1;
+    height: 8px;
+    background: #0d1117;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.bar-fill { height: 100%; background: var(--accent2); border-radius: 4px; }
+.bar-val { width: 36px; text-align: right; color: var(--text-dim); }
 
 /* ── Stat cards (home) ─────────────────────────────────── */
 .stat-cards {

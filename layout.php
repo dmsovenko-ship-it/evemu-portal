@@ -25,6 +25,7 @@ function render_layout($title, $active, $content) {
                 <div class="nav-drop-menu">
                     <a href="/players" class="<?= $active==='players'?'active':'' ?>">Players</a>
                     <a href="/systems" class="<?= $active==='systems'?'active':'' ?>">Systems</a>
+                    <a href="/battles">Battles</a>
                 </div>
             </div>
             <div class="nav-drop <?= in_array($active,['market','haul'],true)?'active':'' ?>">
