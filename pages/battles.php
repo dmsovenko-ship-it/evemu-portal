@@ -43,32 +43,53 @@ usort($battles, function($a, $b) {
     return $tb <=> $ta;
 });
 
-function battle_summary($battle) {
-    $system = (string)$battle[0]['solarsystemname'];
-    $sysID = (string)$battle[0]['solarsystemid'];
-    $sec = (float)$battle[0]['finalsecuritystatus'];
-    $kills = count($battle);
-    $start = filetime_to_unix((int)$battle[0]['killtime']);
-    $end = filetime_to_unix((int)$battle[count($battle)-1]['killtime']);
-    $dmg = 0;
-    foreach ($battle as $k) $dmg += (int)$k['victimdamagetaken'];
-    $victims = [];
-    foreach ($battle as $k) $victims[] = '<a href="/character/' . $k['victimcharacterid'] . '">' . e($k['victimname']) . '</a>';
-    $ships = [];
-    foreach ($battle as $k) $ships[] = '<img src="' . ship_icon($k['victimshiptypeid'],32) . '" width="22" height="22" style="vertical-align:middle" title="' . e($k['victimshipname']) . '" onerror="this.style.display=\'none\'">';
-    $killerNames = [];
-    foreach ($battle as $k) $killerNames[] = e($k['finalname']);
+// Resolve corporation names for both sides (the battle table shows corps, not
+// every pilot name — long player lists overflow the screen).
+$corpIDs = [];
+foreach ($battles as $battle) {
+    foreach ($battle as $k) {
+        $vc = (int)$k['victimcorporationid'];
+        $fc = (int)$k['finalcorporationid'];
+        if ($vc > 0) $corpIDs[$vc] = true;
+        if ($fc > 0) $corpIDs[$fc] = true;
+    }
+}
+$corpNames = [];
+if (!empty($corpIDs)) {
+    $rxml = api_get('/char/Resolve.xml.aspx?ids=' . implode(',', array_keys($corpIDs)));
+    if ($rxml && $rxml->result && $rxml->result->names)
+        foreach ($rxml->result->names->row as $r)
+            $corpNames[(string)$r['id']] = (string)$r['name'];
+}
+
+// corp labels for a battle: unique, resolved, capped so a 27-kill blob doesn't
+// push the table off-screen ("+N" for the rest). Returns [id, name] pairs.
+function corp_list($battle, $attr, $corpNames, $max = 3) {
+    $ids = [];
+    foreach ($battle as $k) {
+        $id = (int)$k[$attr];
+        if ($id > 0) $ids[$id] = true;
+    }
+    $pairs = [];
+    foreach (array_keys($ids) as $id)
+        $pairs[] = [$id, $corpNames[(string)$id] ?? ('#' . $id)];
     return [
-        'sysid' => $sysID, 'system' => $system, 'sec' => $sec,
-        'kills' => $kills, 'start' => $start, 'end' => $end, 'dmg' => $dmg,
-        'victims' => implode(', ', $victims), 'ships' => implode(' ', $ships),
-        'killers' => implode(', ', array_unique($killerNames)),
-        'ids' => array_map(function($k){ return (int)$k['killid']; }, $battle),
+        'pairs' => array_slice($pairs, 0, $max),
+        'extra' => count($pairs) > $max ? ' <span style="color:var(--text-dim)">+' . (count($pairs) - $max) . ' more</span>' : '',
     ];
 }
 
 ob_start();
 ?>
+
+<style>
+/* keep the battle table on-screen: parties capped by corp_list() and clipped */
+.battle-parties { max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.battle-parties .vs { color: var(--text-dim); padding: 0 6px; }
+.battle-parties a { color: var(--text); }
+.battle-parties a:hover { color: var(--accent2); }
+</style>
+
 <div class="section-header" style="margin-bottom:12px">
     <h2 style="font-size:16px">Battles</h2>
     <span class="section-count"><?= number_format(count($battles)) ?> engagements</span>
@@ -82,21 +103,35 @@ ob_start();
         <th class="k-time">When</th>
         <th class="k-system">System</th>
         <th class="k-icon"></th>
-        <th>Victims</th>
+        <th>Corporations</th>
         <th class="k-value">Ships lost</th>
         <th class="k-value">Damage</th>
     </tr></thead>
     <tbody>
-    <?php foreach ($battles as $b): $s = battle_summary($b); ?>
+    <?php foreach ($battles as $b):
+        $start = filetime_to_unix((int)$b[0]['killtime']);
+        $end   = filetime_to_unix((int)$b[count($b)-1]['killtime']);
+        $sec   = (float)$b[0]['finalsecuritystatus'];
+        $dmg   = 0;
+        foreach ($b as $k) $dmg += (int)$k['victimdamagetaken'];
+        $vc = corp_list($b, 'victimcorporationid', $corpNames);
+        $kc = corp_list($b, 'finalcorporationid', $corpNames);
+    ?>
     <tr class="kill-row">
-        <td class="k-time" title="<?= date('Y-m-d H:i:s', $s['start']) ?> – <?= date('H:i:s', $s['end']) ?>">
-            <b><?= date('Y-m-d', $s['start']) ?></b><br><span style="color:var(--text-dim)"><?= date('H:i', $s['start']) ?></span>
+        <td class="k-time" title="<?= date('Y-m-d H:i:s', $start) ?> – <?= date('H:i:s', $end) ?>">
+            <b><?= date('Y-m-d', $start) ?></b><br><span style="color:var(--text-dim)"><?= date('H:i', $start) ?></span>
         </td>
-        <td class="k-system"><a href="/system/<?= $s['sysid'] ?>"><span class="sec" style="color:<?= security_color($s['sec']) ?>"><?= number_format($s['sec'],1) ?></span> <?= e($s['system']) ?></a></td>
-        <td class="k-icon"><?= $s['ships'] ?></td>
-        <td style="font-size:12px"><?= $s['victims'] ?></td>
-        <td class="k-value"><span class="badge badge-open"><?= $s['kills'] ?> kills</span></td>
-        <td class="k-value"><?= number_format($s['dmg']) ?></td>
+        <td class="k-system"><a href="/system/<?= $b[0]['solarsystemid'] ?>"><span class="sec" style="color:<?= security_color($sec) ?>"><?= number_format($sec,1) ?></span> <?= e($b[0]['solarsystemname']) ?></a></td>
+        <td class="k-icon"><?php foreach ($b as $k) { ?>
+            <img src="<?= ship_icon($k['victimshiptypeid'],32) ?>" width="22" height="22" style="vertical-align:middle" title="<?= e($k['victimshipname']) ?>" onerror="this.style.display='none'">
+        <?php } ?></td>
+        <td class="battle-parties">
+            <?php foreach ($vc['pairs'] as $p): ?><a href="/corporation/<?= $p[0] ?>"><?= e($p[1]) ?></a> <?php endforeach; ?><?= $vc['extra'] ?>
+            <span class="vs">vs</span>
+            <?php foreach ($kc['pairs'] as $p): ?><a href="/corporation/<?= $p[0] ?>"><?= e($p[1]) ?></a> <?php endforeach; ?><?= $kc['extra'] ?>
+        </td>
+        <td class="k-value"><span class="badge badge-open"><?= count($b) ?> kills</span></td>
+        <td class="k-value"><?= number_format($dmg) ?></td>
     </tr>
     <?php endforeach; ?>
     </tbody>

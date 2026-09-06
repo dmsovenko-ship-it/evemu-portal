@@ -4,14 +4,30 @@ require_once __DIR__ . '/../layout.php';
 $from = isset($_GET['from']) && is_numeric($_GET['from']) ? (int)$_GET['from'] : null;
 $to   = isset($_GET['to'])   && is_numeric($_GET['to'])   ? (int)$_GET['to']   : null;
 
-$url = '/server/CourierContracts.xml.aspx?limit=100';
+// One server call for the whole board (server caches the response), paginated
+// client-side — the API has no offset and one cached fetch beats per-page calls.
+$url = '/server/CourierContracts.xml.aspx?limit=500';
 if ($from) $url .= '&fromsystem=' . $from;
 if ($to)   $url .= '&tosystem=' . $to;
 
 $xml = api_get($url, 15);
-$contracts = [];
+$allContracts = [];
 if ($xml && $xml->result) {
-    foreach ($xml->result->contract ?? [] as $r) $contracts[] = $r;
+    foreach ($xml->result->contract ?? [] as $r) $allContracts[] = $r;
+}
+
+// pagination: 20 per page
+$perPage  = 20;
+$pageCnt  = max(1, (int)ceil(count($allContracts) / $perPage));
+$page     = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+$page     = max(1, min($pageCnt, $page));
+$contracts = array_slice($allContracts, ($page - 1) * $perPage, $perPage);
+
+function haul_page_url($p, $from, $to) {
+    $u = '/haul?page=' . $p;
+    if ($from) $u .= '&from=' . $from;
+    if ($to)   $u .= '&to=' . $to;
+    return $u;
 }
 
 ob_start();
@@ -37,7 +53,7 @@ ob_start();
 
 <div class="section-header" style="margin-bottom:12px">
     <h2 style="font-size:16px">Haul Contracts</h2>
-    <span class="section-count">Public courier jobs on the open market</span>
+    <span class="section-count"><?= number_format(count($allContracts)) ?> public courier jobs on the open market</span>
 </div>
 
 <div class="haul-list">
@@ -70,6 +86,14 @@ ob_start();
     </div>
     <?php endforeach; ?>
 </div>
+
+<?php if ($pageCnt > 1): ?>
+<div class="pagination">
+    <?php if ($page > 1): ?><a href="<?= haul_page_url($page - 1, $from, $to) ?>">&larr; Prev</a><?php endif; ?>
+    <span>Page <?= $page ?> of <?= $pageCnt ?></span>
+    <?php if ($page < $pageCnt): ?><a href="<?= haul_page_url($page + 1, $from, $to) ?>">Next &rarr;</a><?php endif; ?>
+</div>
+<?php endif; ?>
 
 <?php
 render_layout('Haul Contracts', 'haul', ob_get_clean());
