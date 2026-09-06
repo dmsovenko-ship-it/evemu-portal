@@ -101,4 +101,4 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-render_layout($corpName, 'search', $content);
+render_layout($corpName, 'kills', $content);

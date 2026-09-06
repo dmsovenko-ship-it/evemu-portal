@@ -20,18 +20,32 @@ function render_layout($title, $active, $content) {
         </form>
         <div class="nav-links">
             <a href="/kills" class="<?= $active==='kills'?'active':'' ?>">Killboard</a>
-            <a href="/players" class="<?= $active==='players'?'active':'' ?>">Players</a>
-            <a href="/systems" class="<?= $active==='systems'?'active':'' ?>">Systems</a>
-            <a href="/market" class="<?= $active==='market'?'active':'' ?>">Market</a>
-            <a href="/haul" class="<?= $active==='haul'?'active':'' ?>">Haul</a>
+            <div class="nav-drop <?= in_array($active,['players','systems'],true)?'active':'' ?>">
+                <a>World</a>
+                <div class="nav-drop-menu">
+                    <a href="/players" class="<?= $active==='players'?'active':'' ?>">Players</a>
+                    <a href="/systems" class="<?= $active==='systems'?'active':'' ?>">Systems</a>
+                </div>
+            </div>
+            <div class="nav-drop <?= in_array($active,['market','haul'],true)?'active':'' ?>">
+                <a>Trade</a>
+                <div class="nav-drop-menu">
+                    <a href="/market" class="<?= $active==='market'?'active':'' ?>">Market</a>
+                    <a href="/haul" class="<?= $active==='haul'?'active':'' ?>">Haul</a>
+                </div>
+            </div>
             <?php if ($user): ?>
-                <a href="/characters" class="<?= $active==='chars'?'active':'' ?>">My Characters</a>
-                <a href="/petitions" class="<?= $active==='petitions'?'active':'' ?>">Petitions</a>
-                <?php if ($user['role'] & (ROLE_ADMIN|ROLE_GMH|ROLE_GML)): ?>
-                    <a href="/admin" class="<?= $active==='admin'?'active':'' ?>">Admin</a>
-                <?php endif; ?>
-                <span class="nav-user"><?= e($user['accountName']) ?></span>
-                <a href="/logout" class="nav-btn-outline">Logout</a>
+                <div class="nav-drop right <?= in_array($active,['chars','petitions','admin'],true)?'active':'' ?>">
+                    <a><?= e($user['accountName']) ?></a>
+                    <div class="nav-drop-menu">
+                        <a href="/characters" class="<?= $active==='chars'?'active':'' ?>">My Characters</a>
+                        <a href="/petitions" class="<?= $active==='petitions'?'active':'' ?>">Petitions</a>
+                        <?php if ($user['role'] & (ROLE_ADMIN|ROLE_GMH|ROLE_GML)): ?>
+                            <a href="/admin" class="<?= $active==='admin'?'active':'' ?>">Admin</a>
+                        <?php endif; ?>
+                        <a href="/logout">Logout</a>
+                    </div>
+                </div>
             <?php else: ?>
                 <a href="/login" class="nav-btn">Login</a>
             <?php endif; ?>

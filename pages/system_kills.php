@@ -95,4 +95,4 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-render_layout($systemName ?: 'System', 'search', $content);
+render_layout($systemName ?: 'System', 'kills', $content);

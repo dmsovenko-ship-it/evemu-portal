@@ -91,4 +91,4 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-render_layout($shipName ?: 'Ship', 'search', $content);
+render_layout($shipName ?: 'Ship', 'kills', $content);

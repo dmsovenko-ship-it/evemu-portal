@@ -132,4 +132,4 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-render_layout($charName, 'search', $content);
+render_layout($charName, 'kills', $content);

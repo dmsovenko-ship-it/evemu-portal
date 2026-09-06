@@ -95,4 +95,4 @@ ob_start();
 
 <?php
 $content = ob_get_clean();
-render_layout($groupName ?: 'Group', 'search', $content);
+render_layout($groupName ?: 'Group', 'kills', $content);
