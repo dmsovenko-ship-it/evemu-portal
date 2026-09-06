@@ -26,6 +26,7 @@ function render_layout($title, $active, $content) {
             <a href="/haul" class="<?= $active==='haul'?'active':'' ?>">Haul</a>
             <?php if ($user): ?>
                 <a href="/characters" class="<?= $active==='chars'?'active':'' ?>">My Characters</a>
+                <a href="/petitions" class="<?= $active==='petitions'?'active':'' ?>">Petitions</a>
                 <?php if ($user['role'] & (ROLE_ADMIN|ROLE_GMH|ROLE_GML)): ?>
                     <a href="/admin" class="<?= $active==='admin'?'active':'' ?>">Admin</a>
                 <?php endif; ?>

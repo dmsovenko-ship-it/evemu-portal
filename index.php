@@ -75,6 +75,9 @@ switch ($page) {
     case 'characters':
         require __DIR__ . '/pages/characters.php';
         break;
+    case 'petitions':
+        require __DIR__ . '/pages/petitions.php';
+        break;
     case 'admin':
         require __DIR__ . '/pages/admin/index.php';
         break;
