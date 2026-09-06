@@ -60,6 +60,9 @@ switch ($page) {
     case 'systems':
         require __DIR__ . '/pages/systems.php';
         break;
+    case 'sov':
+        require __DIR__ . '/pages/sov.php';
+        break;
     case 'market':
         require __DIR__ . '/pages/market.php';
         break;

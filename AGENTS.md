@@ -4,6 +4,9 @@ PHP-портал-киллборда для приватного EVEmu. Репо�
 
 **Правило**: портал НЕ ходит в БД напрямую — только в API-сервер EVEmu (`API_BASE`, default `http://127.0.0.1:26002`). Данные получает XML; SimpleXML в PHP 8 регистрозависим → ВСЕ элементы/атрибуты API lowercase.
 
+## Страница /sov («смена влияния», 6 сент.)
+Читает `/server/SovChanges.xml.aspx?limit=N&systemid=`. Атрибуты row: `changeid/systemid/ownertype('faction'|'alliance')/oldownerid/oldownername/newownerid/newownername/systemname/regionid/regionname/time` (time = filetime → `filetime_to_unix`). Показывает When/System/Region/Previous→New owner/Type; owner 0 → «—»; цвет фракций оранжевый, альянсов синий (CSS в sov.php). Роут `case 'sov'` в index.php; пункт **Sovereignty** в World-меню (layout.php, active='sov').
+
 ## Структура
 - `config.php` — API_BASE, helpers: `api_get/api_post`, `current_user/is_logged_in/has_role`, CCP role-биты (ROLE_ADMIN=72057594037927936 и т.д. из Acct::Role), `ship_icon/ship_type_icon` (evetech через `/img.php`), `char_portrait/corp_logo` (image server `:26001`), `filetime_to_unix`, `security_color`, `isk_compact` ("57.86b"), `get_slot_name` (6-13 High, 19-26 Mid, 27-34 Low, 92-94 Rig...), `slot_sort_order`.
 - `index.php` — роутер: `/`, `/kills`, `/kill/{id}`, `/search?q=`, `/character/{id}`, `/corporation/{id}`, `/system/{id}`, `/stats`, `/players`, `/systems`, `/market`, `/login`, `/register`, `/logout`, `/characters`, `/admin`.
