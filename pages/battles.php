@@ -126,9 +126,10 @@ ob_start();
             <img src="<?= ship_icon($k['victimshiptypeid'],32) ?>" width="22" height="22" style="vertical-align:middle" title="<?= e($k['victimshipname']) ?>" onerror="this.style.display='none'">
         <?php } ?></td>
         <td class="battle-parties">
-            <?php foreach ($vc['pairs'] as $p): ?><a href="/corporation/<?= $p[0] ?>"><?= e($p[1]) ?></a> <?php endforeach; ?><?= $vc['extra'] ?>
-            <span class="vs">vs</span>
+            <?php if ($vc['pairs']): foreach ($vc['pairs'] as $p): ?><a href="/corporation/<?= $p[0] ?>"><?= e($p[1]) ?></a> <?php endforeach; ?><?= $vc['extra'] ?><?php endif; ?>
+            <?php if ($kc['pairs']): ?><span class="vs">vs</span>
             <?php foreach ($kc['pairs'] as $p): ?><a href="/corporation/<?= $p[0] ?>"><?= e($p[1]) ?></a> <?php endforeach; ?><?= $kc['extra'] ?>
+            <?php endif; ?>
         </td>
         <td class="k-value"><span class="badge badge-open"><?= count($b) ?> kills</span></td>
         <td class="k-value"><?= number_format($dmg) ?></td>
