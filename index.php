@@ -27,6 +27,10 @@ switch ($page) {
     case 'battles':
         require __DIR__ . '/pages/battles.php';
         break;
+    case 'battle':
+        $id = $sub;   // "systemID-firstKillID"
+        require __DIR__ . '/pages/battle.php';
+        break;
     case 'search':
         require __DIR__ . '/pages/search.php';
         break;

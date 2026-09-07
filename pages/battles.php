@@ -116,8 +116,9 @@ ob_start();
         foreach ($b as $k) $dmg += (int)$k['victimdamagetaken'];
         $vc = corp_list($b, 'victimcorporationid', $corpNames);
         $kc = corp_list($b, 'finalcorporationid', $corpNames);
+        $battleId = $b[0]['solarsystemid'] . '-' . $b[0]['killid'];
     ?>
-    <tr class="kill-row">
+    <tr class="kill-row" onclick="location.href='/battle/<?= $battleId ?>'">
         <td class="k-time" title="<?= date('Y-m-d H:i:s', $start) ?> – <?= date('H:i:s', $end) ?>">
             <b><?= date('Y-m-d', $start) ?></b><br><span style="color:var(--text-dim)"><?= date('H:i', $start) ?></span>
         </td>
