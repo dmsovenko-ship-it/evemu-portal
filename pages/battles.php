@@ -102,7 +102,6 @@ ob_start();
     <thead><tr>
         <th class="k-time">When</th>
         <th class="k-system">System</th>
-        <th class="k-icon"></th>
         <th>Corporations</th>
         <th class="k-value">Ships lost</th>
         <th class="k-value">Damage</th>
@@ -123,9 +122,6 @@ ob_start();
             <b><?= date('Y-m-d', $start) ?></b><br><span style="color:var(--text-dim)"><?= date('H:i', $start) ?></span>
         </td>
         <td class="k-system"><a href="/system/<?= $b[0]['solarsystemid'] ?>"><span class="sec" style="color:<?= security_color($sec) ?>"><?= number_format($sec,1) ?></span> <?= e($b[0]['solarsystemname']) ?></a></td>
-        <td class="k-icon"><?php foreach ($b as $k) { ?>
-            <img src="<?= ship_icon($k['victimshiptypeid'],32) ?>" width="22" height="22" style="vertical-align:middle" title="<?= e($k['victimshipname']) ?>" onerror="this.style.display='none'">
-        <?php } ?></td>
         <td class="battle-parties">
             <?php if ($vc['pairs']): foreach ($vc['pairs'] as $p): ?><a href="/corporation/<?= $p[0] ?>"><?= e($p[1]) ?></a> <?php endforeach; ?><?= $vc['extra'] ?><?php endif; ?>
             <?php if ($kc['pairs']): ?><span class="vs">vs</span>
