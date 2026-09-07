@@ -46,85 +46,148 @@ if (!$battle) {
     return;
 }
 
-// Resolve names for all pilots & corps in the battle.
-$charIDs = []; $corpIDs = [];
+// ---- resolve names for every pilot / corp / alliance in the battle ----
+$want = [];
 foreach ($battle as $k) {
-    $vc = (int)$k['victimcharacterid']; $fc = (int)$k['finalcharacterid'];
-    $vco = (int)$k['victimcorporationid']; $fco = (int)$k['finalcorporationid'];
-    if ($vc > 0) $charIDs[$vc] = 1; if ($fc > 0) $charIDs[$fc] = 1;
-    if ($vco > 0) $corpIDs[$vco] = 1; if ($fco > 0) $corpIDs[$fco] = 1;
+    foreach (['victimcharacterid','finalcharacterid'] as $a) if ((int)$k[$a]>0) $want[(int)$k[$a]]=1;
+    foreach (['victimcorporationid','finalcorporationid'] as $a) if ((int)$k[$a]>0) $want[(int)$k[$a]]=1;
+    foreach (['victimallianceid','finalallianceid'] as $a) if ((int)$k[$a]>0) $want[(int)$k[$a]]=1;
 }
 $names = [];
-$resolveIDs = array_merge(array_keys($charIDs), array_keys($corpIDs));
-if ($resolveIDs) {
-    $nx = api_get('/char/Resolve.xml.aspx?ids=' . implode(',', $resolveIDs));
+if ($want) {
+    $nx = api_get('/char/Resolve.xml.aspx?ids=' . implode(',', array_keys($want)));
     if ($nx && $nx->result && $nx->result->names)
-        foreach ($nx->result->names->row as $nr)
-            $names[(int)$nr['id']] = (string)$nr['name'];
+        foreach ($nx->result->names->row as $nr) $names[(int)$nr['id']] = (string)$nr['name'];
 }
+$nm = function($id) use ($names) { return $names[(int)$id] ?? ('#' . $id); };
 
-// aggregate by party (corp buckets)
-$victimCorps = [];   // corpID => kills
-$killerCorps = [];
+// ---- aggregate ----
+// ship-class matrix: rows keyed by class, cols K (kills made by that class) / L (losses of that class)
+$classK = [];   // groupName => count (final-blow ship classes = kills)
+$classL = [];   // groupName => count (victim ship classes = losses)
+$killers = [];  // charID => row (winner side)
+$losers  = [];  // charID => row (loser/victim side)
+$sec = (float)$battle[0]['finalsecuritystatus'];
+
 foreach ($battle as $k) {
-    $vc = (int)$k['victimcorporationid'];
-    $fc = (int)$k['finalcorporationid'];
-    if ($vc > 0) $victimCorps[$vc] = ($victimCorps[$vc] ?? 0) + 1;
-    if ($fc > 0) $killerCorps[$fc] = ($killerCorps[$fc] ?? 0) + 1;
-}
-arsort($victimCorps); arsort($killerCorps);
+    $gK = (string)($k['finalgroupname'] ?? ''); if ($gK==='') $gK = (string)($k['finalshipname'] ?? 'Unknown');
+    $gL = (string)($k['victimgroupname'] ?? ''); if ($gL==='') $gL = (string)($k['victimshipname'] ?? 'Unknown');
+    $classK[$gK] = ($classK[$gK] ?? 0) + 1;
+    $classL[$gL] = ($classL[$gL] ?? 0) + 1;
 
+    $kid = (int)$k['finalcharacterid'];
+    if ($kid > 0) {
+        $killers[$kid] = [
+            'name' => (string)$k['finalname'], 'type' => (int)$k['finalshiptypeid'], 'ship' => (string)$k['finalshipname'],
+            'corp' => (int)$k['finalcorporationid'], 'ally' => (int)$k['finalallianceid'],
+            'dmg' => (($killers[$kid]['dmg'] ?? 0) + (int)$k['finaldamagedone']), 'n' => (($killers[$kid]['n'] ?? 0) + 1),
+        ];
+    }
+    $vid = (int)$k['victimcharacterid'];
+    if ($vid > 0) {
+        $losers[$vid] = [
+            'name' => (string)$k['victimname'], 'type' => (int)$k['victimshiptypeid'], 'ship' => (string)$k['victimshipname'],
+            'corp' => (int)$k['victimcorporationid'], 'ally' => (int)$k['victimallianceid'],
+            'dmg' => (($losers[$vid]['dmg'] ?? 0) + (int)$k['victimdamagetaken']), 'n' => (($losers[$vid]['n'] ?? 0) + 1),
+        ];
+    }
+}
+// order by damage
+uasort($killers, function($a,$b){ return $b['dmg'] <=> $a['dmg']; });
+uasort($losers,  function($a,$b){ return $b['dmg'] <=> $a['dmg']; });
+
+$classRows = array_keys($classK + $classL);
+natcasesort($classRows);
+$totalK = array_sum($classK); $totalL = array_sum($classL);
 $start = filetime_to_unix((int)$battle[0]['killtime']);
 $end   = filetime_to_unix((int)$battle[count($battle)-1]['killtime']);
-$sec   = (float)$battle[0]['finalsecuritystatus'];
 $dmg = 0; foreach ($battle as $k) $dmg += (int)$k['victimdamagetaken'];
 
 ob_start();
 ?>
 <style>
-.battle-hero { display:flex; gap:20px; align-items:stretch; margin-bottom:18px; flex-wrap:wrap; }
-.battle-hero .bx { flex:1; min-width:220px; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:14px; }
-.battle-hero h1 { font-size:20px; color:var(--text-bright); margin-bottom:4px; }
-.battle-hero .sub { color:var(--text-dim); font-size:13px; margin-bottom:8px; }
-.party-block h3 { font-size:12px; text-transform:uppercase; letter-spacing:.4px; margin-bottom:8px; }
-.party-block.victims h3 { color:#ff6b6b; }
-.party-block.killers h3 { color:#4ecdc4; }
-.party-row { display:flex; justify-content:space-between; font-size:13px; padding:2px 0; border-bottom:1px dashed var(--border); }
-.party-row a { color:var(--accent2); }
-.party-row .n { color:var(--text-dim); }
-.stat-line { font-size:13px; color:var(--text); margin:3px 0; }
-.stat-line b { color:var(--text-bright); }
+.bx-scroll { overflow-x:auto; }
+.battle-title { font-size:20px; color:var(--text-bright); margin:0 0 2px; }
+.battle-title small { font-size:12px; color:var(--text-dim); font-weight:400; }
+.class-matrix { border-collapse:collapse; min-width:360px; }
+.class-matrix th, .class-matrix td { border:1px solid var(--border); padding:3px 10px; font-size:12px; text-align:center; }
+.class-matrix th { background:var(--bg-card); color:var(--text-dim); text-transform:uppercase; font-size:10px; }
+.class-matrix td.cl { text-align:left; color:var(--text); }
+.class-matrix .tot td { font-weight:700; background:var(--bg-card); color:var(--text-bright); }
+.side-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:14px 0; }
+@media (max-width:900px){ .side-grid{grid-template-columns:1fr;} }
+.side { background:var(--bg-card); border:1px solid var(--border); border-radius:8px; padding:12px; min-width:0; }
+.side h3 { font-size:13px; margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+.side.losers h3 { color:#ff6b6b; } .side.killers h3 { color:#4ecdc4; }
+.side .cnt { font-weight:400; color:var(--text-dim); font-size:11px; }
+.pilot { display:flex; align-items:center; gap:8px; padding:4px 0; border-bottom:1px dashed var(--border); }
+.pilot img.ps { width:32px; height:32px; border-radius:3px; flex:0 0 32px; }
+.pilot .pi { min-width:0; }
+.pilot .pn a { color:var(--text-bright); font-weight:600; font-size:13px; }
+.pilot .pn a:hover { color:var(--accent2); }
+.pilot .pship { font-size:11px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.pilot .pc { font-size:10px; color:#667788; }
+.pilot .pd { margin-left:auto; text-align:right; font-size:11px; color:var(--text); white-space:nowrap; }
+.pilot .pd b { color:var(--warn); }
 </style>
 
 <a href="/battles" style="font-size:12px;color:var(--text-dim);display:inline-block;margin-bottom:8px">&laquo; Battles</a>
 
-<div class="battle-hero">
-    <div class="bx" style="flex:2">
-        <h1>Battle &mdash; <?= e($battle[0]['solarsystemname']) ?></h1>
-        <div class="sub">
-            <span class="sec" style="color:<?= security_color($sec) ?>"><?= number_format($sec,1) ?></span> sec
-            &middot; <a href="/system/<?= $sysID ?>"><?= e($battle[0]['solarsystemname']) ?></a>
-            &middot; <?= date('Y-m-d H:i', $start) ?> &ndash; <?= date('H:i', $end) ?> (<?= time_ago($end) ?>)
-        </div>
-        <div class="stat-line"><b><?= count($battle) ?></b> ships destroyed</div>
-        <div class="stat-line">Total damage: <b><?= number_format($dmg) ?></b></div>
-        <div class="stat-line">Duration: <b><?= max(1, $end - $start) ?>s</b></div>
-    </div>
-    <div class="bx party-block victims">
-        <h3>Losses</h3>
-        <?php foreach ($victimCorps as $cid => $cnt): ?>
-            <div class="party-row"><span><a href="/corporation/<?= $cid ?>"><?= e($names[$cid] ?? '#'.$cid) ?></a></span><span class="n"><?= $cnt ?> ship<?= $cnt>1?'s':'' ?></span></div>
-        <?php endforeach; ?>
-    </div>
-    <div class="bx party-block killers">
-        <h3>Killers</h3>
-        <?php foreach ($killerCorps as $cid => $cnt): ?>
-            <div class="party-row"><span><a href="/corporation/<?= $cid ?>"><?= e($names[$cid] ?? '#'.$cid) ?></a></span><span class="n"><?= $cnt ?> kill<?= $cnt>1?'s':'' ?></span></div>
-        <?php endforeach; ?>
-    </div>
+<div class="battle-title">Battle in <a href="/system/<?= $sysID ?>"><?= e($battle[0]['solarsystemname']) ?></a><small> &middot; <?= date('Y-m-d H:i', $start) ?> &ndash; <?= date('H:i', $end) ?> &middot; sec <?= number_format($sec,1) ?></small></div>
+
+<div class="bx-scroll">
+<table class="class-matrix">
+  <thead><tr><th class="cl">Ship class</th><th>K</th><th>L</th></tr></thead>
+  <tbody>
+  <?php foreach ($classRows as $cls): ?>
+    <tr><td class="cl"><?= e($cls) ?></td><td><?= (int)($classK[$cls]??0) ?></td><td><?= (int)($classL[$cls]??0) ?></td></tr>
+  <?php endforeach; ?>
+  <tr class="tot"><td>Totals</td><td><?= $totalK ?></td><td><?= $totalL ?></td></tr>
+  </tbody>
+</table>
 </div>
 
-<div class="section-title">Kills in this battle</div>
+<div class="side-grid">
+  <div class="side killers">
+    <h3>Killers (winners) <span class="cnt">Pilots: <?= count($killers) ?>, Ships: <?= $totalK ?></span></h3>
+    <?php foreach ($killers as $pID => $p): ?>
+      <div class="pilot">
+        <img class="ps" src="<?= char_portrait($pID, 64) ?>" onerror="this.src='<?= ship_icon($p['type'],32) ?>'">
+        <div class="pi">
+          <div class="pn"><a href="/character/<?= $pID ?>"><?= e($p['name'] ?: 'Unknown') ?></a></div>
+          <div class="pship"><img src="<?= ship_icon($p['type'],24) ?>" width="16" height="16" style="vertical-align:middle" onerror="this.style.display='none'"> <?= e($p['ship']) ?></div>
+          <div class="pc"><?= e($nm($p['corp'])) ?><?php if ($p['ally']>0 && $names[(int)$p['ally']]) echo ' / '.e($names[(int)$p['ally']]); ?></div>
+        </div>
+        <div class="pd"><b><?= number_format($p['dmg']) ?></b><br>DMG &middot; <?= $p['n'] ?> kill<?= $p['n']>1?'s':'' ?></div>
+      </div>
+    <?php endforeach; ?>
+  </div>
+  <div class="side losers">
+    <h3>Losses (victims) <span class="cnt">Pilots: <?= count($losers) ?>, Ships: <?= $totalL ?></span></h3>
+    <?php foreach ($losers as $pID => $p): ?>
+      <div class="pilot">
+        <img class="ps" src="<?= ship_icon($p['type'],32) ?>" onerror="this.style.display='none'">
+        <div class="pi">
+          <div class="pn"><a href="/character/<?= $pID ?>"><?= e($p['name'] ?: 'Unknown') ?></a></div>
+          <div class="pship"><?= e($p['ship']) ?></div>
+          <div class="pc"><?= e($nm($p['corp'])) ?><?php if ($p['ally']>0 && $names[(int)$p['ally']]) echo ' / '.e($names[(int)$p['ally']]); ?></div>
+        </div>
+        <div class="pd"><b><?= number_format($p['dmg']) ?></b><br>HP &middot; <?= $p['n'] ?> ship<?= $p['n']>1?'s':'' ?></div>
+      </div>
+    <?php endforeach; ?>
+  </div>
+</div>
+
+<div class="section-title">Battle Statistics</div>
+<div class="stat-cards" style="justify-content:flex-start">
+  <div class="stat-card"><div class="stat-num"><?= $totalL ?></div><div class="stat-label">Ships lost</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:var(--accent)"><?= $totalK ?></div><div class="stat-label">Ships killed</div></div>
+  <div class="stat-card"><div class="stat-num" style="color:var(--warn)"><?= number_format($dmg) ?></div><div class="stat-label">Damage (HP)</div></div>
+  <div class="stat-card"><div class="stat-num"><?= max(1, $end - $start) ?>s</div><div class="stat-label">Duration</div></div>
+</div>
+
+<div class="section-title">Timeline</div>
+<div class="bx-scroll">
 <table class="kill-table">
     <thead><tr>
         <th>Time</th><th>Victim</th><th>Ship</th><th>Corp</th><th>Damage</th><th>Final Blow</th><th>Ship</th>
@@ -136,7 +199,7 @@ ob_start();
         <td class="k-time" title="<?= date('Y-m-d H:i:s', $kts) ?>"><?= date('H:i:s', $kts) ?></td>
         <td class="k-victim"><a href="/character/<?= $k['victimcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['victimname'] ?: 'Unknown') ?></a></td>
         <td class="k-ship"><img src="<?= ship_icon($k['victimshiptypeid'],24) ?>" width="24" height="24" style="vertical-align:middle" onerror="this.style.display='none'"> <?= e($k['victimshipname']) ?></td>
-        <td class="k-ship" style="color:var(--text-dim)"><?= e($names[(int)$k['victimcorporationid']] ?? '') ?></td>
+        <td class="k-ship" style="color:var(--text-dim)"><?= e($nm($k['victimcorporationid'])) ?></td>
         <td class="k-value"><?= number_format((int)$k['victimdamagetaken']) ?></td>
         <td class="k-killer"><a href="/character/<?= $k['finalcharacterid'] ?>" onclick="event.stopPropagation()"><?= e($k['finalname'] ?: 'Unknown') ?></a></td>
         <td class="k-ship"><img src="<?= ship_icon($k['finalshiptypeid'],24) ?>" width="24" height="24" style="vertical-align:middle" onerror="this.style.display='none'"> <?= e($k['finalshipname']) ?></td>
@@ -144,6 +207,7 @@ ob_start();
     <?php endforeach; ?>
     </tbody>
 </table>
+</div>
 
 <?php
 $content = ob_get_clean();
