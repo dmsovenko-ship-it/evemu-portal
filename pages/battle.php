@@ -81,6 +81,7 @@ foreach ($battle as $k) {
             'name' => (string)$k['finalname'], 'type' => (int)$k['finalshiptypeid'], 'ship' => (string)$k['finalshipname'],
             'corp' => (int)$k['finalcorporationid'], 'ally' => (int)$k['finalallianceid'],
             'dmg' => (($killers[$kid]['dmg'] ?? 0) + (int)$k['finaldamagedone']), 'n' => (($killers[$kid]['n'] ?? 0) + 1),
+            'link' => (int)$k['killid'],
         ];
     }
     $vid = (int)$k['victimcharacterid'];
@@ -89,6 +90,7 @@ foreach ($battle as $k) {
             'name' => (string)$k['victimname'], 'type' => (int)$k['victimshiptypeid'], 'ship' => (string)$k['victimshipname'],
             'corp' => (int)$k['victimcorporationid'], 'ally' => (int)$k['victimallianceid'],
             'dmg' => (($losers[$vid]['dmg'] ?? 0) + (int)$k['victimdamagetaken']), 'n' => (($losers[$vid]['n'] ?? 0) + 1),
+            'link' => (int)$k['killid'],
         ];
     }
 }
@@ -129,6 +131,12 @@ ob_start();
 .pilot .pc { font-size:10px; color:#667788; }
 .pilot .pd { margin-left:auto; text-align:right; font-size:11px; color:var(--text); white-space:nowrap; }
 .pilot .pd b { color:var(--warn); }
+/* side colouring: killed ships red (click → its killmail), survivors green */
+.pilot.dead img.ps, .pilot.dead .pship img { box-shadow:0 0 0 1px #ff5252; border-radius:3px; }
+.pilot.alive img.ps, .pilot.alive .pship img { box-shadow:0 0 0 1px #2ecc71; border-radius:3px; }
+.pilot.dead .pn a { color:#ff7b7b; }
+.pilot.alive .pn a { color:#5ee08a; }
+.pilot .killchip { font-size:10px; color:var(--text-dim); }
 </style>
 
 <a href="/battles" style="font-size:12px;color:var(--text-dim);display:inline-block;margin-bottom:8px">&laquo; Battles</a>
@@ -151,28 +159,28 @@ ob_start();
   <div class="side killers">
     <h3>Killers (winners) <span class="cnt">Pilots: <?= count($killers) ?>, Ships: <?= $totalK ?></span></h3>
     <?php foreach ($killers as $pID => $p): ?>
-      <div class="pilot">
-        <img class="ps" src="<?= char_portrait($pID, 64) ?>" onerror="this.src='<?= ship_icon($p['type'],32) ?>'">
+      <div class="pilot alive" title="survived the battle">
+        <a href="/kill/<?= $p['link'] ?>"><img class="ps" src="<?= char_portrait($pID, 64) ?>" onerror="this.src='<?= ship_icon($p['type'],32) ?>'"></a>
         <div class="pi">
           <div class="pn"><a href="/character/<?= $pID ?>"><?= e($p['name'] ?: 'Unknown') ?></a></div>
-          <div class="pship"><img src="<?= ship_icon($p['type'],24) ?>" width="16" height="16" style="vertical-align:middle" onerror="this.style.display='none'"> <?= e($p['ship']) ?></div>
+          <div class="pship"><a href="/kill/<?= $p['link'] ?>"><img src="<?= ship_icon($p['type'],24) ?>" width="16" height="16" style="vertical-align:middle" onerror="this.style.display='none'"></a> <?= e($p['ship']) ?></div>
           <div class="pc"><?= e($nm($p['corp'])) ?><?php if ($p['ally']>0 && $names[(int)$p['ally']]) echo ' / '.e($names[(int)$p['ally']]); ?></div>
         </div>
-        <div class="pd"><b><?= number_format($p['dmg']) ?></b><br>DMG &middot; <?= $p['n'] ?> kill<?= $p['n']>1?'s':'' ?></div>
+        <div class="pd"><b><?= number_format($p['dmg']) ?></b><br><a href="/kill/<?= $p['link'] ?>" class="killchip">kill &rarr;</a></div>
       </div>
     <?php endforeach; ?>
   </div>
   <div class="side losers">
-    <h3>Losses (victims) <span class="cnt">Pilots: <?= count($losers) ?>, Ships: <?= $totalL ?></span></h3>
+    <h3>Losses (destroyed) <span class="cnt">Pilots: <?= count($losers) ?>, Ships: <?= $totalL ?></span></h3>
     <?php foreach ($losers as $pID => $p): ?>
-      <div class="pilot">
-        <img class="ps" src="<?= ship_icon($p['type'],32) ?>" onerror="this.style.display='none'">
+      <div class="pilot dead" title="ship destroyed">
+        <a href="/kill/<?= $p['link'] ?>"><img class="ps" src="<?= ship_icon($p['type'],32) ?>" onerror="this.style.display='none'"></a>
         <div class="pi">
           <div class="pn"><a href="/character/<?= $pID ?>"><?= e($p['name'] ?: 'Unknown') ?></a></div>
-          <div class="pship"><?= e($p['ship']) ?></div>
+          <div class="pship"><a href="/kill/<?= $p['link'] ?>"><?= e($p['ship']) ?></a></div>
           <div class="pc"><?= e($nm($p['corp'])) ?><?php if ($p['ally']>0 && $names[(int)$p['ally']]) echo ' / '.e($names[(int)$p['ally']]); ?></div>
         </div>
-        <div class="pd"><b><?= number_format($p['dmg']) ?></b><br>HP &middot; <?= $p['n'] ?> ship<?= $p['n']>1?'s':'' ?></div>
+        <div class="pd"><b><?= number_format($p['dmg']) ?></b><br><a href="/kill/<?= $p['link'] ?>" class="killchip">killmail &rarr;</a></div>
       </div>
     <?php endforeach; ?>
   </div>
