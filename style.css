@@ -1091,6 +1091,20 @@ img[width][height] { max-width: none; object-fit: contain; }
 .stat-num { font-size: 22px; font-weight: 700; color: var(--accent2); }
 .stat-label { color: var(--text-dim); font-size: 9px; text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
 
+/* ── Petitions thread ───────────────────────────────────── */
+.pet-thread { display:flex; flex-direction:column; gap:8px; }
+.pet-msg {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent2);
+    border-radius: 4px;
+    background: var(--bg-card);
+    padding: 8px 10px;
+}
+.pet-msg-gm { border-left-color: #ee4466; background: #1a1016; }
+.pet-msg-head { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+.pet-msg-body { white-space:pre-wrap; font-size:13px; line-height:1.45; color:var(--text); }
+select { background: var(--bg-input,#0e1620); color: var(--text); border: 1px solid var(--border); padding: 6px 8px; border-radius: 3px; width: 100%; box-sizing:border-box; }
+
 /* ── Responsive ────────────────────────────────────────── */
 @media (max-width: 900px) {
     .home-layout { flex-direction: column; }
