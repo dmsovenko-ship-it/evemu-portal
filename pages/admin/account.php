@@ -75,7 +75,7 @@ if ($accountID) {
             <td><a href="/corporation/<?= (int)$c['corporationid'] ?>" style="color:var(--text-dim)"><?= e($c['corporationname']) ?: '—' ?></a></td>
             <td style="white-space:nowrap"><?= number_format((float)$c['balance'], 0, '.', ' ') ?> ISK</td>
             <td style="white-space:nowrap"><?= number_format((int)$c['skillpoints'], 0, '.', ' ') ?></td>
-            <td><?= security_color((float)$c['securityrating']) ?></td>
+            <td><?php $sv=(float)$c['securityrating']; ?><span style="color:#000;background:<?= security_color($sv) ?>;border-radius:4px;padding:1px 6px;font-weight:600;display:inline-block"><?= number_format($sv,2,'.','') ?></span></td>
             <td>
                 <?php if ((int)$c['shiptypeid']): ?>
                     <a href="/ship/<?= (int)$c['shiptypeid'] ?>" title="Type <?= (int)$c['shiptypeid'] ?>"><img src="<?= ship_icon((int)$c['shiptypeid'], 24) ?>" alt="" width="24" height="24" style="vertical-align:middle"></a>
