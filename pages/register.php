@@ -18,7 +18,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     elseif ($pass !== $pass2)
         $error = 'Passwords do not match';
     else {
-        $xml = api_post('/auth/Register.xml.aspx', "name=" . urlencode($name) . "&password=" . urlencode($pass) . "&email=" . urlencode($email));
+        $clientIP = trim($_SERVER['HTTP_X_FORWARDED_FOR'] ?? '');
+        if ($clientIP !== '' && strpos($clientIP, ',') !== false)
+            $clientIP = trim(explode(',', $clientIP)[0]);
+        if ($clientIP === '') $clientIP = $_SERVER['REMOTE_ADDR'] ?? '';
+        $xml = api_post('/auth/Register.xml.aspx', "name=" . urlencode($name) . "&password=" . urlencode($pass) . "&email=" . urlencode($email) . "&ip=" . urlencode($clientIP));
         if ($xml && $xml->result && $xml->result->accountid) {
             $success = 'Account created! You can now log in.';
         } elseif ($xml && $xml->error) {
