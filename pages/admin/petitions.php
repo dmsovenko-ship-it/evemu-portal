@@ -62,7 +62,7 @@ foreach ($petitions as $p) {
     if ($catFilter === 'rmt' && $cid !== 602) continue;
     $listPetitions[] = $p;
 }
-paginate_admin($listPetitions, 25, $pagedPetitions, $p, $pages);
+paginate_admin($listPetitions, 25, $pagedPetitions, $pgNo, $pgTotal);
 
 $thread = [];
 $viewPet = null;
@@ -115,7 +115,7 @@ if ($view) {
     <?php if (empty($pagedPetitions)): ?><tr><td colspan="9" class="empty">Нет петиций</td></tr><?php endif; ?>
     </tbody>
 </table>
-<?= pager_html($p, $pages) ?>
+<?= pager_html($pgNo, $pgTotal) ?>
 
 <?php if ($viewPet): ?>
 <div class="form-card" style="margin-top:16px">
