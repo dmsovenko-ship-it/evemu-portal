@@ -2,6 +2,9 @@
 $msg = '';
 $error = '';
 $view = isset($_GET['view']) ? intval($_GET['view']) : 0;
+// monitoring filter: 'bot' (601 Multiboxing/Botting) or 'rmt' (602 RMT)
+$catFilter = $_GET['cat'] ?? '';
+if ($catFilter !== 'bot' && $catFilter !== 'rmt') $catFilter = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $act = $_POST['action'] ?? '';
@@ -55,16 +58,31 @@ if ($view) {
 <?php if ($msg): ?><div class="form-success"><?= e($msg) ?></div><?php endif; ?>
 <?php if ($error): ?><div class="form-error"><?= e($error) ?></div><?php endif; ?>
 
+<div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <a href="/admin/petitions" class="btn <?= $catFilter===''?'btn-primary':'btn-outline' ?>" style="width:auto;padding:5px 12px;font-size:12px">Все</a>
+    <a href="/admin/petitions?cat=bot" class="btn <?= $catFilter==='bot'?'btn-primary':'btn-outline' ?>" style="width:auto;padding:5px 12px;font-size:12px">🤖 Боты / мультиаккаунты</a>
+    <a href="/admin/petitions?cat=rmt" class="btn <?= $catFilter==='rmt'?'btn-primary':'btn-outline' ?>" style="width:auto;padding:5px 12px;font-size:12px">💸 RMT</a>
+</div>
+
 <table class="data-table">
-    <thead><tr><th>#</th><th>Дата</th><th>Автор</th><th>Тип</th><th>Категория</th><th>Тема</th><th>Статус</th><th></th></tr></thead>
+    <thead><tr><th>#</th><th>Создана</th><th>Изменена</th><th>Автор</th><th>Тип</th><th>Категория</th><th>Тема</th><th>Статус</th><th></th></tr></thead>
     <tbody>
-    <?php foreach ($petitions as $p): ?>
+    <?php foreach ($petitions as $p):
+        $catId = (int)$p['categoryid'];
+        if ($catFilter === 'bot' && $catId !== 601) continue;
+        if ($catFilter === 'rmt' && $catId !== 602) continue;
+        $specialCat = ($catId === 601 || $catId === 602) ? ' <span class="badge badge-banned" style="background:#5a1d1d">' . ($catId === 601 ? 'Боты' : 'RMT') . '</span>' : '';
+    ?>
     <tr style="<?= $view==(int)$p['petitionid'] ? 'background:rgba(255,255,255,0.04)' : ''; ?>">
-        <td><?= (int)$p['petitionid'] ?></td>
+        <td><a href="/admin/petitions?view=<?= (int)$p['petitionid'] ?>" style="color:var(--accent2);font-weight:600">#<?= (int)$p['petitionid'] ?></a></td>
         <td style="color:var(--text-dim);white-space:nowrap"><?= e($p['createdate']) ?></td>
-        <td><?= e($p['authorname']) ?></td>
+        <td style="color:var(--text-dim);white-space:nowrap"><?= e($p['touchdate'] ?: $p['createdate']) ?></td>
+        <td>
+            <?php if ((int)$p['accountid']): ?><a href="/admin/account/<?= (int)$p['accountid'] ?>" style="color:var(--accent2)"><?= e($p['authorname']) ?></a>
+            <?php else: ?><?= e($p['authorname']) ?><?php endif; ?>
+        </td>
         <td><?= (int)$p['characterid'] > 0 ? 'игра' : 'портал' ?></td>
-        <td style="color:var(--text-dim)"><?= e($p['categoryname'] ?: '—') ?></td>
+        <td style="color:var(--text-dim)"><?= e($p['categoryname'] ?: '—') ?><?= $specialCat ?></td>
         <td><a href="/admin/petitions?view=<?= (int)$p['petitionid'] ?>" style="color:var(--accent2)"><?= e($p['subject']) ?></a></td>
         <td><?= (int)$p['status']===1 ? '<span class="badge badge-open">Открыта</span>' : '<span class="badge badge-closed">Закрыта</span>' ?></td>
         <td>
@@ -74,7 +92,7 @@ if ($view) {
         </td>
     </tr>
     <?php endforeach; ?>
-    <?php if (empty($petitions)): ?><tr><td colspan="8" class="empty">Нет петиций</td></tr><?php endif; ?>
+    <?php if (empty($petitions)): ?><tr><td colspan="9" class="empty">Нет петиций</td></tr><?php endif; ?>
     </tbody>
 </table>
 
@@ -82,9 +100,12 @@ if ($view) {
 <div class="form-card" style="margin-top:16px">
     <h3 style="margin-bottom:4px;font-size:14px">#<?= (int)$viewPet['petitionid'] ?> — <?= e($viewPet['subject']) ?></h3>
     <div style="color:var(--text-dim);font-size:12px;margin-bottom:10px">
-        <?= e($viewPet['authorname']) ?> (акк. <?= (int)$viewPet['accountid'] ?>)
+        <?php if ((int)$viewPet['accountid']): ?>
+            <a href="/admin/account/<?= (int)$viewPet['accountid'] ?>" style="color:var(--accent2)"><?= e($viewPet['authorname']) ?></a> (акк. #<?= (int)$viewPet['accountid'] ?> — персонажи/ISK/SP)
+        <?php else: ?><?= e($viewPet['authorname']) ?><?php endif; ?>
         &middot; <?= e($viewPet['categoryname'] ?: '—') ?>
         &middot; создана <?= e($viewPet['createdate']) ?>
+        &middot; изменена <?= e($viewPet['touchdate'] ?: $viewPet['createdate']) ?>
         &middot; <?= (int)$viewPet['status']===1 ? 'открыта' : 'закрыта' ?>
     </div>
     <div class="pet-thread">
