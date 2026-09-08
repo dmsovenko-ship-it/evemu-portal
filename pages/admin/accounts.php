@@ -7,7 +7,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $aid = intval($_POST['accountid'] ?? 0);
 
     if ($act === 'ban' && $aid) {
-        $xml = api_post('/admin/BanAccount.xml.aspx', "accountid=$aid");
+        $reason = trim($_POST['reason'] ?? '');
+        $xml = api_post('/admin/BanAccount.xml.aspx', "accountid=$aid&reason=" . urlencode($reason));
         $msg = $xml && $xml->result ? 'OK' : (($xml && $xml->error) ? (string)$xml->error : 'Ошибка');
     }
     if ($act === 'unban' && $aid) {
@@ -46,7 +47,7 @@ paginate_admin($accounts, 25, $paged, $p, $pages);
             <?php else: ?><span class="badge badge-player">Player</span><?php endif; ?>
         </td>
         <td><?= $a['online'] ? '🟢' : '⚫' ?></td>
-        <td><?= $banned ? '<span class="badge badge-banned">BANNED</span>' : '—' ?></td>
+        <td><?php if ($banned): ?><span class="badge badge-banned">BANNED</span><?php if (trim((string)$a['banreason']) !== ''): ?><div style="font-size:11px;color:#ff8b8b;margin-top:2px"><?= e($a['banreason']) ?></div><?php endif; ?><?php else: ?>—<?php endif; ?></td>
         <td>
             <?php if ($banned): ?>
                 <form method="POST" style="display:inline"><input type="hidden" name="action" value="unban"><input type="hidden" name="accountid" value="<?= $a['accountid'] ?>"><button class="btn btn-outline" style="width:auto;padding:4px 10px;font-size:11px">Разбанить</button></form>

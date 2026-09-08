@@ -15,6 +15,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $accountID) {
         $msg = $xml && $xml->result ? 'Аккаунт разбанен' : 'Ошибка';
     }
     if ($act === 'back') { redirect('/admin/accounts'); return; }
+    if ($act === 'setcomment') {
+        $comment = trim($_POST['comment'] ?? '');
+        $xml = api_post('/admin/SetAccountComment.xml.aspx', 'accountid=' . $accountID . '&comment=' . urlencode($comment));
+        $msg = $xml && $xml->result ? 'Комментарий сохранён' : 'Ошибка';
+        header('Location: /admin/account/' . $accountID); exit;
+    }
 }
 
 $acc = null; $chars = [];
@@ -61,6 +67,21 @@ if ($accountID) {
         <?php else: ?>
             <form method="POST" style="display:inline"><input type="hidden" name="action" value="ban"><button class="btn btn-danger" style="width:auto">Забанить</button></form>
         <?php endif; ?>
+    </div>
+
+    <?php if ((int)$acc['banned']): ?>
+    <div style="margin-top:12px;background:rgba(238,68,68,.08);border:1px solid rgba(238,68,68,.4);border-radius:6px;padding:8px 12px;color:#ff8b8b">
+        <b>⛔ Забанен.</b> <?= trim((string)$acc['banreason']) !== '' ? 'Причина: ' . e($acc['banreason']) : 'Причина не указана.' ?>
+    </div>
+    <?php endif; ?>
+
+    <div style="margin-top:14px">
+        <h3 style="font-size:13px;margin-bottom:6px">Комментарий администратора</h3>
+        <form method="POST" style="display:flex;gap:8px;flex-wrap:wrap">
+            <input type="hidden" name="action" value="setcomment">
+            <textarea name="comment" rows="3" placeholder="Заметки для админов..." style="flex:1;min-width:260px;background:#1a1a1a;border:1px solid var(--border);border-radius:6px;color:var(--text);padding:8px"><?= e((string)$acc['admincomment']) ?></textarea>
+            <button class="btn btn-primary" style="width:auto;align-self:flex-end">Сохранить</button>
+        </form>
     </div>
 </div>
 
