@@ -41,6 +41,15 @@ if ($xml && $xml->result && $xml->result->flags)
             </td>
             <td style="color:var(--text-dim);white-space:nowrap"><?= e($f['createdate']) ?></td>
         </tr>
+        <?php elseif ($t === 'transfer'): ?>
+        <tr>
+            <td><span class="badge badge-gm">Transfer</span></td>
+            <td>
+                <a href="/admin/petitions?view=<?= (int)$f['petitionid'] ?>" style="color:var(--accent2)">#<?= (int)$f['petitionid'] ?> <?= e($f['subject']) ?></a>
+                <div style="color:var(--text-dim);font-size:11px">автор: <?= (int)$f['accountid'] ? '<a href="/admin/account/'.(int)$f['accountid'].'" style="color:var(--accent2)">'.e($f['authorname']).'</a>' : e($f['authorname']) ?> — ждёт одобрения</div>
+            </td>
+            <td style="color:var(--text-dim);white-space:nowrap"><?= e($f['createdate']) ?></td>
+        </tr>
         <?php endif; ?>
     <?php endforeach; ?>
     <?php if (empty($flags)): ?><tr><td colspan="3" class="empty">Флагов нет — всё чисто.</td></tr><?php endif; ?>

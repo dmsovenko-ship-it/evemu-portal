@@ -35,6 +35,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if ($pid) $view = $pid;
     }
+    if ($act === 'approve_transfer') {
+        $pid = intval($_POST['petitionid'] ?? 0);
+        $seller = intval($_POST['selleraccountid'] ?? 0);
+        $buyer  = intval($_POST['buyeraccountid'] ?? 0);
+        if ($pid && $seller && $buyer) {
+            $xml = api_post('/admin/ApproveTransfer.xml.aspx',
+                'selleraccountid=' . $seller . '&buyeraccountid=' . $buyer . '&petitionid=' . $pid
+                . '&note=' . urlencode('передача аккаунта, петиция #' . $pid));
+            $msg = $xml && $xml->result ? 'Передача одобрена — потоки пары больше не флагаются как RMT' : 'Ошибка';
+        }
+        if ($pid) $view = $pid;
+    }
 }
 
 $xml = api_get('/admin/PetitionList.xml.aspx');
@@ -135,6 +147,31 @@ if ($view) {
                 onclick="this.form.action.value='close';return confirm('Закрыть петицию?')">Закрыть</button>
         </div>
     </form>
+    <?php endif; ?>
+    <?php if ((int)$viewPet['categoryid']===603 && (int)$viewPet['status']===1): ?>
+    <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
+        <h4 style="font-size:12px;color:var(--text-dim);margin-bottom:8px">Легальная передача аккаунта</h4>
+        <form method="POST">
+            <input type="hidden" name="action" value="approve_transfer">
+            <input type="hidden" name="petitionid" value="<?= (int)$viewPet['petitionid'] ?>">
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <div class="form-group" style="flex:1;min-width:180px">
+                    <label>Продавец (accountID)</label>
+                    <input name="selleraccountid" value="<?= (int)$viewPet['accountid'] ?>" required>
+                </div>
+                <div class="form-group" style="flex:1;min-width:180px">
+                    <label>Покупатель (accountID)</label>
+                    <input name="buyeraccountid" required placeholder="аккаунт получателя">
+                </div>
+                <div style="align-self:flex-end">
+                    <button class="btn btn-primary" style="width:auto">Одобрить передачу</button>
+                </div>
+            </div>
+            <p style="color:var(--text-dim);font-size:11px;margin-top:6px">
+                После одобрения крупные переводы между этими аккаунтами не будут помечаться как RMT.
+            </p>
+        </form>
+    </div>
     <?php endif; ?>
 </div>
 <?php endif; ?>
