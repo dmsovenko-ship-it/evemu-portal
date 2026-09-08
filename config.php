@@ -171,3 +171,25 @@ function slot_sort_order($name) {
     $order = ['High' => 0, 'Mid' => 1, 'Low' => 2, 'Rig' => 3, 'Subsystem' => 4, 'Ship' => 5, 'Cargo' => 6, 'Drone Bay' => 7, 'Other' => 8];
     return $order[$name] ?? 9;
 }
+
+// Generic client-side pager for admin lists. Preserves the current GET params
+// (except page) so filters/view stay active. $items is a full array; returns
+// nothing when it fits on one page.
+function paginate_admin(array $items, int $perPage, array &$out, int &$page, int &$pages): void {
+    $pages = max(1, (int)ceil(count($items) / $perPage));
+    $page  = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+    $page  = max(1, min($pages, $page));
+    $out   = array_slice($items, ($page - 1) * $perPage, $perPage);
+}
+
+function pager_html(int $page, int $pages): string {
+    if ($pages <= 1) return '';
+    $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) ?: '/';
+    $q = $_GET;
+    $html = '<div class="pagination" style="margin-top:10px">';
+    if ($page > 1) { $q['page'] = $page - 1; $html .= '<a href="' . htmlspecialchars($path . '?' . http_build_query($q), ENT_QUOTES, 'UTF-8') . '">&larr; Prev</a>'; }
+    $html .= '<span>' . $page . ' / ' . $pages . '</span>';
+    if ($page < $pages) { $q['page'] = $page + 1; $html .= '<a href="' . htmlspecialchars($path . '?' . http_build_query($q), ENT_QUOTES, 'UTF-8') . '">Next &rarr;</a>'; }
+    $html .= '</div>';
+    return $html;
+}

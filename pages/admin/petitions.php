@@ -54,6 +54,16 @@ $petitions = [];
 if ($xml && $xml->result && $xml->result->petitions)
     foreach ($xml->result->petitions->row as $r) $petitions[] = $r;
 
+// Apply the bot/RMT filter first, then paginate the visible list.
+$listPetitions = [];
+foreach ($petitions as $p) {
+    $cid = (int)$p['categoryid'];
+    if ($catFilter === 'bot' && $cid !== 601) continue;
+    if ($catFilter === 'rmt' && $cid !== 602) continue;
+    $listPetitions[] = $p;
+}
+paginate_admin($listPetitions, 25, $pagedPetitions, $p, $pages);
+
 $thread = [];
 $viewPet = null;
 if ($view) {
@@ -79,10 +89,8 @@ if ($view) {
 <table class="data-table">
     <thead><tr><th>#</th><th>Создана</th><th>Изменена</th><th>Автор</th><th>Тип</th><th>Категория</th><th>Тема</th><th>Статус</th><th></th></tr></thead>
     <tbody>
-    <?php foreach ($petitions as $p):
+    <?php foreach ($pagedPetitions as $p):
         $catId = (int)$p['categoryid'];
-        if ($catFilter === 'bot' && $catId !== 601) continue;
-        if ($catFilter === 'rmt' && $catId !== 602) continue;
         $specialCat = ($catId === 601 || $catId === 602) ? ' <span class="badge badge-banned" style="background:#5a1d1d">' . ($catId === 601 ? 'Боты' : 'RMT') . '</span>' : '';
     ?>
     <tr style="<?= $view==(int)$p['petitionid'] ? 'background:rgba(255,255,255,0.04)' : ''; ?>">
@@ -104,9 +112,10 @@ if ($view) {
         </td>
     </tr>
     <?php endforeach; ?>
-    <?php if (empty($petitions)): ?><tr><td colspan="9" class="empty">Нет петиций</td></tr><?php endif; ?>
+    <?php if (empty($pagedPetitions)): ?><tr><td colspan="9" class="empty">Нет петиций</td></tr><?php endif; ?>
     </tbody>
 </table>
+<?= pager_html($p, $pages) ?>
 
 <?php if ($viewPet): ?>
 <div class="form-card" style="margin-top:16px">

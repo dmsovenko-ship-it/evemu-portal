@@ -20,6 +20,9 @@ $xml = api_get('/admin/AccountList.xml.aspx');
 $accounts = [];
 if ($xml && $xml->result && $xml->result->accounts)
     foreach ($xml->result->accounts->row as $r) $accounts[] = $r;
+
+$paged = $accounts;
+paginate_admin($accounts, 25, $paged, $p, $pages);
 ?>
 
 <h2 style="margin-bottom:16px">Аккаунты</h2>
@@ -29,13 +32,13 @@ if ($xml && $xml->result && $xml->result->accounts)
 <table class="data-table">
     <thead><tr><th>ID</th><th>Имя</th><th>Email</th><th>Роль</th><th>Онлайн</th><th>Бан</th><th></th></tr></thead>
     <tbody>
-    <?php foreach ($accounts as $a):
+    <?php foreach ($paged as $a):
         $role = (int)$a['role'];
         $banned = (int)$a['banned'];
     ?>
     <tr>
-        <td><?= $a['accountid'] ?></td>
-        <td style="font-weight:600"><?= e($a['accountname']) ?></td>
+        <td><a href="/admin/account/<?= (int)$a['accountid'] ?>" style="color:var(--accent2)"><?= $a['accountid'] ?></a></td>
+        <td style="font-weight:600"><a href="/admin/account/<?= (int)$a['accountid'] ?>" style="color:var(--text);text-decoration:none"><?= e($a['accountname']) ?></a></td>
         <td style="color:var(--text-dim)"><?= e($a['email']) ?></td>
         <td>
             <?php if ($role & ROLE_ADMIN): ?><span class="badge badge-admin">Admin</span>
@@ -58,6 +61,7 @@ if ($xml && $xml->result && $xml->result->accounts)
         </td>
     </tr>
     <?php endforeach; ?>
-    <?php if (empty($accounts)): ?><tr><td colspan="7" class="empty">Нет аккаунтов</td></tr><?php endif; ?>
+    <?php if (empty($paged)): ?><tr><td colspan="7" class="empty">Нет аккаунтов</td></tr><?php endif; ?>
     </tbody>
 </table>
+<?= pager_html($p, $pages) ?>

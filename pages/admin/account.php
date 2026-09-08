@@ -70,7 +70,7 @@ if ($accountID) {
     <tbody>
     <?php foreach ($chars as $c): ?>
         <tr>
-            <td><?= char_portrait((int)$c['characterid'], 32) ?></td>
+            <td><img src="<?= char_portrait((int)$c['characterid'], 32) ?>" alt="" width="32" height="32" style="border-radius:4px;object-fit:cover"></td>
             <td><a href="/character/<?= (int)$c['characterid'] ?>" style="color:var(--accent2);font-weight:600"><?= e($c['charactername']) ?></a></td>
             <td><a href="/corporation/<?= (int)$c['corporationid'] ?>" style="color:var(--text-dim)"><?= e($c['corporationname']) ?: '—' ?></a></td>
             <td style="white-space:nowrap"><?= number_format((float)$c['balance'], 0, '.', ' ') ?> ISK</td>
@@ -78,7 +78,7 @@ if ($accountID) {
             <td><?= security_color((float)$c['securityrating']) ?></td>
             <td>
                 <?php if ((int)$c['shiptypeid']): ?>
-                    <a href="/ship/<?= (int)$c['shiptypeid'] ?>" title="Type <?= (int)$c['shiptypeid'] ?>"><?= ship_icon((int)$c['shiptypeid'], 24) ?></a>
+                    <a href="/ship/<?= (int)$c['shiptypeid'] ?>" title="Type <?= (int)$c['shiptypeid'] ?>"><img src="<?= ship_icon((int)$c['shiptypeid'], 24) ?>" alt="" width="24" height="24" style="vertical-align:middle"></a>
                 <?php else: ?>—<?php endif; ?>
             </td>
             <td><?= ((int)$c['online']) ? '🟢' : '⚫' ?></td>
