@@ -60,6 +60,54 @@ function render_layout($title, $active, $content) {
 <footer class="footer">
     <?= SITE_NAME ?> Killboard &copy; <?= date('Y') ?> &mdash; Portal v<?= PORTAL_VERSION ?> &mdash; Powered by EVEmu
 </footer>
+
+<style>
+    #themeBtn{position:fixed;right:14px;bottom:14px;z-index:500;width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+    #themeMenu{position:fixed;right:14px;bottom:62px;z-index:501;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:8px;display:none;min-width:170px;box-shadow:0 4px 14px rgba(0,0,0,.45)}
+    #themeMenu a{display:block;padding:6px 10px;font-size:13px;color:var(--text);text-decoration:none;border-radius:6px;cursor:pointer}
+    #themeMenu a:hover{background:var(--bg-hover)}
+    #themeMenu a.on{color:var(--accent2);font-weight:600}
+</style>
+<button id="themeBtn" title="Тема оформления">🎨</button>
+<div id="themeMenu"></div>
+<script>
+(function(){
+  var PRESETS = {
+    classic: {name:'Классика', vars:{'--bg':'#0a0e14','--bg-card':'#111820','--bg-hover':'#151d28','--bg-input':'#0d1117','--border':'#1a2030','--text':'#c5c8c6','--text-dim':'#667788','--text-bright':'#e0e0e0','--accent':'#66cc88','--accent2':'#4a9eff'}},
+    blue:    {name:'Синяя ночь', vars:{'--bg':'#0a1020','--bg-card':'#101a2e','--bg-hover':'#16233b','--bg-input':'#0b1120','--border':'#22334f','--text':'#c9d6ea','--text-dim':'#6a7f9e','--text-bright':'#e4ecf7','--accent':'#4a9eff','--accent2':'#66cc88'}},
+    amethyst:{name:'Аметист', vars:{'--bg':'#160f20','--bg-card':'#201431','--bg-hover':'#2a1b40','--bg-input':'#130c1c','--border':'#38284f','--text':'#d8ccec','--text-dim':'#8c7aa6','--text-bright':'#efe8fb','--accent':'#b388ff','--accent2':'#4a9eff'}},
+    matrix:  {name:'Matrix', vars:{'--bg':'#020d03','--bg-card':'#06160a','--bg-hover':'#0b2212','--bg-input':'#04100a','--border':'#103a1d','--text':'#b9e8c2','--text-dim':'#4d8f5c','--text-bright':'#dcffe2','--accent':'#20ff66','--accent2':'#36c9ff'}},
+    light:   {name:'Светлая', vars:{'--bg':'#eef1f6','--bg-card':'#ffffff','--bg-hover':'#e6ebf3','--bg-input':'#f5f7fa','--border':'#d4dae4','--text':'#22303f','--text-dim':'#5f6f82','--text-bright':'#0b1016','--accent':'#168a5a','--accent2':'#1868c8'}}
+  };
+  var root = document.documentElement;
+  function apply(name){
+    var p = PRESETS[name]; if(!p) return;
+    for(var k in p.vars) root.style.setProperty(k, p.vars[k]);
+    try{ localStorage.setItem('portal_theme', name); }catch(e){}
+    var menu = document.getElementById('themeMenu');
+    Array.prototype.forEach.call(menu.querySelectorAll('a'), function(a){ a.className = a.getAttribute('data-t') === name ? 'on' : ''; });
+  }
+  function build(){
+    var menu = document.getElementById('themeMenu');
+    Object.keys(PRESETS).forEach(function(k){
+      var a = document.createElement('a');
+      a.textContent = PRESETS[k].name;
+      a.setAttribute('data-t', k);
+      a.onclick = function(){ apply(k); };
+      menu.appendChild(a);
+    });
+    var saved = 'classic';
+    try{ saved = localStorage.getItem('portal_theme') || 'classic'; }catch(e){}
+    apply(saved);
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    build();
+    var btn = document.getElementById('themeBtn'), menu = document.getElementById('themeMenu');
+    btn.onclick = function(){ menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; };
+    document.addEventListener('click', function(e){ if(e.target !== btn && !menu.contains(e.target)) menu.style.display='none'; });
+  });
+})();
+</script>
 </body>
 </html>
 <?php
