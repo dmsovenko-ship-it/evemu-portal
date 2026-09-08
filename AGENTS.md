@@ -1,8 +1,13 @@
 # EVEmu Portal — Session Context
 
-PHP-портал-киллборда для приватного EVEmu. Репозиторий PRIVATE. Развёрнут на отдельном хосте `video.iks-online.net:26006` (nginx+php-fpm), конфиг `config.php` там свой (API_BASE наружу к игровому серверу). Сервер EVEmu: `172.20.1.47`, API `:26002`, image server `:26001`.
+PHP-портал-киллборда для приватного EVEmu. Репозиторий PRIVATE. Развёрнут на отдельном хосте `video.iks-online.net:26006` (nginx+php-fpm) и `http://router.iks-online.net:26006` (тот же деплой), конфиг `config.php` там свой (API_BASE наружу к игровому серверу `172.20.1.47:26002`, image server `:26001`). Сервер EVEmu: `172.20.1.47`, API `:26002`, image server `:26001`. SSH-мост деплоя: `plink dmitry@172.20.1.47` → `sshpass ssh dmitry@172.20.1.49`, repo в `/var/www/html`, sudo через `echo gbnjy78 | sudo -S -p ""` (base64-скрипт паттерн). Прод-репо: локальные правки battle*.php застейджированы (устарели — origin уже содержит финальные версии).
 
 **Правило**: портал НЕ ходит в БД напрямую — только в API-сервер EVEmu (`API_BASE`, default `http://127.0.0.1:26002`). Данные получает XML; SimpleXML в PHP 8 регистрозависим → ВСЕ элементы/атрибуты API lowercase.
+
+## Петиции и новости — единая с игрой модель (8 сент., портал `955be91` за петициями, `32acbe5`+)
+- **Петиции** (портал ↔ игровой F12 через общие таблицы сервера): `/petitions` (игрок): форма «группа→категория» (PetitionCategories, язык whitelist) + subject/body → `PetitionCreate` (author=первый чар аккаунта через CharacterList; senderid передаётся, petition.characterID=0 → видна всем чарам аккаунта в игре); список своих `PetitionMine?accountid` (вкл. игровые строки); тред `PetitionMessages?petitionid&accountid`; ответ `PetitionAddMessage` (ownership+open) / отмена `PetitionCancel`. `/admin/petitions` (GM): `PetitionList` (все, источник игра/портал по characterid, статус), тред, ответ `PetitionReply` (isGM=1 в тред, adminname/senderid = первый чар админа), закрыть `PetitionClose`. CSS тредов `.pet-thread/.pet-msg/.pet-msg-gm` в style.css.
+- **Новости** `/admin/news`: публикация `PostNews` + **архив** из `NewsList` (id/date/author/title/body) с кнопками «В ТГ» (`NewsResend`) и «Удалить» (`NewsDelete`, confirm). Превью без mbstring (`news_preview` UTF-8-safe).
+- Поля API: `petitionid/accountid/characterid/authorname/categoryid/categoryname/subject/status/claimedby/updated/deleted/createdate/touchdate`; сообщения: `messageid/senderid/sendername/isgm/comment/text/sentdate`; новости: `newsid/title/body/authorname/createdat`.
 
 ## Страница /sov («смена влияния», 6 сент.)
 Читает `/server/SovChanges.xml.aspx?limit=N&systemid=`. Атрибуты row: `changeid/systemid/ownertype('faction'|'alliance')/oldownerid/oldownername/newownerid/newownername/systemname/regionid/regionname/time` (time = filetime → `filetime_to_unix`). Показывает When/System/Region/Previous→New owner/Type; owner 0 → «—»; цвет фракций оранжевый, альянсов синий (CSS в sov.php). Роут `case 'sov'` в index.php; пункт **Sovereignty** в World-меню (layout.php, active='sov').
@@ -43,4 +48,4 @@ PHP-портал-киллборда для приватного EVEmu. Репо�
 - После пересборки сервера `d0c2e655` + portal `e2ec7c0`: главная (карточки Ships/Structures/Sponsored со значением, сайдбар Current Activity/Top), детальный килл (корпы/альянсы/карты справа, related), онлайн с челоботами, логин (CCP hash).
 - Оценка ISK зависит от mktOrders: если цены нереалистичны/пусты — подкрутить (возможно SEED/import цен, fallback на basePrice invTypes).
 - Админка: выдача таймкодов/предметов требует проверки на живой сессии; роли субадминов настраиваются через SetRole.
-- Telegram-интеграция (уведомления/чат) — не начата.
+- Telegram-команды реализованы на СЕРВЕРЕ (`TelegramCmd`, см. evemu AGENTS): /online /topkills /market /who /last (игроки) и /status /flags /petitions /accounts /bans (админы) — портальные страницы для этого не нужны.
