@@ -174,12 +174,15 @@ function slot_sort_order($name) {
 
 // Generic client-side pager for admin lists. Preserves the current GET params
 // (except page) so filters/view stay active. $items is a full array; returns
-// nothing when it fits on one page.
-function paginate_admin(array $items, int $perPage, array &$out, int &$page, int &$pages): void {
-    $pages = max(1, (int)ceil(count($items) / $perPage));
-    $page  = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
-    $page  = max(1, min($pages, $page));
-    $out   = array_slice($items, ($page - 1) * $perPage, $perPage);
+// nothing when it fits on one page. $out/$page/$pages are by-reference outputs
+// (passed possibly-uninitialised by callers).
+function paginate_admin($items, $perPage, &$out, &$page, &$pages): void {
+    $perPage = max(1, (int)$perPage);
+    $items   = is_array($items) ? array_values($items) : [];
+    $pages   = max(1, (int)ceil(count($items) / $perPage));
+    $page    = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
+    $page    = max(1, min($pages, $page));
+    $out     = array_slice($items, ($page - 1) * $perPage, $perPage);
 }
 
 function pager_html(int $page, int $pages): string {
