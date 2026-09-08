@@ -48,7 +48,12 @@ if ($xml && $xml->result && $xml->result->accounts)
             <?php if ($banned): ?>
                 <form method="POST" style="display:inline"><input type="hidden" name="action" value="unban"><input type="hidden" name="accountid" value="<?= $a['accountid'] ?>"><button class="btn btn-outline" style="width:auto;padding:4px 10px;font-size:11px">Разбанить</button></form>
             <?php else: ?>
-                <form method="POST" style="display:inline"><input type="hidden" name="action" value="ban"><input type="hidden" name="accountid" value="<?= $a['accountid'] ?>"><button class="btn btn-danger" style="width:auto;padding:4px 10px;font-size:11px">Забанить</button></form>
+                <form method="POST" style="display:flex;gap:4px;align-items:center">
+                    <input type="hidden" name="action" value="ban">
+                    <input type="hidden" name="accountid" value="<?= $a['accountid'] ?>">
+                    <input type="text" name="reason" placeholder="причина (уйдёт в Telegram)" style="width:140px;padding:4px 8px;font-size:11px;background:#1a1a1a;border:1px solid var(--border);border-radius:4px;color:var(--text)">
+                    <button class="btn btn-danger" style="width:auto;padding:4px 10px;font-size:11px">Забанить</button>
+                </form>
             <?php endif; ?>
         </td>
     </tr>
