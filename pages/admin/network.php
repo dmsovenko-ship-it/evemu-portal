@@ -14,7 +14,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'ban_i
 $group = ($_GET['group'] ?? 'ip') === 'email' ? 'email' : 'ip';
 
 // Offline MaxMind GeoLite2 lookup (if DB present at /geo/GeoLite2-City.mmdb).
-require_once __DIR__ . '/../../lib/MaxMind/Db/Reader.php';
+spl_autoload_register(function ($class) {
+    if (strncmp($class, 'MaxMind\\', 8) !== 0) return;
+    $rel = str_replace('\\', '/', substr($class, 8));
+    $file = __DIR__ . '/../../lib/MaxMind/' . $rel . '.php';
+    if (is_file($file)) require_once $file;
+});
 $GLOBALS['__geoReader'] = null;
 $GLOBALS['__asnReader'] = null;
 function geo_txt($ip) {
