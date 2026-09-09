@@ -17,11 +17,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Password: minimum 6 characters';
     elseif ($pass !== $pass2)
         $error = 'Passwords do not match';
+    elseif ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL))
+        $error = 'Email is required and must be valid (used for login codes).';
     else {
-        $clientIP = trim($_SERVER['HTTP_X_FORWARDED_FOR'] ?? '');
-        if ($clientIP !== '' && strpos($clientIP, ',') !== false)
-            $clientIP = trim(explode(',', $clientIP)[0]);
-        if ($clientIP === '') $clientIP = $_SERVER['REMOTE_ADDR'] ?? '';
+        $clientIP = client_ip();
         $xml = api_post('/auth/Register.xml.aspx', "name=" . urlencode($name) . "&password=" . urlencode($pass) . "&email=" . urlencode($email) . "&ip=" . urlencode($clientIP));
         if ($xml && $xml->result && $xml->result->accountid) {
             $success = 'Account created! You can now log in.';
@@ -46,8 +45,8 @@ ob_start();
                 <input name="name" required maxlength="40" autofocus>
             </div>
             <div class="form-group">
-                <label>Email (optional)</label>
-                <input name="email" type="email">
+                <label>Email (required)</label>
+                <input name="email" type="email" required value="<?= e($_POST['email'] ?? '') ?>">
             </div>
             <div class="form-group">
                 <label>Password</label>

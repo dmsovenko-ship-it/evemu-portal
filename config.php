@@ -31,6 +31,19 @@ define('MAIL_FROM_NAME', SITE_NAME);
 define('MAIL_ENCRYPTION', 'tls'); // tls | ssl | none
 define('MAIL_TIMEOUT', 30);
 
+// ---- two-factor e-mail codes (2FA) ------------------------------------------
+// Requires a working SMTP (MAIL_*). Codes go to the account e-mail.
+// - first login from a new device/IP → code
+// - admins (ROLE_ADMIN/GMH/GML) → code on EVERY login
+// - session length is SESSION_LIFETIME (8 h)
+define('TFA_ENABLED', true);
+define('TFA_REQUIRE_NEW_DEVICE', true); // false → only admins get codes
+define('TFA_ADMIN_ALWAYS', true);
+define('TFA_CODE_TTL', 10 * 60);        // seconds a code stays valid
+define('TFA_MAX_ATTEMPTS', 5);          // failed entries before the code dies
+define('TFA_DEVICE_COOKIE', 'evemu_2fa_dev');
+define('TFA_DEVICE_LIFETIME', 180 * 24 * 3600); // "remember this device" cookie
+
 if (PHP_SAPI !== 'cli' && session_status() === PHP_SESSION_NONE) {
     session_set_cookie_params([
         'lifetime' => SESSION_LIFETIME,
@@ -270,4 +283,85 @@ function b64url_encode(string $data): string {
 }
 function b64url_decode(string $data): string {
     return base64_decode(strtr($data, '-_', '+/'));
+}
+
+// ---- client IP (works behind nginx / proxies) -------------------------------
+function client_ip(): string {
+    foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP'] as $h) {
+        if (!empty($_SERVER[$h]) && filter_var($_SERVER[$h], FILTER_VALIDATE_IP)) return $_SERVER[$h];
+    }
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        foreach (explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']) as $ip) {
+            $ip = trim($ip);
+            if (filter_var($ip, FILTER_VALIDATE_IP)) return $ip;
+        }
+    }
+    return $_SERVER['REMOTE_ADDR'] ?? '';
+}
+
+// ---- 2FA trusted devices (JSON store, per accountID) -------------------------
+function tfa_devices_file(): string {
+    if (!is_dir(PUSH_DATA_DIR)) @mkdir(PUSH_DATA_DIR, 0775, true);
+    return rtrim(PUSH_DATA_DIR, '/') . '/tfa_devices.json';
+}
+function tfa_devices(): array {
+    $f = tfa_devices_file();
+    if (!is_file($f)) return [];
+    $raw = json_decode((string)@file_get_contents($f), true);
+    return is_array($raw) ? $raw : [];
+}
+function tfa_save_devices(array $all): void {
+    // trim: drop devices idle > 90 days
+    $cut = time() - TFA_DEVICE_LIFETIME;
+    foreach ($all as $aid => $devs) {
+        $all[$aid] = array_values(array_filter($devs, function ($d) use ($cut) {
+            return (int)($d['last'] ?? 0) >= $cut;
+        }));
+        if (!$all[$aid]) unset($all[$aid]);
+    }
+    file_put_contents(tfa_devices_file(), json_encode($all, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+}
+function tfa_device_token(): string {
+    return (string)($_COOKIE[TFA_DEVICE_COOKIE] ?? '');
+}
+function is_staff_role($role): bool {
+    $role = (int)$role;
+    return (bool)($role & (ROLE_ADMIN | ROLE_GMH | ROLE_GML));
+}
+// Does this browser/IP need a code?
+function tfa_requires_code(int $aid, $role, string $ip): bool {
+    if (!TFA_ENABLED) return false;
+    if (TFA_ADMIN_ALWAYS && is_staff_role($role)) return true;
+    if (!TFA_REQUIRE_NEW_DEVICE) return false;
+    $token = tfa_device_token();
+    $devs = tfa_devices()[$aid] ?? [];
+    if ($token === '') return true;             // new/unknown browser
+    foreach ($devs as $d) {
+        if (($d['token'] ?? '') === $token) {
+            if (($d['ip'] ?? '') === $ip) return false;  // same device + same IP → trusted
+            // same browser from a new IP: also treat as known device? per spec "смена ip" → require code
+            return true;
+        }
+    }
+    return true;
+}
+function tfa_trust_device(int $aid, string $ip): void {
+    $all = tfa_devices();
+    $devs = $all[$aid] ?? [];
+    $token = tfa_device_token();
+    if ($token === '') {
+        $token = bin2hex(random_bytes(20));
+        setcookie(TFA_DEVICE_COOKIE, $token, time() + TFA_DEVICE_LIFETIME, '/', '', !empty($_SERVER['HTTPS']), true);
+    }
+    // mark the (token, ip) pair as seen now
+    foreach ($devs as $i => $d) {
+        if (($d['token'] ?? '') === $token && ($d['ip'] ?? '') === $ip) { $devs[$i]['last'] = time(); $all[$aid] = $devs; tfa_save_devices($all); return; }
+    }
+    $devs[] = ['token' => $token, 'ip' => $ip, 'first' => time(), 'last' => time()];
+    $all[$aid] = $devs;
+    tfa_save_devices($all);
+}
+function tfa_new_code(): string {
+    // 6 digits, no ambiguous chars needed for digits
+    return sprintf('%06d', random_int(0, 999999));
 }
