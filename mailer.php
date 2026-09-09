@@ -92,8 +92,14 @@ function portal_mail_send(string $to, string $subject, string $body, bool $html 
     stream_set_timeout($sock, $timeout);
 
     $code = 0;
-    _smtp_read_response($sock, $code);
-    if ($code !== 220) { fclose($sock); return [false, "unexpected greeting: $code"]; }
+    $greet = _smtp_read_response($sock, $code);
+    if ($code !== 220) {
+        $meta = stream_get_meta_data($sock);
+        $why = $meta['timed_out'] ? ' (timed out — wrong port/encryption? for port 465 use ssl, for 587 use tls)' : ' (connection closed)';
+        $partial = trim($greet);
+        fclose($sock);
+        return [false, 'unexpected greeting: ' . $code . $why . ($partial !== '' ? ' — server said: ' . $partial : '')];
+    }
 
     list($code, $ext) = _smtp_ehlo_lines($sock, 'portal');
     if ($code !== 250) { fclose($sock); return [false, "EHLO rejected: $code"]; }
