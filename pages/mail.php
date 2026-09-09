@@ -9,7 +9,8 @@ if (!is_logged_in()) { redirect('/login'); }
 $user   = current_user();
 $aid    = (int)$user['accountID'];
 $tab    = $_GET['tab'] ?? 'inbox';
-if (!in_array($tab, ['inbox', 'sent', 'notif'], true)) $tab = 'inbox';
+if (!in_array($tab, ['inbox', 'sent', 'notif', 'corp', 'alliance', 'lists'], true)) $tab = 'inbox';
+$listFilter = !empty($_GET['list']) ? (int)$_GET['list'] : 0;   // single mailing list view
 
 // ---- identity: first character + list of account characters (sender chooser)
 $chars   = [];
@@ -136,6 +137,14 @@ if (!isset($error) || !$error) {
             foreach ($rows as $r) foreach (explode(',', $r['toids']) as $t) if ((int)$t) $nameIds[(int)$t] = 1;
         }
         if ($viewRow && $tab === 'inbox') { /* sender shown, nothing to resolve */ }
+
+        // single-list view under "Списки рассылки" filters server rows client-side
+        if ($tab === 'lists' && $listFilter) {
+            $rows = array_values(array_filter($rows, function($r) use ($listFilter) {
+                return (int)($r['tolistid'] ?? 0) === $listFilter;
+            }));
+        }
+
         $nameMap = [];
         if ($nameIds) {
             $ids = implode(',', array_keys($nameIds));
@@ -146,6 +155,18 @@ if (!isset($error) || !$error) {
                     $nameMap[(int)($r['id'] ?? 0)] = (string)($r['name'] ?? '');
             }
         }
+    }
+}
+
+// mailing lists the account chars belong to (shown in the left menu always)
+$mailLists = [];
+$lx2 = api_get('/char/MailingLists.xml.aspx?accountid=' . $aid);
+if ($lx2 !== null && isset($lx2->result->lists)) {
+    foreach ($lx2->result->lists->row as $r) {
+        $mailLists[] = [
+            'id' => (int)($r['listid'] ?? 0),
+            'name' => (string)($r['displayname'] ?? ''),
+        ];
     }
 }
 
@@ -178,6 +199,14 @@ function notif_label(int $t): string {
     return $m[$t] ?? ('Notification #' . $t);
 }
 
+// notification grouping (categories shown in the /mail sidebar section)
+function notif_group(int $t): string {
+    if (in_array($t, [1, 2, 3, 4, 5], true)) return 'War';
+    if (in_array($t, [13, 14, 16, 25, 34, 54, 62, 63], true)) return 'Corporation';
+    if (in_array($t, [28, 30, 74, 76, 78, 83, 84, 85], true)) return 'Sovereignty';
+    return 'System';
+}
+
 // ---- pagination over the fetched list (server has no offset; same pattern as haul)
 $mailPageSize = 20;
 $mailPage = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
@@ -203,6 +232,21 @@ ob_start();
 .mail-tabs a.active{background:var(--accent2);color:#06121f;border-color:transparent;font-weight:700}
 .mail-tabs .push-btn{padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);cursor:pointer;font-size:12px}
 .mail-card{border:1px solid var(--border);border-radius:10px;background:var(--bg-card);overflow:hidden}
+.mail-layout{display:grid;grid-template-columns:210px 1fr;gap:16px;align-items:start}
+.mail-menu{border:1px solid var(--border);border-radius:10px;background:var(--bg-card);overflow:hidden}
+.mail-menu a{display:block;padding:8px 14px;color:var(--text);border-bottom:1px solid var(--border);text-decoration:none;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mail-menu a:last-of-type{border-bottom:none}
+.mail-menu a:hover{background:var(--bg-hover);color:var(--accent2)}
+.mail-menu a.active{background:rgba(74,158,255,.12);color:var(--accent2);font-weight:700}
+.mail-menu .m-group{padding:8px 12px 5px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text-dim);border-bottom:1px solid var(--border);margin-top:4px}
+.notif-row summary{display:flex;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--border);cursor:pointer;list-style:none;font-size:13px}
+.notif-row summary::-webkit-details-marker{display:none}
+.notif-row summary::before{content:'▸';color:var(--text-dim);flex:0 0 auto;transition:transform .12s}
+.notif-row[open] summary::before{content:'▾'}
+.notif-row summary:hover{background:var(--bg-hover)}
+.notif-row summary b{flex:0 0 auto;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.notif-row summary .badge{flex:0 0 auto}
+.notif-row summary span.date{margin-left:auto}
 .mail-compose{margin:14px 0;padding:16px;border:1px solid var(--border);border-radius:10px;background:var(--bg-card)}
 .mail-compose>b{display:block;margin-bottom:10px;color:var(--text-bright, var(--text))}
 .mail-compose label{display:block;font-size:12px;color:var(--text-dim);margin:10px 0 4px}
@@ -232,7 +276,7 @@ ob_start();
 .mail-view .m-top{display:flex;gap:10px;align-items:center;margin-bottom:12px}
 .mail-view .m-top img{width:44px;height:44px;border-radius:50%;border:1px solid var(--border)}
 .mail-view .body{white-space:pre-wrap;word-break:break-word;line-height:1.55;font-size:13px}
-.notif-row{display:flex;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid var(--border);font-size:13px}
+.notif-row{padding:0;font-size:13px}
 .notif-row:last-child{border-bottom:none}
 .notif-row .badge{background:rgba(255,200,60,.14);color:#ffc83c;border-radius:6px;padding:2px 7px;font-size:12px;white-space:nowrap}
 .empty{color:var(--text-dim);text-align:center;padding:26px 0}
@@ -251,15 +295,25 @@ ob_start();
     <?php if ($tab !== 'notif'): ?><span class="mail-count"><?= $mailTotal ?> писем · страница <?= $mailPage ?>/<?= $mailPages ?></span><?php endif; ?>
 </div>
 
-<div class="mail-tabs">
-    <a href="/mail" class="<?= $tab==='inbox'?'active':'' ?>">Входящие</a>
-    <a href="/mail?tab=sent" class="<?= $tab==='sent'?'active':'' ?>">Отправленные</a>
-    <a href="/mail?tab=notif" class="<?= $tab==='notif'?'active':'' ?>">Уведомления</a>
-    <span style="flex:1"></span>
-    <?php if (PUSH_ENABLED): ?>
-        <button id="pushToggle" class="push-btn">Уведомления: …</button>
-    <?php endif; ?>
-</div>
+<div class="mail-layout">
+    <aside class="mail-menu">
+        <div class="m-group">Почта</div>
+        <a href="/mail" class="<?= $tab==='inbox'?'active':'' ?>">Личные</a>
+        <a href="/mail?tab=corp" class="<?= $tab==='corp'?'active':'' ?>">Корпорация</a>
+        <a href="/mail?tab=alliance" class="<?= $tab==='alliance'?'active':'' ?>">Альянс</a>
+        <div class="m-group">Списки рассылки</div>
+        <?php foreach ($mailLists as $l): ?>
+            <a href="/mail?tab=lists&list=<?= (int)$l['id'] ?>" class="<?= ($tab==='lists' && $listFilter===(int)$l['id']) ? 'active' : '' ?>"><?= e($l['name']) ?></a>
+        <?php endforeach; ?>
+        <a href="/mail?tab=lists" class="<?= ($tab==='lists' && !$listFilter) ? 'active' : '' ?>">Все сообщения списков</a>
+        <div class="m-group">Прочее</div>
+        <a href="/mail?tab=sent" class="<?= $tab==='sent'?'active':'' ?>">Отправленные</a>
+        <a href="/mail?tab=notif" class="<?= $tab==='notif'?'active':'' ?>">Уведомления</a>
+        <?php if (PUSH_ENABLED): ?>
+            <div style="padding:10px 12px"><button id="pushToggle" class="push-btn" style="width:100%">Уведомления: …</button></div>
+        <?php endif; ?>
+    </aside>
+    <div class="mail-main">
 
 <?php if ($tab !== 'notif'): ?>
 <div class="mail-compose">
@@ -288,19 +342,45 @@ ob_start();
 <?php endif; ?>
 
 <?php if ($tab === 'notif'): ?>
-    <?php if (!$notifs): ?><p style="color:var(--text-dim)">Новых уведомлений нет.</p><?php endif; ?>
-    <div style="margin:14px 0">
+    <?php if (!$notifs): ?><div class="empty">Новых уведомлений нет.</div><?php endif; ?>
+    <div style="margin:0 0 12px">
         <?php if ($notifs): ?><a href="/mail?tab=notif&clearall=1" class="btn btn-outline" style="font-size:12px">Отметить все прочитанными</a><?php endif; ?>
     </div>
-    <?php foreach ($notifs as $n): ?>
-        <div class="notif-row">
-            <span class="badge"><?= e(notif_label((int)$n['typeid'])) ?></span>
-            <span style="flex:1">
-                <?php if ((int)$n['senderid']): ?>от <b><?= e($n['sendername'] ?: ('#' . $n['senderid'])) ?></b><?php else: ?><b>Система</b><?php endif; ?>
-                <span style="color:var(--text-dim);font-size:12px">&nbsp;для <?= e($n['receivername'] ?: ('#' . $n['receiverid'])) ?></span>
-            </span>
-            <span style="color:var(--text-dim);font-size:12px"><?= e(date('d.m.Y H:i', filetime_to_unix($n['created']))) ?></span>
-            <a href="/mail?tab=notif&marknotif=<?= (int)$n['id'] ?>" class="m-act" style="color:var(--text-dim);font-size:12px;text-decoration:none">ок</a>
+    <?php
+    // notifications grouped by category (War / Corporation / Sovereignty / System),
+    // each row is expandable (<details>) so the details open in place.
+    $grpOrder = ['War', 'Corporation', 'Sovereignty', 'System'];
+    $notifGroups = [];
+    foreach ($notifs as $n)
+        $notifGroups[notif_group((int)$n['typeid'])][] = $n;
+    ?>
+    <?php foreach ($grpOrder as $gTitle):
+        if (empty($notifGroups[$gTitle])) continue;
+        $gRows = $notifGroups[$gTitle]; ?>
+        <div class="m-group" style="margin:14px 0 6px;letter-spacing:1px"><?= e($gTitle) ?> · <?= count($gRows) ?></div>
+        <div class="mail-card">
+        <?php foreach ($gRows as $n): ?>
+            <details class="notif-row">
+                <summary>
+                    <span class="badge"><?= e(notif_label((int)$n['typeid'])) ?></span>
+                    <?php if ((int)$n['senderid']): ?>
+                        <b><?= e($n['sendername'] ?: ('#' . $n['senderid'])) ?></b>
+                    <?php else: ?>
+                        <b>Система</b>
+                    <?php endif; ?>
+                    <span class="date" style="color:var(--text-dim);font-size:12px"><?= e(date('d.m.Y H:i', filetime_to_unix($n['created']))) ?></span>
+                </summary>
+                <div style="padding:8px 4px 2px;font-size:12px;color:var(--text-dim)">
+                    <?php if ((int)$n['senderid']): ?>от <b><?= e($n['sendername'] ?: ('#' . $n['senderid'])) ?></b><?php else: ?><b>Система</b><?php endif; ?>
+                    &nbsp;для <?= e($n['receivername'] ?: ('#' . $n['receiverid'])) ?>
+                    &nbsp;·&nbsp; <?= e(notif_label((int)$n['typeid'])) ?>
+                    &nbsp;·&nbsp; typeID <?= (int)$n['typeid'] ?>
+                    <div style="margin-top:6px">
+                        <a href="/mail?tab=notif&marknotif=<?= (int)$n['id'] ?>" style="color:var(--accent2);text-decoration:none;font-size:12px">отметить прочитанным</a>
+                    </div>
+                </div>
+            </details>
+        <?php endforeach; ?>
         </div>
     <?php endforeach; ?>
 <?php else: ?>
@@ -356,7 +436,15 @@ ob_start();
             </div>
         <?php endif; ?>
     <?php elseif (!$mailShown && !$viewRow): ?>
-        <div class="mail-card"><div class="empty"><?= $tab === 'sent' ? 'Отправленных писем нет.' : 'Входящих писем нет.' ?></div></div>
+        <div class="empty">
+            <?php
+                echo e($tab === 'sent' ? 'Отправленных писем нет.'
+                    : ($tab === 'corp' ? 'Корпоративных писем нет.'
+                    : ($tab === 'alliance' ? 'Писем от альянса нет.'
+                    : ($tab === 'lists' ? 'Сообщений от рассылок нет.'
+                    : 'Входящих писем нет.'))));
+            ?>
+        </div>
     <?php endif; ?>
 
     <?php if (!$viewRow && $mailShown): ?>
@@ -401,7 +489,9 @@ ob_start();
     </div>
     <?php endif; ?>
     <?php endif; ?>
-<?php endif; ?>
+    <?php endif; ?>
+    </div><!-- /.mail-main -->
+</div><!-- /.mail-layout -->
 
 <button id="mailToastBtn" title="Новое событие">🔔</button>
 <div class="toast" id="mailToast"></div>

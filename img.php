@@ -10,7 +10,11 @@ if (!is_dir($cacheDir)) {
 }
 
 $url = $_GET['url'] ?? '';
-if (empty($url) || !preg_match('#^https://(images\.eveonline\.com|images\.zkillboard\.com|images\.evetech\.net)/#', $url)) {
+// Two hosts only: the public image CDNs AND our own LAN image server
+// (http://172.20.1.47:26001 - the portal's char_portrait()/corp_logo() route
+// through this cache proxy because a browser on the internet cannot reach a
+// 172.x address directly).
+if (empty($url) || !preg_match('#^(https://(images\.eveonline\.com|images\.zkillboard\.com|images\.evetech\.net)|http://172\.20\.1\.47:26001)/#', $url)) {
     http_response_code(400);
     exit;
 }

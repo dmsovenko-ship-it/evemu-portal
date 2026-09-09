@@ -142,19 +142,23 @@ function ship_type_icon($typeID, $size = 32) {
     return '/img.php?url=' . urlencode(EVE_ICON . '/' . $typeID . '/icon?size=' . evetech_size($size));
 }
 
+// Portraits/logos live on OUR image server (IMAGE_SERVER = lan://...:26001).
+// A browser on the internet cannot reach a 172.x address, so all of these go
+// through the /img.php cache proxy (it is allowed to fetch our LAN host
+// server-side); pages previously handed browsers raw unreachable URLs.
 function char_portrait($charID, $size = 64) {
     if (!$charID) return '';
-    return IMAGE_SERVER . '/Character/' . $charID . '_' . $size . '.jpg';
+    return '/img.php?url=' . urlencode(IMAGE_SERVER . '/Character/' . $charID . '_' . $size . '.jpg');
 }
 
 function corp_logo($corpID, $size = 32) {
     if (!$corpID) return '';
-    return IMAGE_SERVER . '/Corporation/' . $corpID . '_' . $size . '.png';
+    return '/img.php?url=' . urlencode(IMAGE_SERVER . '/Corporation/' . $corpID . '_' . $size . '.png');
 }
 
 function alliance_logo($allianceID, $size = 32) {
     if (!$allianceID) return '';
-    return IMAGE_SERVER . '/Alliance/' . $allianceID . '_' . $size . '.png';
+    return '/img.php?url=' . urlencode(IMAGE_SERVER . '/Alliance/' . $allianceID . '_' . $size . '.png');
 }
 
 function filetime_to_unix($filetime) {
