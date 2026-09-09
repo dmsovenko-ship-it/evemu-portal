@@ -16,23 +16,40 @@ $group = ($_GET['group'] ?? 'ip') === 'email' ? 'email' : 'ip';
 // Offline MaxMind GeoLite2 lookup (if DB present at /geo/GeoLite2-City.mmdb).
 require_once __DIR__ . '/../../lib/MaxMind/Db/Reader.php';
 $GLOBALS['__geoReader'] = null;
+$GLOBALS['__asnReader'] = null;
 function geo_txt($ip) {
     if ($ip === '' || $ip === '(нет)' || filter_var($ip, FILTER_VALIDATE_IP) === false) return '';
     try {
         if ($GLOBALS['__geoReader'] === null) {
             $db = __DIR__ . '/../../geo/GeoLite2-City.mmdb';
-            if (!is_file($db)) return '';
-            $GLOBALS['__geoReader'] = new \MaxMind\Db\Reader($db);
+            if (is_file($db)) $GLOBALS['__geoReader'] = new \MaxMind\Db\Reader($db);
         }
-        $r = $GLOBALS['__geoReader']->get($ip);
-        if (!is_array($r)) return '';
         $parts = [];
-        if (!empty($r['country']['names']['ru'])) $parts[] = $r['country']['names']['ru'];
-        elseif (!empty($r['country']['names']['en'])) $parts[] = $r['country']['names']['en'];
-        if (!empty($r['subdivisions'][0]['names']['ru'])) $parts[] = $r['subdivisions'][0]['names']['ru'];
-        elseif (!empty($r['subdivisions'][0]['names']['en'])) $parts[] = $r['subdivisions'][0]['names']['en'];
-        if (!empty($r['city']['names']['ru'])) $parts[] = $r['city']['names']['ru'];
-        elseif (!empty($r['city']['names']['en'])) $parts[] = $r['city']['names']['en'];
+        if ($GLOBALS['__geoReader'] !== null) {
+            $r = $GLOBALS['__geoReader']->get($ip);
+            if (is_array($r)) {
+                if (!empty($r['country']['names']['ru'])) $parts[] = $r['country']['names']['ru'];
+                elseif (!empty($r['country']['names']['en'])) $parts[] = $r['country']['names']['en'];
+                if (!empty($r['subdivisions'][0]['names']['ru'])) $parts[] = $r['subdivisions'][0]['names']['ru'];
+                elseif (!empty($r['subdivisions'][0]['names']['en'])) $parts[] = $r['subdivisions'][0]['names']['en'];
+                if (!empty($r['city']['names']['ru'])) $parts[] = $r['city']['names']['ru'];
+                elseif (!empty($r['city']['names']['en'])) $parts[] = $r['city']['names']['en'];
+            }
+        }
+        // ASN / provider (optional GeoLite2-ASN.mmdb)
+        if ($GLOBALS['__asnReader'] === null) {
+            $db = __DIR__ . '/../../geo/GeoLite2-ASN.mmdb';
+            if (is_file($db)) $GLOBALS['__asnReader'] = new \MaxMind\Db\Reader($db);
+        }
+        if ($GLOBALS['__asnReader'] !== null) {
+            $a = $GLOBALS['__asnReader']->get($ip);
+            if (is_array($a)) {
+                if (!empty($a['autonomous_system_organization']))
+                    $parts[] = $a['autonomous_system_organization'];
+                elseif (!empty($a['autonomous_system_number']))
+                    $parts[] = 'AS' . $a['autonomous_system_number'];
+            }
+        }
         return implode(', ', $parts);
     } catch (\Throwable $e) {
         return '';
