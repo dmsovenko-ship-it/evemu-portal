@@ -31,7 +31,7 @@ paginate_admin($accounts, 25, $paged, $p, $pages);
 <?php if ($err): ?><div class="form-error"><?= e($err) ?></div><?php endif; ?>
 
 <table class="data-table">
-    <thead><tr><th>ID</th><th>Имя</th><th>Email</th><th>Роль</th><th>Онлайн</th><th>Бан</th><th></th></tr></thead>
+    <thead><tr><th>ID</th><th>Имя</th><th>e-mail</th><th>IP</th><th>Роль</th><th>Онлайн</th><th>Бан</th><th></th></tr></thead>
     <tbody>
     <?php foreach ($paged as $a):
         $role = (int)$a['role'];
@@ -41,6 +41,7 @@ paginate_admin($accounts, 25, $paged, $p, $pages);
         <td><a href="/admin/account/<?= (int)$a['accountid'] ?>" style="color:var(--accent2)"><?= $a['accountid'] ?></a></td>
         <td style="font-weight:600"><a href="/admin/account/<?= (int)$a['accountid'] ?>" style="color:var(--text);text-decoration:none"><?= e($a['accountname']) ?></a></td>
         <td style="color:var(--text-dim)"><?= e($a['email']) ?></td>
+        <td style="color:var(--text-dim);white-space:nowrap"><?= trim((string)($a['ip'] ?? '')) !== '' ? e($a['ip']) : '—' ?></td>
         <td>
             <?php if ($role & ROLE_ADMIN): ?><span class="badge badge-admin">Admin</span>
             <?php elseif ($role & (ROLE_GMH|ROLE_GML)): ?><span class="badge badge-gm">GM</span>
@@ -62,7 +63,7 @@ paginate_admin($accounts, 25, $paged, $p, $pages);
         </td>
     </tr>
     <?php endforeach; ?>
-    <?php if (empty($paged)): ?><tr><td colspan="7" class="empty">Нет аккаунтов</td></tr><?php endif; ?>
+    <?php if (empty($paged)): ?><tr><td colspan="8" class="empty">Нет аккаунтов</td></tr><?php endif; ?>
     </tbody>
 </table>
 <?= pager_html($p, $pages) ?>

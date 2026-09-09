@@ -55,6 +55,7 @@ if ($accountID) {
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;font-size:13px">
         <div><span style="color:var(--text-dim)">ID</span><div style="font-weight:600">#<?= (int)$acc['accountid'] ?></div></div>
         <div><span style="color:var(--text-dim)">Email</span><div style="font-weight:600"><?= e($acc['email']) ?></div></div>
+        <div><span style="color:var(--text-dim)">IP</span><div style="font-weight:600"><?= trim((string)($acc['ip'] ?? '')) !== '' ? e($acc['ip']) : '—' ?></div></div>
         <div><span style="color:var(--text-dim)">Входов</span><div style="font-weight:600"><?= (int)$acc['logoncount'] ?></div></div>
         <div><span style="color:var(--text-dim)">Последний вход</span><div style="font-weight:600"><?= e($acc['lastlogin']) ?: '—' ?></div></div>
     </div>
