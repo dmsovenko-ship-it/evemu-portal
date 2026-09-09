@@ -37,11 +37,12 @@ function render_layout($title, $active, $content) {
                 </div>
             </div>
             <?php if ($user): ?>
-                <div class="nav-drop right <?= in_array($active,['chars','petitions','admin'],true)?'active':'' ?>">
+                <div class="nav-drop right <?= in_array($active,['chars','petitions','mail','admin'],true)?'active':'' ?>">
                     <a><?= e($user['accountName']) ?></a>
                     <div class="nav-drop-menu">
                         <a href="/characters" class="<?= $active==='chars'?'active':'' ?>">My Characters</a>
                         <a href="/petitions" class="<?= $active==='petitions'?'active':'' ?>">Petitions</a>
+                        <a href="/mail" class="<?= $active==='mail'?'active':'' ?>">Mail <span id="mailBadge" style="display:none;background:var(--accent2);color:#06121f;border-radius:9px;padding:0 6px;margin-left:4px;font-size:11px;font-weight:700">0</span></a>
                         <?php if ($user['role'] & (ROLE_ADMIN|ROLE_GMH|ROLE_GML)): ?>
                             <a href="/admin" class="<?= $active==='admin'?'active':'' ?>">Admin</a>
                         <?php endif; ?>
@@ -108,6 +109,46 @@ function render_layout($title, $active, $content) {
   });
 })();
 </script>
+<?php if ($user && PUSH_ENABLED): ?>
+<script>
+(function(){ // register the push service worker (only meaningful on https)
+  if (!('serviceWorker' in navigator)) return;
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
+  });
+})();
+</script>
+<?php endif; ?>
+<?php if ($user): ?>
+<script>
+(function(){ // lightweight unread badge + desktop notification while browsing
+  if (window.EVEMU_MAIL_OWN_POLL === false) return; // the /mail page runs its own poller
+  var SITE = <?= json_encode(SITE_NAME) ?>;
+  var lastMail = -1, lastNotif = -1, first = true;
+  function poll(){
+    fetch('/mail/poll', {credentials:'same-origin'}).then(function(r){ return r.json(); }).then(function(d){
+      if (!d.ok) return;
+      var dot = document.getElementById('mailBadge');
+      if (dot){
+        var n = (d.unread|0) + (d.notifications|0);
+        dot.style.display = n > 0 ? '' : 'none';
+        dot.textContent = n;
+      }
+      if (!first && (d.unread > lastMail) &&
+          typeof Notification !== 'undefined' && Notification.permission === 'granted'){
+        try{ new Notification(SITE + ' — ' + (d.unread - lastMail) + ' new mail'); }catch(e){}
+      }
+      if (!first && (d.notifications > lastNotif) &&
+          typeof Notification !== 'undefined' && Notification.permission === 'granted'){
+        try{ new Notification(SITE + ' — new notification'); }catch(e){}
+      }
+      lastMail = d.unread; lastNotif = d.notifications; first = false;
+    }).catch(function(){});
+  }
+  setInterval(poll, 20000);
+})();
+</script>
+<?php endif; ?>
 </body>
 </html>
 <?php

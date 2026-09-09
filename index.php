@@ -89,6 +89,13 @@ switch ($page) {
     case 'petitions':
         require __DIR__ . '/pages/petitions.php';
         break;
+    case 'mail':
+        // /mail/poll  — JSON counts for JS polling / service worker
+        if ($sub === 'poll') { require __DIR__ . '/pages/mail_poll.php'; break; }
+        // /mail/push  — web-push subscription management (POST subscribe/unsubscribe)
+        if ($sub === 'push') { require __DIR__ . '/pages/mail_push.php'; break; }
+        require __DIR__ . '/pages/mail.php';
+        break;
     case 'admin':
         require __DIR__ . '/pages/admin/index.php';
         break;

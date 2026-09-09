@@ -7,7 +7,17 @@ define('SITE_NAME', 'EVEmu');
 define('PORTAL_VERSION', '1.0.0');
 define('SESSION_LIFETIME', 86400);
 
-session_start();
+// ---- Web Push (mail/notification events) ------------------------------------
+// Real browser push needs a secure context (HTTPS) + Push API in the browser
+// and php-openssl here. Off by default; flip to true once the portal is behind
+// HTTPS and generate VAPID keys with tools/gen_vapid.php.
+define('PUSH_ENABLED', false);
+define('VAPID_PUBLIC_KEY',  '');   // base64url(applicationServerKey)
+define('VAPID_PRIVATE_KEY', '');   // PKCS#8 PEM base64url without headers
+define('VAPID_SUBJECT', 'mailto:admin@' . (parse_url(API_BASE, PHP_URL_HOST) ?: 'localhost'));
+define('PUSH_DATA_DIR', __DIR__ . '/cache');
+
+if (PHP_SAPI !== 'cli' && session_status() === PHP_SESSION_NONE) session_start();
 
 function api_get($path, $timeout = 5) {
     $url = API_BASE . $path;
@@ -204,4 +214,33 @@ function pager_html(int $page, int $pages): string {
     if ($page < $pages) { $q['page'] = $page + 1; $html .= '<a href="' . htmlspecialchars($path . '?' . http_build_query($q), ENT_QUOTES, 'UTF-8') . '">Next &rarr;</a>'; }
     $html .= '</div>';
     return $html;
+}
+
+// ---- push subscription store (JSON file in PUSH_DATA_DIR) --------------------
+function push_subs_file(): string {
+    if (!is_dir(PUSH_DATA_DIR)) @mkdir(PUSH_DATA_DIR, 0775, true);
+    return rtrim(PUSH_DATA_DIR, '/') . '/push_subs.json';
+}
+
+function push_subs(): array {
+    $f = push_subs_file();
+    if (!is_file($f)) return [];
+    $raw = @file_get_contents($f);
+    $arr = json_decode((string)$raw, true);
+    return is_array($arr) ? $arr : [];
+}
+
+function push_save_subs(array $subs): void {
+    // key by endpoint
+    $byKey = [];
+    foreach ($subs as $s) if (isset($s['endpoint'])) $byKey[$s['endpoint']] = $s;
+    file_put_contents(push_subs_file(), json_encode(array_values($byKey), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+}
+
+// base64url helpers (browser push keys are base64url, VAPID keys too)
+function b64url_encode(string $data): string {
+    return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+}
+function b64url_decode(string $data): string {
+    return base64_decode(strtr($data, '-_', '+/'));
 }
