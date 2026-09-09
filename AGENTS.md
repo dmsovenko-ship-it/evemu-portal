@@ -57,7 +57,7 @@ PHP-портал-киллборда для приватного EVEmu. Репо�
 - Portal version footer: `PORTAL_VERSION`.
 
 ## TODO / на проверку
-- 🔴 **eve-mail `/mail` оформление + пагинация** (см. блок «9 сентября (вечер)» выше).
+- ✅ **eve-mail `/mail` оформление + пагинация** — ЗАКРЫТО (`d9af208`, 9 сент.): общий стиль портала, портреты отправителей, подсветка непрочитанных, пагинация 20/страницу_one-fetch limit=500 (сервер offset не имеет; паттерн haul.php), читалка с портретом. Деплой на прод `d9af208`.
 - Проверить после деплоя сервера (auth/mail в evemu origin): регистрация с email, 2FA-код (админ всегда / новый IP), привязка email для старых аккаунтов.
 - **Web Push** — включить позже на HTTPS: `php tools/gen_vapid.php` → VAPID_* в config, `PUSH_ENABLED=true`, cron `tools/push_worker.php` каждую минуту.
 - После пересборки сервера `d0c2e655` + portal `e2ec7c0`: главная (карточки Ships/Structures/Sponsored со значением, сайдбар Current Activity/Top), детальный килл (корпы/альянсы/карты справа, related), онлайн с челоботами, логин (CCP hash).
