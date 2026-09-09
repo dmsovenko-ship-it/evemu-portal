@@ -277,7 +277,7 @@ ob_start();
                     &nbsp;·&nbsp; Кому: <?= e(implode(', ', array_map(function($t){ return (string)$t; }, array_filter(array_map('trim', explode(',', $viewRow['toids'])))))) ?>
                 <?php endif; ?>
             </div>
-            <div class="body"><?= nl2br(e($viewRow['body'])) ?></div>
+            <div class="body"><?= e($viewRow['body']) ?></div>
             <?php if ($tab === 'inbox'): ?>
                 <div style="margin-top:14px">
                     <a class="btn btn-primary" style="font-size:13px"
