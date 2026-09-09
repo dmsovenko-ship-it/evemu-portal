@@ -50,6 +50,16 @@ if ($xml && $xml->result && $xml->result->flags)
             </td>
             <td style="color:var(--text-dim);white-space:nowrap"><?= e($f['createdate']) ?></td>
         </tr>
+        <?php elseif ($t === 'capital'): ?>
+        <tr>
+            <td><span class="badge badge-gm">Capital</span></td>
+            <td>
+                <a href="/character/<?= (int)$f['characterid'] ?>" style="color:var(--accent2)"><?= e($f['charactername']) ?></a>
+                (акк. <a href="/admin/account/<?= (int)$f['accountid'] ?>" style="color:var(--accent2)"><?= e($f['accountname']) ?></a>)
+                <div style="color:var(--text-dim);font-size:11px"><?= e($f['groupname']) ?>: <?= e($f['shipname']) ?></div>
+            </td>
+            <td style="color:var(--text-dim)"><?= ship_icon((int)$f['shiptypeid'], 32) !== '' ? '<img src="'.ship_icon((int)$f['shiptypeid'],32).'" alt="" width="24" height="24" style="vertical-align:middle" onerror="this.style.display=\'none\'">' : '—' ?></td>
+        </tr>
         <?php endif; ?>
     <?php endforeach; ?>
     <?php if (empty($flags)): ?><tr><td colspan="3" class="empty">Флагов нет — всё чисто.</td></tr><?php endif; ?>

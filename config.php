@@ -73,14 +73,23 @@ function role_name($role) {
     return implode(', ', $names);
 }
 
+function evetech_size($size) {
+    $size = (int)$size;
+    if ($size <= 48)  return 32;
+    if ($size <= 96)  return 64;
+    if ($size <= 192) return 128;
+    if ($size <= 384) return 256;
+    return 512;
+}
+
 function ship_icon($typeID, $size = 32) {
     if (!$typeID) return '';
-    return '/img.php?url=' . urlencode(EVE_RENDER . '/' . $typeID . '/render?size=' . $size);
+    return '/img.php?url=' . urlencode(EVE_RENDER . '/' . $typeID . '/render?size=' . evetech_size($size));
 }
 
 function ship_type_icon($typeID, $size = 32) {
     if (!$typeID) return '';
-    return '/img.php?url=' . urlencode(EVE_ICON . '/' . $typeID . '/icon?size=' . $size);
+    return '/img.php?url=' . urlencode(EVE_ICON . '/' . $typeID . '/icon?size=' . evetech_size($size));
 }
 
 function char_portrait($charID, $size = 64) {
