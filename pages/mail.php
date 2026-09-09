@@ -2,6 +2,7 @@
 // /mail — player eve-mail portal page (inbox/sent/compose) + in-game notifications.
 error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
 require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../layout.php';
 
 if (!is_logged_in()) { redirect('/login'); }
 
