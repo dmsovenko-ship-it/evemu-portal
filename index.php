@@ -76,6 +76,9 @@ switch ($page) {
     case 'register':
         require __DIR__ . '/pages/register.php';
         break;
+    case 'rules':
+        require __DIR__ . '/pages/rules.php';
+        break;
     case 'login':
         require __DIR__ . '/pages/login.php';
         break;

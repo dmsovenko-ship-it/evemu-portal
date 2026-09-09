@@ -59,7 +59,7 @@ function render_layout($title, $active, $content) {
 <?= $content ?>
 </main>
 <footer class="footer">
-    <?= SITE_NAME ?> Killboard &copy; <?= date('Y') ?> &mdash; Portal v<?= PORTAL_VERSION ?> &mdash; Powered by EVEmu
+    <?= SITE_NAME ?> Killboard &copy; <?= date('Y') ?> &mdash; Portal v<?= PORTAL_VERSION ?> &mdash; Powered by EVEmu &mdash; <a href="/rules" style="color:var(--text-dim)">Rules</a>
 </footer>
 
 <style>
