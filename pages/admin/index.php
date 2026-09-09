@@ -16,6 +16,7 @@ ob_start();
         <a href="/admin/security" class="<?= $sub==='security'?'active':'' ?>">Security</a>
         <a href="/admin/network" class="<?= $sub==='network'?'active':'' ?>">Network</a>
         <a href="/admin/news" class="<?= $sub==='news'?'active':'' ?>">News</a>
+        <a href="/admin/emailtest" class="<?= $sub==='emailtest'?'active':'' ?>">SMTP test</a>
         <?php if (current_user()['role'] & ROLE_ADMIN): ?>
             <a href="/admin/timecodes" class="<?= $sub==='timecodes'?'active':'' ?>">Timecodes</a>
             <a href="/admin/items" class="<?= $sub==='items'?'active':'' ?>">Items</a>

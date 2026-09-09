@@ -5,7 +5,7 @@ define('EVE_ICON', 'https://images.evetech.net/types');
 define('IMAGE_SERVER', 'http://127.0.0.1:26001');
 define('SITE_NAME', 'EVEmu');
 define('PORTAL_VERSION', '1.0.0');
-define('SESSION_LIFETIME', 86400);
+define('SESSION_LIFETIME', 8 * 3600);   // max 8 hours (see security plan)
 
 // ---- Web Push (mail/notification events) ------------------------------------
 // Real browser push needs a secure context (HTTPS) + Push API in the browser
@@ -17,7 +17,34 @@ define('VAPID_PRIVATE_KEY', '');   // PKCS#8 PEM base64url without headers
 define('VAPID_SUBJECT', 'mailto:admin@' . (parse_url(API_BASE, PHP_URL_HOST) ?: 'localhost'));
 define('PUSH_DATA_DIR', __DIR__ . '/cache');
 
-if (PHP_SAPI !== 'cli' && session_status() === PHP_SESSION_NONE) session_start();
+// ---- outbound e-mail (SMTP) -------------------------------------------------
+// portal_mail_send() in mailer.php uses these. 'tls' = STARTTLS on MAIL_PORT,
+// 'ssl' = implicit TLS, 'none' = plaintext (port 25). AUTH is used only when
+// MAIL_USER is non-empty. Test from /admin/emailtest.
+define('MAIL_ENABLED', false);
+define('MAIL_HOST', '');
+define('MAIL_PORT', 587);
+define('MAIL_USER', '');
+define('MAIL_PASS', '');
+define('MAIL_FROM', '');          // fallback: MAIL_USER
+define('MAIL_FROM_NAME', SITE_NAME);
+define('MAIL_ENCRYPTION', 'tls'); // tls | ssl | none
+define('MAIL_TIMEOUT', 30);
+
+if (PHP_SAPI !== 'cli' && session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'lifetime' => SESSION_LIFETIME,
+        'path'     => '/',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    session_start();
+    // hard cap on the session age as well (defence in depth)
+    if (isset($_SESSION['login_time']) && time() - (int)$_SESSION['login_time'] > SESSION_LIFETIME) {
+        session_unset();
+        session_destroy();
+    }
+}
 
 function api_get($path, $timeout = 5) {
     $url = API_BASE . $path;
