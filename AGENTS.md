@@ -4,6 +4,18 @@ PHP-портал-киллборда для приватного EVEmu. Репо�
 
 **Правило**: портал НЕ ходит в БД напрямую — только в API-сервер EVEmu (`API_BASE`, default `http://127.0.0.1:26002`). Данные получает XML; SimpleXML в PHP 8 регистрозависим → ВСЕ элементы/атрибуты API lowercase.
 
+## 9 сентября (вечер): eve-mail `/mail` + безопасность (SMTP→email при регистрации→2FA→правила)
+Портал-серия (`bc8ef23`..`6f8ff16`), серверная подложка — в evemu AGENTS.
+- **Eve-mail `/mail`** (игрок, только свой аккаунт): табы Входящие/Отправленные/Уведомления. API: `char/MailList`(inbox|sent, aggregate по чарам accountID, unread), `MailGet`(body распаковывается по `0x78`, авто-read), `MailSend`(от чара аккаунта, схема MailDB::SendMail), `MailRead/MailUnread`, `Notifications`(игровые, processed=0 по умолчанию), `NotifRead/NotifReadAll`, `MailStatus`(unread/notifications/lastmessageid/lastnotificationid для поллинга). Стили страницы — костыльные inline в `pages/mail.php` (CSS `.mail-*` инлайном), НЕ вынесены в style.css. События: `/mail/poll` (JSON) + бейдж непрочитанного в меню Mail (все страницы, поллинг 20с; на `/mail` свои 10с), desktop `Notification` при открытой вкладке. Web Push СДЕЛАН, ВЫКЛЮЧЕН (`PUSH_ENABLED=false`): `sw.js`, `/mail/push`, `tools/push_worker.php` (cron), `tools/gen_vapid.php`; нужен HTTPS + VAPID + cron на хосте.
+- **SMTP** (`mailer.php`, порт. тест `/admin/emailtest`): чистый PHP SMTP (tls/ssl/none, AUTH LOGIN/PLAIN, UTF-8/base64, RFC2047). Конфиг `MAIL_*`; прод тестирован (SSL). ⚠️ Прод-`config.php` хранит локальные `MAIL_*` — при деплое не затирать.
+- **Email обязателен при регистрации** (сервер): `auth/Register` валидирует/хранит уникальный email (колонка `account.email` уже была), `auth/Login` возвращает `<email>`, новый `auth/SetEmail` для аккаунтов без почты. Экранирование имён (SQL-inj закрыта).
+- **2FA** (портал `604ac28`): код на email. Админы — всегда; остальные — новый device/IP (`cache/tfa_devices.json`, cookie `evemu_2fa_dev` 180д). Код 6 цифр, TTL 10мин, 5 попыток, в сессии только hash. Аккаунт без email → шаг привязки (SetEmail). Сессия создаётся после кода; `SESSION_LIFETIME=8ч` (cookie + guard `login_time`). `TFA_ENABLED/TFA_REQUIRE_NEW_DEVICE/TFA_ADMIN_ALWAYS` в config.
+- **Правила при регистрации** (`6f8ff16`): `portal_rules.php` (`server_rules_text()`), страница `/rules`, в форме обязательный чекбокс (серверная проверка) + раскрывающийся блок текста; ссылка Rules в футере.
+- Деплой: требует пересборку сервера (mail API/live-push/auth в evemu origin), затем git pull портала.
+
+## TODO / next session (портал)
+- 🔴 **`/mail` — оформить + пагинация** (юзер: «в еве почте нет оформления и пагинации»). Перенести инлайн-CSS `.mail-*`/тост/бейдж в style.css; списки писем/уведомлений пагинировать (сервер: `limit` есть, offset/page НЕТ — добавить page/offset в `MailList/Notifications` или нарезать в PHP как haul.php). Возможно: вынести шапку тредов, кнопки компоуз/ответ красивее.
+
 ## Петиции и новости — единая с игрой модель (8 сент., портал `955be91` за петициями, `32acbe5`+)
 - **Петиции** (портал ↔ игровой F12 через общие таблицы сервера): `/petitions` (игрок): форма «группа→категория» (PetitionCategories, язык whitelist) + subject/body → `PetitionCreate` (author=первый чар аккаунта через CharacterList; senderid передаётся, petition.characterID=0 → видна всем чарам аккаунта в игре); список своих `PetitionMine?accountid` (вкл. игровые строки); тред `PetitionMessages?petitionid&accountid`; ответ `PetitionAddMessage` (ownership+open) / отмена `PetitionCancel`. `/admin/petitions` (GM): `PetitionList` (все, источник игра/портал по characterid, статус), тред, ответ `PetitionReply` (isGM=1 в тред, adminname/senderid = первый чар админа), закрыть `PetitionClose`. CSS тредов `.pet-thread/.pet-msg/.pet-msg-gm` в style.css.
 - **Новости** `/admin/news`: публикация `PostNews` + **архив** из `NewsList` (id/date/author/title/body) с кнопками «В ТГ» (`NewsResend`) и «Удалить» (`NewsDelete`, confirm). Превью без mbstring (`news_preview` UTF-8-safe).
@@ -33,7 +45,7 @@ PHP-портал-киллборда для приватного EVEmu. Репо�
 - `/server/ActiveSystems.xml.aspx`, `/server/MarketStats.xml.aspx`, `/server/KillStats.xml.aspx`.
 - `/char/KillMails.xml.aspx?characterID=&beforekillid=`, `/char/AllKills.xml.aspx`, `/char/CharacterList.xml.aspx?accountid=|page=`, `/char/CharacterInfo.xml.aspx?characterID=`, `/char/KillDetail.xml.aspx?killid=` (полный: corp/alliance/region жертвы+убийцы, ticker), `/char/KillMail.xml.aspx?killid=` (текст killmail), `/char/RelatedKills.xml.aspx?killid=` (та же система ±24ч), `/char/Resolve.xml.aspx?ids=`.
 - `/corp/KillMails.xml.aspx?corporationID=`, `/corp/MemberTracking.xml.aspx`.
-- `/auth/Login.xml.aspx` (POST form name/password; CCP PasswordHash SHA1), `/auth/Register.xml.aspx`.
+- `/auth/Login.xml.aspx` (POST form name/password; CCP PasswordHash SHA1; возвращает `<email>`), `/auth/Register.xml.aspx` (email обязателен+уникален), `/auth/SetEmail.xml.aspx` (для аккаунтов без почты).
 - `/admin/AccountList|BanAccount|UnbanAccount|PetitionList|PetitionClose|PetitionReply|TimecodeList|GrantTimecode|GiveItem|SetRole.xml.aspx`.
 
 ## Рабочие заметки / правила API
@@ -45,7 +57,9 @@ PHP-портал-киллборда для приватного EVEmu. Репо�
 - Portal version footer: `PORTAL_VERSION`.
 
 ## TODO / на проверку
-- **Хотелка: eve-mail на портале для игроков** (9 сент.). Аналог почты EVE: читать/писать сообщения (mailMessage/mailStatus — те же таблицы, что LSCService::SelfEveMail), входящие/исходящие, ответ. Нужен серверный API (порт: mail-эндпоинты в API-сервере), страницы `/mail` + авторизация по аккаунту (как петиции: только свои). Не начато.
+- 🔴 **eve-mail `/mail` оформление + пагинация** (см. блок «9 сентября (вечер)» выше).
+- Проверить после деплоя сервера (auth/mail в evemu origin): регистрация с email, 2FA-код (админ всегда / новый IP), привязка email для старых аккаунтов.
+- **Web Push** — включить позже на HTTPS: `php tools/gen_vapid.php` → VAPID_* в config, `PUSH_ENABLED=true`, cron `tools/push_worker.php` каждую минуту.
 - После пересборки сервера `d0c2e655` + portal `e2ec7c0`: главная (карточки Ships/Structures/Sponsored со значением, сайдбар Current Activity/Top), детальный килл (корпы/альянсы/карты справа, related), онлайн с челоботами, логин (CCP hash).
 - Оценка ISK зависит от mktOrders: если цены нереалистичны/пусты — подкрутить (возможно SEED/import цен, fallback на basePrice invTypes).
 - Админка: выдача таймкодов/предметов требует проверки на живой сессии; роли субадминов настраиваются через SetRole.
