@@ -3,3 +3,9 @@
 *~
 .DS_Store
 Thumbs.db
+
+lib/
+geo/
+vendor/
+composer.json
+composer.lock

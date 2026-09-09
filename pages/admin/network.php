@@ -13,6 +13,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'ban_i
 
 $group = ($_GET['group'] ?? 'ip') === 'email' ? 'email' : 'ip';
 
+// Offline MaxMind GeoLite2 lookup (if DB present at /geo/GeoLite2-City.mmdb).
+require_once __DIR__ . '/../../lib/MaxMind/Db/Reader.php';
+$GLOBALS['__geoReader'] = null;
+function geo_txt($ip) {
+    if ($ip === '' || $ip === '(нет)' || filter_var($ip, FILTER_VALIDATE_IP) === false) return '';
+    try {
+        if ($GLOBALS['__geoReader'] === null) {
+            $db = __DIR__ . '/../../geo/GeoLite2-City.mmdb';
+            if (!is_file($db)) return '';
+            $GLOBALS['__geoReader'] = new \MaxMind\Db\Reader($db);
+        }
+        $r = $GLOBALS['__geoReader']->get($ip);
+        if (!is_array($r)) return '';
+        $parts = [];
+        if (!empty($r['country']['names']['ru'])) $parts[] = $r['country']['names']['ru'];
+        elseif (!empty($r['country']['names']['en'])) $parts[] = $r['country']['names']['en'];
+        if (!empty($r['subdivisions'][0]['names']['ru'])) $parts[] = $r['subdivisions'][0]['names']['ru'];
+        elseif (!empty($r['subdivisions'][0]['names']['en'])) $parts[] = $r['subdivisions'][0]['names']['en'];
+        if (!empty($r['city']['names']['ru'])) $parts[] = $r['city']['names']['ru'];
+        elseif (!empty($r['city']['names']['en'])) $parts[] = $r['city']['names']['en'];
+        return implode(', ', $parts);
+    } catch (\Throwable $e) {
+        return '';
+    }
+}
+
 $accounts = [];
 $xml = api_get('/admin/AccountsNetwork.xml.aspx');
 if ($xml && $xml->result && $xml->result->accounts)
@@ -44,6 +70,9 @@ uasort($groups, function($x, $y) { return count($y) - count($x); });
         <div>
             <b style="font-size:14px"><?= $group==='ip' ? '🌐' : '✉️' ?> <?= e($key) ?></b>
             <span style="color:var(--text-dim);font-size:12px;margin-left:8px">аккаунтов: <?= count($list) ?></span>
+            <?php if ($group==='ip' && $key !== '(нет)'): $geo = geo_txt($key); if ($geo !== ''): ?>
+                <div style="color:var(--text-dim);font-size:12px">📍 <?= e($geo) ?></div>
+            <?php endif; endif; ?>
         </div>
         <?php if ($group === 'ip' && $key !== '(нет)'): ?>
             <form method="POST" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
