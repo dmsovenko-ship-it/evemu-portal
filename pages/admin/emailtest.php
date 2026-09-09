@@ -19,8 +19,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         else $error = 'Ошибка отправки: ' . $err;
     }
 }
-
-ob_start();
 ?>
 <h3>Тест SMTP</h3>
 <?php if ($sentOk): ?><div class="form-success">Письмо отправлено на <?= e($to ?? '') ?> — проверьте ящик (и спам).</div><?php endif; ?>
@@ -47,5 +45,3 @@ ob_start();
         auth <?= MAIL_USER !== '' ? 'on' : 'off' ?>.
     </p>
 </div>
-<?php
-render_layout('SMTP test', 'admin', ob_get_clean());

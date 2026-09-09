@@ -1,6 +1,7 @@
 <?php
 // /rules — server rules.
 require_once __DIR__ . '/../portal_rules.php';
+require_once __DIR__ . '/../layout.php';
 
 ob_start();
 ?>
