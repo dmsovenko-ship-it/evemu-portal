@@ -95,6 +95,8 @@ if (!isset($error) || !$error) {
                     'receiverid' => (int)($r['receiverid'] ?? 0),
                     'receivername' => (string)($r['receivername'] ?? ''),
                     'created' => (int)($r['created'] ?? 0),
+                    'avatarid' => (int)($r['senderavatarid'] ?? 0),
+                    'avatartype' => (string)($r['senderavatartype'] ?? 'character'),
                 ];
         }
     } else {
@@ -214,6 +216,15 @@ function notif_label(int $t): string {
     return $m[$t] ?? ('Уведомление #' . $t);
 }
 
+// notification sender avatar: character/agent portrait, corp logo (CEO id
+// resolved server-side) or faction logo.
+function notif_avatar_url(string $type, int $id): string {
+    if (!$id) return '';
+    if ($type === 'corporation') return corp_logo($id, 32);
+    if ($type === 'faction')     return '';
+    return char_portrait($id, 32);
+}
+
 // notification grouping (mirrors Notify::NotifyTypeToGroup on the server)
 function notif_group(int $t): string {
     if ($t === 66 || ($t >= 70 && $t <= 74)) return 'Агенты';
@@ -286,8 +297,8 @@ ob_start();
 .mail-row .m-who{min-width:170px;max-width:220px;color:var(--text-dim);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mail-row.unread .m-who{color:var(--text-bright,var(--text))}
 .mail-row.unread .m-subj{font-weight:700}
-.mail-row .m-subj{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
-.mail-row .m-date{color:var(--text-dim);font-size:12px;white-space:nowrap}
+.mail-row .m-subj{flex:0 1 50%;max-width:50%;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
+.mail-row .m-date{color:var(--text-dim);font-size:12px;white-space:nowrap;margin-left:auto}
 .mail-row .m-act a{color:var(--text-dim);font-size:12px;text-decoration:none;white-space:nowrap}
 .mail-row .m-act a:hover{color:var(--accent2)}
 .mail-pager{display:flex;gap:6px;align-items:center;justify-content:center;padding:12px}
@@ -386,6 +397,9 @@ ob_start();
         <?php foreach ($gRows as $n): ?>
             <details class="notif-row">
                 <summary>
+                    <?php $av = notif_avatar_url((string)$n['avatartype'], (int)$n['avatarid']); if ($av): ?>
+                        <img class="m-ava" src="<?= e($av) ?>" alt="" onerror="this.style.visibility='hidden'">
+                    <?php endif; ?>
                     <span class="badge" title="typeID <?= (int)$n['typeid'] ?>"><?= e(notif_label((int)$n['typeid'])) ?></span>
                     <?php if ((int)$n['senderid']): ?>
                         <b><?= e($n['sendername'] ?: ('#' . $n['senderid'])) ?></b>
