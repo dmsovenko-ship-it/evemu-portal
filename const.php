@@ -185,6 +185,19 @@ function redirect($url) {
 
 function e($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
+// UTF-8-safe truncation with a ".." suffix (no mbstring needed).
+function shorten_text($s, int $maxChars): string {
+    $s = (string)$s;
+    if ($maxChars < 1) return '';
+    $m = [];
+    if (@preg_match_all('/./us', $s, $m) === false) {
+        // invalid UTF-8 — fall back to byte truncation
+        return strlen($s) > $maxChars ? substr($s, 0, $maxChars) . '..' : $s;
+    }
+    if (count($m[0]) <= $maxChars) return $s;
+    return implode('', array_slice($m[0], 0, $maxChars)) . '..';
+}
+
 function time_ago($ts) {
     if ($ts <= 0) return '';
     $diff = time() - $ts;

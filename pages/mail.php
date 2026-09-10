@@ -287,20 +287,21 @@ ob_start();
 .mail-compose label{display:block;font-size:12px;color:var(--text-dim);margin:10px 0 4px}
 .mail-compose input[type=text],.mail-compose select,.mail-compose textarea{width:100%;box-sizing:border-box;padding:7px 9px;border-radius:7px;border:1px solid var(--border);background:#0d1117;color:var(--text);font-size:13px}
 .mail-compose textarea{min-height:130px;font-family:inherit;resize:vertical}
-.mail-row{display:flex;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;text-decoration:none;color:var(--text)}
+.mail-row{display:flex;flex-wrap:nowrap;gap:10px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;text-decoration:none;color:var(--text);white-space:nowrap;overflow:hidden}
 .mail-row:last-child{border-bottom:none}
 .mail-row:hover{background:var(--bg-hover);text-decoration:none}
 .mail-row.unread{background:rgba(74,158,255,.07)}
 .mail-row.unread:hover{background:rgba(74,158,255,.12)}
 .mail-row .m-ava{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);flex:0 0 auto;background:#0d1117;object-fit:cover}
 .mail-row .dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);flex:0 0 auto}
-.mail-row .m-who{min-width:170px;max-width:220px;color:var(--text-dim);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mail-row .m-who{flex:0 1 auto;min-width:0;max-width:190px;color:var(--text-dim);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mail-row.unread .m-who{color:var(--text-bright,var(--text))}
 .mail-row.unread .m-subj{font-weight:700}
-.mail-row .m-subj{flex:0 1 50%;max-width:50%;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
-.mail-row .m-date{color:var(--text-dim);font-size:12px;white-space:nowrap;margin-left:auto}
-.mail-row .m-act a{color:var(--text-dim);font-size:12px;text-decoration:none;white-space:nowrap}
-.mail-row .m-act a:hover{color:var(--accent2)}
+.mail-row .m-subj{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
+.mail-row .m-date{flex:0 0 auto;color:var(--text-dim);font-size:12px;white-space:nowrap;margin-left:8px}
+.mail-row .m-act{flex:0 0 auto;margin-left:8px}
+.mail-row .m-act span{color:var(--text-dim);font-size:12px;white-space:nowrap}
+.mail-row .m-act span:hover{color:var(--accent2)}
 .mail-pager{display:flex;gap:6px;align-items:center;justify-content:center;padding:12px}
 .mail-pager a,.mail-pager span{padding:5px 11px;border-radius:6px;border:1px solid var(--border);font-size:12px;color:var(--text-dim);text-decoration:none}
 .mail-pager a:hover{color:var(--accent2);border-color:var(--accent2)}
@@ -317,7 +318,7 @@ ob_start();
 .empty{color:var(--text-dim);text-align:center;padding:26px 0}
 .toast{position:fixed;right:16px;bottom:70px;z-index:600;background:var(--bg-card);border:1px solid var(--accent2);border-radius:10px;padding:12px 16px;max-width:320px;box-shadow:0 6px 20px rgba(0,0,0,.5);display:none}
 #mailToastBtn{position:fixed;right:14px;bottom:64px;z-index:500;width:40px;height:40px;border-radius:50%;border:1px solid var(--accent2);background:var(--bg-card);color:var(--text);cursor:pointer;font-size:17px;display:none}
-@media(max-width:768px){ .mail-row .m-who{min-width:110px;max-width:130px} .mail-row .m-date{display:none} }
+@media(max-width:768px){ .mail-row .m-who{max-width:120px} .mail-row .m-date{display:none} }
 </style>
 
 <script>window.EVEMU_MAIL_OWN_POLL = false;</script>
@@ -496,23 +497,24 @@ ob_start();
             <?php if ($r['unread']): ?><span class="dot" title="Непрочитано"></span><?php endif; ?>
             <span class="m-who">
                 <?php if ($tab === 'inbox'): ?>
-                    <?= e($r['sendername'] ?: ('#' . $r['senderid'])) ?>
+                    <?= e(shorten_text($r['sendername'] ?: ('#' . $r['senderid']), 24)) ?>
                 <?php else: ?>
                     <?php
                         $names = [];
                         foreach (array_filter(array_map('trim', explode(',', $r['toids']))) as $t) $names[] = $nameMap[(int)$t] ?? ('#' . $t);
-                        echo e(implode(', ', array_slice($names, 0, 3)) . (count($names) > 3 ? '…' : ''));
+                        $joined = implode(', ', $names) . (count($names) > 3 ? ' …' : '');
+                        echo e(shorten_text($joined, 30));
                     ?>
                 <?php endif; ?>
             </span>
-            <span class="m-subj"><?= e($r['title']) ?></span>
+            <span class="m-subj"><?= e(shorten_text($r['title'], 80)) ?></span>
             <span class="m-date"><?= e(date('d.m.Y H:i', filetime_to_unix($r['sentdate']))) ?></span>
             <?php if ($tab === 'inbox'): ?>
                 <span class="m-act">
-                    <a href="/mail?tab=inbox&mark=<?= $r['unread'] ? 'read' : 'unread' ?>&id=<?= (int)$r['messageid'] ?>"
-                       onclick="event.preventDefault(); fetch('/mail?tab=inbox&mark=<?= $r['unread'] ? 'read' : 'unread' ?>&id=<?= (int)$r['messageid'] ?>').then(()=>location.reload());">
+                    <span role="button" tabindex="0" style="cursor:pointer"
+                          onclick="event.stopPropagation(); event.preventDefault(); fetch('/mail?tab=inbox&mark=<?= $r['unread'] ? 'read' : 'unread' ?>&id=<?= (int)$r['messageid'] ?>').then(()=>location.reload());">
                         <?= $r['unread'] ? 'прочит.' : 'непрочит.' ?>
-                    </a>
+                    </span>
                 </span>
             <?php endif; ?>
         </a>
