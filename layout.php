@@ -149,6 +149,24 @@ function render_layout($title, $active, $content) {
 })();
 </script>
 <?php endif; ?>
+<script>
+(function(){ // navbar dropdowns: reliable tap/click toggle (fixes stuck menus on mobile)
+  var drops = document.querySelectorAll('.nav-drop');
+  function closeAll(except){ drops.forEach(function(d){ if (d !== except) d.classList.remove('open'); }); }
+  drops.forEach(function(d){
+    var trigger = d.querySelector(':scope > a');
+    if (!trigger) return;
+    trigger.addEventListener('click', function(e){
+      e.preventDefault();
+      var open = !d.classList.contains('open');
+      closeAll(d);
+      d.classList.toggle('open', open);
+    });
+  });
+  document.addEventListener('click', function(e){ if (!e.target.closest || !e.target.closest('.nav-drop')) closeAll(null); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeAll(null); });
+})();
+</script>
 </body>
 </html>
 <?php

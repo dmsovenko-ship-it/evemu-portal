@@ -195,8 +195,12 @@ img[width][height] { max-width: none; object-fit: contain; }
     white-space: nowrap;
 }
 .nav-drop-menu a:hover { color: var(--text-bright); background: rgba(255,255,255,.05); }
-.nav-drop:hover .nav-drop-menu,
-.nav-drop:focus-within .nav-drop-menu { display: block; }
+/* Open state is driven by JS (tap/click) so it works on touch devices and never
+   sticks; hover-open is only enabled for real pointers (desktop). */
+.nav-drop.open .nav-drop-menu { display: block; }
+@media (hover: hover) and (pointer: fine) {
+    .nav-drop:hover .nav-drop-menu { display: block; }
+}
 /* account dropdown hugs the right edge */
 .nav-drop.right .nav-drop-menu { left: auto; right: 0; }
 
