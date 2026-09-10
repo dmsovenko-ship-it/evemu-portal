@@ -9,3 +9,8 @@ geo/
 vendor/
 composer.json
 composer.lock
+
+# user configuration + runtime data (never overwrite on update)
+config.php
+cache/
+
