@@ -6,6 +6,12 @@ PHP-портал-киллборда для приватного EVEmu. Репо�
 
 **Конфиг (10 сент.)**: `config.php` — ТОЛЬКО пользовательские настройки (API_BASE/IMAGE_SERVER/SITE_NAME/MAIL_*/TFA_*/PUSH_*); файл в `.gitignore` (git-ignored) — обновления его не трогают. Движок, дефолты (guard `if(!defined)`) и все функции — в `const.php` (перезаписывается при обновлении). Шаблон — `config.sample.php`. Миграция на сервере: `cp config.php /tmp/config.php.bak; git checkout -- config.php; git pull; cp config.sample.php config.php` + перенести MAIL_*/значения из бэкапа.
 
+## 10 сентября (портал): конфиг-сплит, /mail, уведомления, SMTP/2FA/правила
+- **Конфиг разнесён**: `config.php` — только пользовательские настройки (git-ignored), движок/дефолты и все функции — в `const.php` (guard `if(!defined)`), шаблон `config.sample.php`. Обновления не затирают user-конфиг.
+- **/mail**: однострочные строки (без переносов, обрезка `..`), аватары уведомлений (агент/CEO/фракция, генерация портрета на image server), полный маппинг Notify::Types (RU), категории, пагинация/оформление.
+- **Безопасность**: SMTP (`mailer.php`, `/admin/emailtest`), обязательный email при регистрации, 2FA (код на почту: админы всегда, новый device/IP), правила при регистрации (`portal_rules.php`), сессия 8ч.
+- Петиции/новости — единая с игрой модель (см. ниже).
+
 ## 9 сентября (вечер): eve-mail `/mail` + безопасность (SMTP→email при регистрации→2FA→правила)
 Портал-серия (`bc8ef23`..`6f8ff16`), серверная подложка — в evemu AGENTS.
 - **Eve-mail `/mail`** (игрок, только свой аккаунт): табы Входящие/Отправленные/Уведомления. API: `char/MailList`(inbox|sent, aggregate по чарам accountID, unread), `MailGet`(body распаковывается по `0x78`, авто-read), `MailSend`(от чара аккаунта, схема MailDB::SendMail), `MailRead/MailUnread`, `Notifications`(игровые, processed=0 по умолчанию), `NotifRead/NotifReadAll`, `MailStatus`(unread/notifications/lastmessageid/lastnotificationid для поллинга). Стили страницы — костыльные inline в `pages/mail.php` (CSS `.mail-*` инлайном), НЕ вынесены в style.css. События: `/mail/poll` (JSON) + бейдж непрочитанного в меню Mail (все страницы, поллинг 20с; на `/mail` свои 10с), desktop `Notification` при открытой вкладке. Web Push СДЕЛАН, ВЫКЛЮЧЕН (`PUSH_ENABLED=false`): `sw.js`, `/mail/push`, `tools/push_worker.php` (cron), `tools/gen_vapid.php`; нужен HTTPS + VAPID + cron на хосте.
