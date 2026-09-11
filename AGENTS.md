@@ -1,5 +1,10 @@
 # EVEmu Portal — Session Context
 
+## ✅ Статус 11 сент. (подтверждено юзером)
+- **Портал актуальный** (`bd24463`, README + PROGRESS обновлены), проверен — всё работает.
+- **Web Push пока НЕ включён**: нет TLS-сертификата (нужен HTTPS для service worker / VAPID). Включать позже: `php tools/gen_vapid.php` → `VAPID_*` + `PUSH_ENABLED=true` + cron `tools/push_worker.php`.
+- Роадмап (ISK-fallback для карточек маркета, проверка админ-выдачи таймкодов/предметов, субадмин-роли) — позже.
+
 PHP-портал-киллборда для приватного EVEmu. Репозиторий PRIVATE. Развёрнут на отдельном хосте `video.iks-online.net:26006` (nginx+php-fpm) и `http://router.iks-online.net:26006` (тот же деплой), конфиг `config.php` там свой (API_BASE наружу к игровому серверу `172.20.1.47:26002`, image server `:26001`). Сервер EVEmu: `172.20.1.47`, API `:26002`, image server `:26001`. SSH-мост деплоя: `plink dmitry@172.20.1.47` → `sshpass ssh dmitry@172.20.1.49`, repo в `/var/www/html`, sudo через `echo gbnjy78 | sudo -S -p ""` (base64-скрипт паттерн). Прод-репо: локальные правки battle*.php застейджированы (устарели — origin уже содержит финальные версии).
 
 **Правило**: портал НЕ ходит в БД напрямую — только в API-сервер EVEmu (`API_BASE`, default `http://127.0.0.1:26002`). Данные получает XML; SimpleXML в PHP 8 регистрозависим → ВСЕ элементы/атрибуты API lowercase.
