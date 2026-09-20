@@ -1,5 +1,11 @@
 # EVEmu Portal — Session Context
 
+## 20 сент.: `/mail` — вкладки списков рассылки были пустыми (`5359439`)
+- **Симптом (из старого TODO «оформить /mail» — оформление и пагинация уже были сделаны ранее, `d9af208`/`4185d98`)**: реальный баг — **вкладки «Списки рассылки» всегда пустые**.
+- **Корень**: серверный `MailList.xml.aspx` отдаёт в каждой строке `tolistid` и `tocorpallianceid` (см. `APICharacterManager.cpp:822/903`), а `pages/mail.php` эти атрибуты **не парсил** → фильтр `($r['tolistid'] ?? 0) === $listFilter` всегда сравнивал 0 → пусто.
+- **Фикс**: парсинг `tolistid`/`tocorpallianceid` в `$rows` и `$viewRow`; фильтр списков заработал; `$mailPageUrl` сохраняет `&list=` при пагинации; подписи «кому» — имя списка / «Корпорация» / «Альянс» (в списке и в открытом письме); **пагинация уведомлений** (30/стр, `$notifShown`, свой пейджер) — раньше был жёсткий `limit=100`.
+- **Деплой**: `git pull --ff-only` на `/var/www/html` (боевой), `php -l` — OK, `GET /login` 200, `GET /mail` 302 (не авторизован), `config.php` (API_BASE) не затронут. Паттерн деплоя: base64-скрипт через plink→`sshpass ssh dmitry@172.20.1.49 'bash -s' < file` (⚠️ передавать скрипт по stdin, а не `bash /tmp/...` — /tmp на другом хосте).
+
 ## ✅ Статус 11 сент. (подтверждено юзером)
 - **Портал актуальный** (`bd24463`, README + PROGRESS обновлены), проверен — всё работает.
 - **Web Push пока НЕ включён**: нет TLS-сертификата (нужен HTTPS для service worker / VAPID). Включать позже: `php tools/gen_vapid.php` → `VAPID_*` + `PUSH_ENABLED=true` + cron `tools/push_worker.php`.
