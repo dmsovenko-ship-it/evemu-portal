@@ -108,6 +108,8 @@ if (!isset($error) || !$error) {
                     'senderid'  => (int)($r['senderid'] ?? 0),
                     'sendername'=> (string)($r['sendername'] ?? ''),
                     'toids'     => (string)($r['tocharacterids'] ?? ''),
+                    'tolistid'  => (int)($r['tolistid'] ?? 0),
+                    'tocorp'    => (int)($r['tocorpallianceid'] ?? 0),
                     'title'     => (string)($r['title'] ?? ''),
                     'sentdate'  => (int)($r['sentdate'] ?? 0),
                     'unread'    => (int)($r['unread'] ?? 0),
@@ -124,6 +126,8 @@ if (!isset($error) || !$error) {
                     'senderid'  => (int)($v['senderid'] ?? 0),
                     'sendername'=> (string)($v['sendername'] ?? ''),
                     'toids'     => (string)($v['tocharacterids'] ?? ''),
+                    'tolistid'  => (int)($v['tolistid'] ?? 0),
+                    'tocorp'    => (int)($v['tocorpallianceid'] ?? 0),
                     'title'     => (string)($v['title'] ?? ''),
                     'sentdate'  => (int)($v['sentdate'] ?? 0),
                     'body'      => (string)($v->body ?? ''),
@@ -250,9 +254,19 @@ $mailPages = max(1, (int)ceil($mailTotal / $mailPageSize));
 if ($mailPage > $mailPages) $mailPage = $mailPages;
 $mailShown = array_slice($rows, ($mailPage - 1) * $mailPageSize, $mailPageSize);
 
-$mailPageUrl = function(int $p) use ($tab, $view): string {
+// notifications are fetched flat (limit 100) and paged client-side too
+$notifPageSize = 30;
+$notifPage = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$notifTotal = count($notifs);
+$notifPages = max(1, (int)ceil($notifTotal / $notifPageSize));
+if ($notifPage > $notifPages) $notifPage = $notifPages;
+$notifShown = array_slice($notifs, ($notifPage - 1) * $notifPageSize, $notifPageSize);
+
+// keep the mailing-list filter when paging
+$mailPageUrl = function(int $p) use ($tab, $view, $listFilter): string {
     $q = '/mail?tab=' . urlencode($tab) . '&page=' . $p;
-    if ($view) $q .= '&view=' . $view;
+    if ($listFilter) $q .= '&list=' . (int)$listFilter;
+    if ($view) $q .= '&view=' . (int)$view;
     return $q;
 };
 
@@ -328,7 +342,11 @@ ob_start();
 
 <div class="mail-head">
     <h2>Eve Mail</h2>
-    <?php if ($tab !== 'notif'): ?><span class="mail-count"><?= $mailTotal ?> писем · страница <?= $mailPage ?>/<?= $mailPages ?></span><?php endif; ?>
+    <?php if ($tab === 'notif'): ?>
+        <span class="mail-count"><?= $notifTotal ?> уведомлений<?= $notifPages > 1 ? ' · страница ' . $notifPage . '/' . $notifPages : '' ?></span>
+    <?php else: ?>
+        <span class="mail-count"><?= $mailTotal ?> писем · страница <?= $mailPage ?>/<?= $mailPages ?></span>
+    <?php endif; ?>
 </div>
 
 <div class="mail-layout">
@@ -387,7 +405,7 @@ ob_start();
     // each row is expandable (<details>) so the details open in place.
     $grpOrder = ['Война', 'Корпорация', 'Контакты', 'Суверенитет', 'Структуры', 'Агенты', 'Счета', 'Прочее', 'Старые'];
     $notifGroups = [];
-    foreach ($notifs as $n)
+    foreach ($notifShown as $n)
         $notifGroups[notif_group((int)$n['typeid'])][] = $n;
     ?>
     <?php foreach ($grpOrder as $gTitle):
@@ -421,6 +439,13 @@ ob_start();
         <?php endforeach; ?>
         </div>
     <?php endforeach; ?>
+    <?php if ($notifPages > 1): ?>
+    <div class="mail-pager">
+        <?php if ($notifPage > 1): ?><a href="/mail?tab=notif&page=<?= $notifPage - 1 ?>">&larr; Prev</a><?php endif; ?>
+        <span class="cur">Page <?= $notifPage ?> of <?= $notifPages ?></span>
+        <?php if ($notifPage < $notifPages): ?><a href="/mail?tab=notif&page=<?= $notifPage + 1 ?>">Next &rarr;</a><?php endif; ?>
+    </div>
+    <?php endif; ?>
 <?php else: ?>
     <?php if ($viewRow): ?>
         <?php if ($tab === 'inbox'): ?>
@@ -439,6 +464,14 @@ ob_start();
                         <div class="meta" style="margin-bottom:0">
                             Кому: <?= e(implode(', ', array_map(function($t){ return (string)$t; }, array_filter(array_map('trim', explode(',', $viewRow['toids'])))))) ?>
                         </div>
+                    <?php elseif (!empty($viewRow['tolistid'])): ?>
+                        <?php
+                            $ln = '';
+                            foreach ($mailLists as $l) if ((int)$l['id'] === (int)$viewRow['tolistid']) { $ln = $l['name']; break; }
+                        ?>
+                        <div class="meta" style="margin-bottom:0">Кому: список «<?= e($ln !== '' ? $ln : ('#' . (int)$viewRow['tolistid'])) ?>»</div>
+                    <?php elseif (!empty($viewRow['tocorp'])): ?>
+                        <div class="meta" style="margin-bottom:0">Кому: корпорация/альянс #<?= (int)$viewRow['tocorp'] ?></div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -498,6 +531,16 @@ ob_start();
             <span class="m-who">
                 <?php if ($tab === 'inbox'): ?>
                     <?= e(shorten_text($r['sendername'] ?: ('#' . $r['senderid']), 24)) ?>
+                <?php elseif ($tab === 'lists'): ?>
+                    <?php
+                        $ln = '';
+                        foreach ($mailLists as $l) if ((int)$l['id'] === (int)$r['tolistid']) { $ln = $l['name']; break; }
+                        echo e(shorten_text($ln !== '' ? $ln : ('Список #' . (int)$r['tolistid']), 30));
+                    ?>
+                <?php elseif ($tab === 'corp'): ?>
+                    Корпорация
+                <?php elseif ($tab === 'alliance'): ?>
+                    Альянс
                 <?php else: ?>
                     <?php
                         $names = [];
