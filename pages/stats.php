@@ -4,15 +4,14 @@ require_once __DIR__ . '/../layout.php';
 $server = api_get('/server/ServerStatus.xml.aspx');
 $kills = api_get('/server/KillStats.xml.aspx');
 
-$online = $version = $players = $accounts = $characters = $bots = '—';
+$online = $version = '—';
 if ($server && $server->result) {
     $r = $server->result;
-    $online    = $r->online ?? $r->serveronline ?? $r->playersOnline ?? '—';
-    $version   = $r->version ?? $r->serverversion ?? '—';
-    $players   = $r->players ?? $r->playersOnline ?? '—';
-    $accounts  = $r->accounts ?? '—';
-    $characters = $r->characters ?? '—';
-    $bots      = $r->bots ?? '—';
+    // onlineplayers already includes the simulated pilots (chelobots). The public
+    // site must not expose account/character/bot counts — that would reveal the
+    // simulation behind the population. Admins see those in /admin.
+    $online  = (int)($r->onlineplayers ?? 0);
+    $version = (string)($r->serverversion ?? '—');
 }
 
 $totalKills = 0;
@@ -40,24 +39,8 @@ ob_start();
 
 <div class="stat-cards">
     <div class="stat-card">
-        <div class="stat-num" style="color:<?= $online != '—' && $online ? 'var(--accent)' : 'var(--danger)' ?>"><?= e($online) ?></div>
+        <div class="stat-num" style="color:<?= $online > 0 ? 'var(--accent)' : 'var(--danger)' ?>"><?= e($online) ?></div>
         <div class="stat-label">Online</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-num"><?= e($players) ?></div>
-        <div class="stat-label">Players</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-num"><?= e($accounts) ?></div>
-        <div class="stat-label">Accounts</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-num"><?= e($characters) ?></div>
-        <div class="stat-label">Characters</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-num" style="color:var(--warn)"><?= e($bots) ?></div>
-        <div class="stat-label">Bots</div>
     </div>
     <div class="stat-card">
         <div class="stat-num" style="color:var(--danger)"><?= number_format($totalKills) ?></div>

@@ -6,11 +6,9 @@ $valuables = api_get('/server/TopValuables.xml.aspx?period=7d&limit=30');
 $activity = api_get('/server/Activity.xml.aspx?period=7d');
 $allKills = api_get('/char/AllKills.xml.aspx');
 
-$onlinePlayers = 0; $totalAccounts = 0; $totalCharacters = 0;
+$onlinePlayers = 0;
 if ($serverStatus && $serverStatus->result) {
     $onlinePlayers = (int)($serverStatus->result->onlineplayers ?? 0);
-    $totalAccounts = (int)($serverStatus->result->accountcount ?? 0);
-    $totalCharacters = (int)($serverStatus->result->charactercount ?? 0);
 }
 
 // bucket TopValuables rows by ship / structure / sponsored
@@ -77,8 +75,6 @@ ob_start();
 
 <div class="stat-cards">
     <div class="stat-card"><div class="stat-num" style="color:<?= $onlinePlayers>0?'var(--accent)':'var(--danger)' ?>"><?= number_format($onlinePlayers) ?></div><div class="stat-label">Online Now</div></div>
-    <div class="stat-card"><div class="stat-num"><?= number_format($totalAccounts) ?></div><div class="stat-label">Accounts</div></div>
-    <div class="stat-card"><div class="stat-num"><?= number_format($totalCharacters) ?></div><div class="stat-label">Characters</div></div>
     <div class="stat-card"><div class="stat-num" style="color:var(--warn)"><?= number_format(count($recentKills)) ?></div><div class="stat-label">Total Kills</div></div>
 </div>
 
