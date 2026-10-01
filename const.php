@@ -16,6 +16,10 @@ if (!defined('EVE_ICON'))      define('EVE_ICON', 'https://images.evetech.net/ty
 if (!defined('SITE_NAME'))     define('SITE_NAME', 'EVEmu');
 if (!defined('PORTAL_VERSION')) define('PORTAL_VERSION', '1.0.0');
 if (!defined('SESSION_LIFETIME')) define('SESSION_LIFETIME', 8 * 3600); // max 8 hours
+// on-disk cache for heavy read-only API responses (see api_get below)
+if (!defined('CACHE_DIR'))      define('CACHE_DIR', __DIR__ . '/cache');
+if (!defined('API_CACHE'))      define('API_CACHE', true);   // set false to disable
+if (!defined('API_CACHE_STALE')) define('API_CACHE_STALE', 86400); // serve up to this stale on API error
 
 // Web Push (see config.sample.php for the user-facing description)
 if (!defined('PUSH_ENABLED'))       define('PUSH_ENABLED', false);
@@ -73,11 +77,76 @@ if (PHP_SAPI !== 'cli' && session_status() === PHP_SESSION_NONE) {
 }
 
 // ---- API helpers ------------------------------------------------------------
+// Portal-side on-disk cache for the heavy read-only endpoints: the game API
+// already caches in memory (short TTL), but a cold cache (first load / after a
+// restart) runs big aggregates that make the portal hang. Caching the raw XML
+// here makes repeat loads instant and serves stale XML if the API is briefly down.
+function api_cache_ttl($path) {
+    // seconds; longest-prefix match. Endpoints not listed (auth/mail/petition
+    // live data) are never cached and always hit the API.
+    static $rules = [
+        '/server/ServerStatus'   => 5,
+        '/server/TopKills'       => 30,
+        '/server/TopValuables'   => 60,
+        '/server/Activity'       => 30,
+        '/server/MarketTops'     => 30,
+        '/server/MarketStats'    => 30,
+        '/server/KillStats'      => 30,
+        '/server/ActiveSystems'  => 60,
+        '/server/CourierContracts'=> 20,
+        '/server/MapData'        => 300,
+        '/server/SovChanges'     => 30,
+        '/server/Search'         => 60,
+        '/char/AllKills'         => 15,
+        '/char/KillMails'        => 20,
+        '/char/KillMail'         => 300,
+        '/char/KillDetail'       => 120,
+        '/char/Resolve'          => 300,
+        '/char/CharacterInfo'    => 300,
+        '/char/RelatedKills'     => 60,
+        '/corp/KillMails'        => 20,
+        '/corp/CorporationSheet' => 300,
+    ];
+    foreach ($rules as $k => $ttl) {
+        if (strncmp($path, $k, strlen($k)) === 0)
+            return $ttl;
+    }
+    return 0;
+}
+
 function api_get($path, $timeout = 5) {
+    $ttl = API_CACHE ? api_cache_ttl($path) : 0;
+    $file = null;
+    if ($ttl > 0) {
+        $dir = rtrim(CACHE_DIR, '/') . '/api';
+        $file = $dir . '/' . sha1($path) . '.xml';
+        if (is_file($file)) {
+            $age = time() - filemtime($file);
+            if ($age < $ttl) {
+                $cached = @file_get_contents($file);
+                if ($cached !== false && $cached !== '') {
+                    $x = @simplexml_load_string($cached);
+                    if ($x !== false) return $x;
+                }
+            }
+        }
+    }
     $url = API_BASE . $path;
     $ctx = stream_context_create(['http' => ['timeout' => $timeout]]);
     $data = @file_get_contents($url, false, $ctx);
-    if ($data === false) return null;
+    if ($data === false) {
+        // API error: serve stale (up to API_CACHE_STALE) rather than a blank page.
+        if ($file && is_file($file) && (time() - filemtime($file)) < API_CACHE_STALE) {
+            $cached = @file_get_contents($file);
+            if ($cached !== false) return @simplexml_load_string($cached);
+        }
+        return null;
+    }
+    if ($file) {
+        $dir = dirname($file);
+        if (!is_dir($dir)) @mkdir($dir, 0777, true);
+        @file_put_contents($file, $data);
+    }
     return @simplexml_load_string($data);
 }
 
