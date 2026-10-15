@@ -57,7 +57,7 @@ foreach ($items as $it) $ids[] = $it['t'];
 $ids[] = (int)$k['victimshiptypeid'];
 $ids = array_unique(array_filter($ids));
 if ($ids) {
-    $nxml = api_get('/char/Resolve.xml.aspx?ids=' . implode(',', $ids));
+    $nxml = api_get('/char/Resolve.xml.aspx?ids=' . implode(',', $ids), 15);
     if ($nxml && $nxml->result && $nxml->result->names)
         foreach ($nxml->result->names->row as $nr) {
             $itemNames[(int)$nr['id']] = (string)$nr['name'];

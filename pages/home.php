@@ -71,6 +71,16 @@ ob_start();
 .zk-top a.nm:hover { text-decoration:underline; }
 @media (max-width:1100px){ .kill-card-grid{grid-template-columns:repeat(2,1fr);} }
 @media (max-width:800px){ .home-zk{grid-template-columns:1fr;} .kill-card-grid{grid-template-columns:repeat(2,1fr);} }
+
+/* Long system/victim/ship names must not stretch the kills table over the top-lists
+   rail: max-width on td is ignored in the default auto table layout, so fix the
+   column geometry instead (fixed layout + ellipsis). */
+.zk-main .kill-table { table-layout:fixed; }
+.zk-main .kill-table th, .zk-main .kill-table td { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.zk-main .kill-table th:nth-child(1), .zk-main .kill-table td:nth-child(1),
+.zk-main .kill-table th:nth-child(6), .zk-main .kill-table td:nth-child(6) { width:44px; }
+.zk-main .kill-table th:nth-child(5), .zk-main .kill-table td:nth-child(5) { width:9%; }
+.zk-main .kill-table th:nth-child(9), .zk-main .kill-table td:nth-child(9) { width:64px; }
 </style>
 
 <div class="stat-cards">
