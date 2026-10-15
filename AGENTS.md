@@ -98,3 +98,11 @@ PHP-портал-киллборда для приватного EVEmu. Репо�
 - Страховка портала: таймаут `Resolve` в kill.php 5→15с (bb04433).
 - **⚠️ Портал теперь слушает :80** (nginx на 26006 больше не висит — проверено `ss -tlnp`); проверки локально делать на `http://127.0.0.1/`. Как снаружи проброшен 26006 — вопрос роутинга/NAT юзера.
 - Деплой 15 окт.: prod-репо был на 4979694 с ручным img.php (origin 0177d83 тот же контент) → `git checkout -- img.php && git pull --ff-only` (bb04433), php -l OK, home 0.06s, kill/29 0.53s (тёплый кеш).
+
+## 📌 ДОПОЛНЕНИЕ (15 окт., вечер): биллборды + админка картинок + раздача клиента
+- **Станционные биллборды**: клиент (`parklife/billboardMgr.py`) тянет 2 URL с CCP — патчем клиента переписаны на `router.iks-online.net:26006`. Портал: `news_headlines.php` (`/mb/news-headlines.asp` → текст `dd.mm.yyyy;Title` CRLF — точный формат клиентского парсера) + `/billboard.asp` → статичная `/media/billboard.png` (1024×256; сейчас — Rattlesnake render с images.evetech.net + подпись). nginx rewrites обязательны (.asp php-fpm не ест).
+- **Админка** (`/admin/news`): + секция **Station Billboard** — превью + upload (png/jpg/webp/gif ≤8МБ) → GD cover-crop resize в 1024×256 → `/var/www/html/media/billboard.png` (dir chown www-data — иначе rename поверх root-файла падает). Игроки видят после следующего дока.
+- **news_headlines.php** читает ТОЛЬКО API (`NewsFeed.xml.aspx`, serverNews) — правило портал≠БД соблюдено.
+- **Раздача клиента**: `/launcher/update.json` + zip (`script/compiled.code` + `bin/blue.dll` + `lib/carbonlib.ccp`). **version в json ОБЯЗАН быть ≥ билда клиента** (dotted compare; 7.31.360230 > 7.31.360229). nginx `location /launcher/` no-cache (open_file_cache off).
+- **Опс**: .47=tvstreamer (игра), .49=pss (портал). Вложенные ssh-кавычки молча ломаются → файловый релей (cat→.47:/tmp, scp→.49:/tmp, sudo bash). CRLF стрипать. Про .21 (video.iks-online.net DNS=172.20.1.21) — юзер пояснил: внутренние ходят через :80 на .49, снаружи только 26006→.49; «сталеп»-загадки были битым mv на .49 (файлы застревали в /tmp), НЕ другим хостом и НЕ кешем.
+- Тест юзера: новости на патченном клиенте работают ✅; журнал инкурсий и магазин — после подъёма сервера с фиксами.
