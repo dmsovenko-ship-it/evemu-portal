@@ -3,6 +3,8 @@ $msg = '';
 $error = '';
 $author = current_user()['accountName'] ?? 'GM';
 
+if (!defined('BILLBOARD_IMG_PATH')) define('BILLBOARD_IMG_PATH', __DIR__ . '/../../media/billboard.png');
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $act = $_POST['action'] ?? '';
     if ($act === 'create') {
@@ -27,6 +29,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $xml = api_post('/admin/NewsResend.xml.aspx', 'newsid=' . $nid);
             $msg = $xml && $xml->result ? "Новость #$nid повторно отправлена в Telegram." : 'Не удалось отправить.';
         }
+    } elseif ($act === 'billboard') {
+        // station billboard ad image: validate, cover-crop to 1024x256, save
+        if (!isset($_FILES['bbfile']) || $_FILES['bbfile']['error'] !== UPLOAD_ERR_OK) {
+            $error = 'Upload failed (file missing or too large).';
+        } elseif ($_FILES['bbfile']['size'] > 8 * 1024 * 1024) {
+            $error = 'Image too large (max 8 MB).';
+        } else {
+            $tmp = $_FILES['bbfile']['tmp_name'];
+            $sz = @getimagesize($tmp);
+            $im = null;
+            if ($sz) {
+                switch ($sz[2]) {
+                    case IMAGETYPE_PNG:  $im = @imagecreatefrompng($tmp);  break;
+                    case IMAGETYPE_JPEG: $im = @imagecreatefromjpeg($tmp); break;
+                    case IMAGETYPE_WEBP: $im = @imagecreatefromwebp($tmp); break;
+                    case IMAGETYPE_GIF:  $im = @imagecreatefromgif($tmp);  break;
+                }
+            }
+            if (!$im) {
+                $error = 'Not a valid image (png/jpg/webp/gif allowed).';
+            } else {
+                $W = 1024; $H = 256;
+                $dst = imagecreatetruecolor($W, $H);
+                $bg = imagecolorallocate($dst, 4, 6, 12);
+                imagefill($dst, 0, 0, $bg);
+                $sw = imagesx($im); $sh = imagesy($im);
+                $scale = max($W / $sw, $H / $sh);
+                $nw = (int)round($sw * $scale); $nh = (int)round($sh * $scale);
+                $mid = imagecreatetruecolor($nw, $nh);
+                imagecopyresampled($mid, $im, 0, 0, 0, 0, $nw, $nh, $sw, $sh);
+                imagecopy($dst, $mid, (int)(($W - $nw) / 2), (int)(($H - $nh) / 2), 0, 0, $nw, $nh);
+                imagedestroy($im); imagedestroy($mid);
+                imagepng($dst, BILLBOARD_IMG_PATH, 6);
+                imagedestroy($dst);
+                $msg = 'Billboard image updated.';
+            }
+        }
+
     } elseif ($act === 'delete') {
         $nid = intval($_POST['newsid'] ?? 0);
         if ($nid) {
@@ -110,3 +150,21 @@ function news_preview($s, $max = 140) {
     </tbody>
 </table>
 <?php endif; ?>
+
+<h2 style="margin:28px 0 12px">Station Billboard (news headlines screen ad)</h2>
+<p style="color:var(--text-dim);font-size:12px;margin-bottom:10px">
+    The image is shown on the station exterior billboard screens (auto center-crop to 1024&times;256,
+    png/jpg/webp/gif up to 8&nbsp;MB). Players see the new image after their next station dock.
+</p>
+<div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+    <div style="border:1px solid var(--border);border-radius:6px;overflow:hidden;background:#04060c">
+        <img src="/billboard.asp?&lt;refresh&gt;" style="width:512px;height:128px;display:block"
+             onerror="this.onerror=null;this.src='/billboard.png'">
+    </div>
+    <form method="POST" enctype="multipart/form-data" style="min-width:280px">
+        <input type="hidden" name="action" value="billboard">
+        <input type="file" name="bbfile" accept="image/*"
+               style="display:block;margin-bottom:10px;font-size:12px;color:var(--text)">
+        <button class="btn" style="width:auto;padding:6px 18px">Upload billboard</button>
+    </form>
+</div>
