@@ -178,7 +178,7 @@ function rules_html(): string {
 
         if (preg_match('/^(#{1,6})\s+(.*)$/', $trim, $m)) {
             $closeList();
-            $lvl = min(6, strlen($m[1]) + 1); // '# ' -> h2 (h1 is the page title)
+            $lvl = strlen($m[1]) === 1 ? 2 : 3; // '# ' -> h2, '##'/'###' -> h3
             $out .= "<h$lvl>" . $inline($m[2]) . "</h$lvl>";
             $i++;
             continue;
