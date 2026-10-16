@@ -14,7 +14,7 @@
  *     {<,t,i,l,e,>} and would eat leading/trailing letters of real titles.
  *     Spaces are NOT in that set, so they survive both strips.
  */
-require_once __DIR__ . '/const.php';
+require_once __DIR__ . '/config.php';   // loads const.php + API_BASE
 
 header('Content-Type: text/xml; charset=utf-8');
 

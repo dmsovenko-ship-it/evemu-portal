@@ -4,7 +4,7 @@
  * Client format: plain text, CRLF-separated lines of "DATE;CAPTION" - the caption
  * is rendered as the scrolling text on the station billboard screen.
  */
-require_once __DIR__ . '/const.php';
+require_once __DIR__ . '/config.php';   // loads const.php + API_BASE
 
 header('Content-Type: text/plain; charset=utf-8');
 
