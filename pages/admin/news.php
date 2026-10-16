@@ -2,6 +2,7 @@
 $msg = '';
 $error = '';
 $author = current_user()['accountName'] ?? 'GM';
+$editId = intval($_GET['edit'] ?? 0);
 
 if (!defined('BILLBOARD_IMG_PATH')) define('BILLBOARD_IMG_PATH', __DIR__ . '/../../media/billboard.png');
 
@@ -21,6 +22,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $msg = 'Новость опубликована и отправлена в игровой Telegram.';
             } else {
                 $error = 'Не удалось опубликовать новость.';
+            }
+        }
+    } elseif ($act === 'edit') {
+        $nid = intval($_POST['newsid'] ?? 0);
+        $title = trim($_POST['title'] ?? '');
+        $body  = trim($_POST['body'] ?? '');
+        if (!$nid) {
+            $error = 'Не указана новость.';
+        } elseif ($title === '' || $body === '') {
+            $error = 'Заполните заголовок и текст.';
+        } else {
+            $xml = api_post('/admin/NewsEdit.xml.aspx',
+                'newsid=' . $nid
+                . '&title=' . urlencode($title)
+                . '&body=' . urlencode($body));
+            if ($xml && $xml->result) {
+                $msg = "Новость #$nid обновлена (клиент/лаунчер/сайт увидят изменение).";
+                $editId = 0;
+            } else {
+                $error = 'Не удалось сохранить (сервер мог не пересобраться).';
             }
         }
     } elseif ($act === 'resend') {
@@ -82,6 +103,10 @@ $xml = api_get('/admin/NewsList.xml.aspx');
 if ($xml && $xml->result && $xml->result->news)
     foreach ($xml->result->news->row as $r) $news[] = $r;
 
+// prefill the form when editing an existing item
+$editRow = null;
+if ($editId) foreach ($news as $n) if ((int)$n['newsid'] === $editId) { $editRow = $n; break; }
+
 function news_preview($s, $max = 140) {
     $s = (string)$s;
     if (strlen($s) <= $max) return $s;
@@ -102,18 +127,24 @@ function news_preview($s, $max = 140) {
 <?php if ($error): ?><div class="form-error"><?= e($error) ?></div><?php endif; ?>
 
 <div class="form-card" style="max-width:720px;margin-bottom:20px">
+    <?php if ($editRow): ?>
+    <h3 style="margin:0 0 12px;font-size:14px">Редактировать новость #<?= (int)$editRow['newsid'] ?>
+        <a href="/admin/news" style="font-size:12px;font-weight:400;margin-left:8px">&times; отмена</a></h3>
+    <?php endif; ?>
     <form method="POST">
-        <input type="hidden" name="action" value="create">
+        <input type="hidden" name="action" value="<?= $editRow ? 'edit' : 'create' ?>">
+        <?php if ($editRow): ?><input type="hidden" name="newsid" value="<?= (int)$editRow['newsid'] ?>"><?php endif; ?>
         <div class="form-group">
             <label>Заголовок</label>
-            <input name="title" maxlength="200" required placeholder="Например: Событие выходных / Обновление">
+            <input name="title" maxlength="200" required placeholder="Например: Событие выходных / Обновление"
+                   value="<?= $editRow ? e((string)$editRow['title']) : '' ?>">
         </div>
         <div class="form-group">
             <label>Текст</label>
-            <textarea name="body" rows="8" required placeholder="Текст новости..."></textarea>
+            <textarea name="body" rows="8" required placeholder="Текст новости..."><?= $editRow ? e((string)$editRow['body']) : '' ?></textarea>
         </div>
         <p style="color:var(--text-dim);font-size:11px;margin-bottom:10px">Автор: <?= e($author) ?></p>
-        <button class="btn btn-primary" style="width:auto">Опубликовать</button>
+        <button class="btn btn-primary" style="width:auto"><?= $editRow ? 'Сохранить' : 'Опубликовать' ?></button>
     </form>
 </div>
 
@@ -133,6 +164,8 @@ function news_preview($s, $max = 140) {
         <td style="color:var(--text-dim);max-width:420px;white-space:normal"
             title="<?= e($n['body']) ?>"><?= e(news_preview($n['body'])) ?></td>
         <td style="white-space:nowrap">
+            <a class="btn btn-outline" style="width:auto;padding:4px 10px;font-size:11px"
+               href="/admin/news?edit=<?= (int)$n['newsid'] ?>">Изменить</a>
             <form method="POST" style="display:inline">
                 <input type="hidden" name="action" value="resend">
                 <input type="hidden" name="newsid" value="<?= (int)$n['newsid'] ?>">
