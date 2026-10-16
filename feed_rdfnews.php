@@ -27,7 +27,11 @@ function rdf_escape($s) {
 function rdf_date($s) {
     $ts = strtotime((string)$s);
     if ($ts === false || $ts <= 0) $ts = time();
-    return gmdate('Y-m-d\TH:i:s', $ts) . '+0000';
+    // The Crucible client parses dc:date by splitting:
+    //   split('-')=3, split('T')=2, split(':')=3, split('+')=2 on the *minutes*
+    // part -> it requires the timezone BETWEEN minutes and seconds:
+    //   YYYY-MM-DDTHH:MM+ZZZZ:SS
+    return gmdate('Y-m-d\TH:i', $ts) . '+0000:' . gmdate('s', $ts);
 }
 
 echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
