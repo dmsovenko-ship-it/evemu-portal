@@ -63,7 +63,7 @@ ob_start();
             <div class="form-group">
                 <details style="border:1px solid var(--border);border-radius:8px;padding:8px 12px;background:var(--bg-input)">
                     <summary style="cursor:pointer;font-weight:700">Правила сервера (обязательно к прочтению)</summary>
-                    <div style="max-height:260px;overflow:auto;margin-top:8px;padding-right:8px;white-space:pre-wrap;line-height:1.5;font-size:12.5px"><?= e(server_rules_text()) ?></div>
+                    <div class="rules-mini" style="max-height:260px;overflow:auto;margin-top:8px;padding-right:8px;line-height:1.5;font-size:12.5px"><?= rules_html() ?></div>
                 </details>
                 <label style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-weight:400">
                     <input type="checkbox" name="agree" value="1" <?= !empty($_POST['agree']) ? 'checked' : '' ?> required>
@@ -75,5 +75,16 @@ ob_start();
         <div class="form-footer">Already have an account? <a href="/login">Login</a></div>
     </div>
 </div>
+<style>
+    .rules-mini h2{font-size:14px;margin:2px 0}
+    .rules-mini h3{font-size:12.5px;margin:10px 0 4px;color:var(--accent2)}
+    .rules-mini p{margin:5px 0}
+    .rules-mini ul{margin:4px 0 6px;padding-left:20px}
+    .rules-mini hr{border:0;border-top:1px solid var(--border);margin:10px 0}
+    .rules-mini strong{color:#fff}
+    .rules-mini table{width:100%;border-collapse:collapse;margin:8px 0;font-size:11.5px}
+    .rules-mini th,.rules-mini td{border:1px solid var(--border);padding:5px 7px;text-align:left;vertical-align:top}
+    .rules-mini th{background:rgba(255,255,255,.04);color:var(--accent2)}
+</style>
 <?php
 render_layout('Register', '', ob_get_clean());

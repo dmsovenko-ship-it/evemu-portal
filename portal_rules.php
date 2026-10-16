@@ -125,3 +125,77 @@ function server_rules_text(): string {
 EOT;
     return str_replace('«SITE NAME»', SITE_NAME, $t);
 }
+
+// Turns the rules source (a small Markdown subset: # headings, --- rules,
+// | tables |, - bullets, **bold**) into sanitized HTML.
+function rules_html(): string {
+    $lines = preg_split('/\r?\n/', server_rules_text());
+    $n = count($lines);
+    $i = 0;
+    $out = '';
+    $inList = false;
+
+    $inline = static function (string $s): string {
+        $s = htmlspecialchars($s, ENT_QUOTES, 'UTF-8');
+        $s = preg_replace('/\*\*(.+?)\*\*/u', '<strong>$1</strong>', $s);
+        return $s;
+    };
+    $closeList = static function () use (&$out, &$inList) {
+        if ($inList) { $out .= '</ul>'; $inList = false; }
+    };
+
+    while ($i < $n) {
+        $raw  = rtrim($lines[$i]);
+        $trim = trim($raw);
+        if ($trim === '') { $i++; continue; }
+
+        // table: consecutive lines starting with '|'
+        if ($trim[0] === '|') {
+            $closeList();
+            $rows = [];
+            while ($i < $n && isset($lines[$i][0]) && ltrim($lines[$i]) !== '' && ltrim($lines[$i])[0] === '|') {
+                $rows[] = $lines[$i];
+                $i++;
+            }
+            $out .= '<table class="rules-table">';
+            $header = true;
+            foreach ($rows as $r) {
+                $cells = array_map('trim', explode('|', trim($r, " \t|")));
+                $isSep = true;
+                foreach ($cells as $c) { if (!preg_match('/^:?-{2,}:?$/', $c)) { $isSep = false; break; } }
+                if ($isSep) { $header = false; continue; }
+                $tag = $header ? 'th' : 'td';
+                $out .= '<tr>';
+                foreach ($cells as $c) $out .= "<$tag>" . $inline($c) . "</$tag>";
+                $out .= '</tr>';
+                $header = false;
+            }
+            $out .= '</table>';
+            continue;
+        }
+
+        if (preg_match('/^-{3,}$/', $trim)) { $closeList(); $out .= '<hr>'; $i++; continue; }
+
+        if (preg_match('/^(#{1,6})\s+(.*)$/', $trim, $m)) {
+            $closeList();
+            $lvl = min(6, strlen($m[1]) + 1); // '# ' -> h2 (h1 is the page title)
+            $out .= "<h$lvl>" . $inline($m[2]) . "</h$lvl>";
+            $i++;
+            continue;
+        }
+
+        if (preg_match('/^\s*[-*]\s+(.*)$/', $raw, $m)) {
+            if (!$inList) { $out .= '<ul>'; $inList = true; }
+            $out .= '<li>' . $inline($m[1]) . '</li>';
+            $i++;
+            continue;
+        }
+
+        $closeList();
+        $out .= '<p>' . $inline($trim) . '</p>';
+        $i++;
+    }
+    $closeList();
+    return $out;
+}
+

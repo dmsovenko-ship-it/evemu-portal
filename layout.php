@@ -20,13 +20,14 @@ function render_layout($title, $active, $content) {
         </form>
         <div class="nav-links">
             <a href="/kills" class="<?= $active==='kills'?'active':'' ?>">Killboard</a>
-            <div class="nav-drop <?= in_array($active,['players','systems','sov'],true)?'active':'' ?>">
+            <div class="nav-drop <?= in_array($active,['players','systems','sov','news'],true)?'active':'' ?>">
                 <a>World</a>
                 <div class="nav-drop-menu">
                     <a href="/players" class="<?= $active==='players'?'active':'' ?>">Players</a>
                     <a href="/systems" class="<?= $active==='systems'?'active':'' ?>">Systems</a>
                     <a href="/sov" class="<?= $active==='sov'?'active':'' ?>">Sovereignty</a>
                     <a href="/battles">Battles</a>
+                    <a href="/news" class="<?= $active==='news'?'active':'' ?>">News</a>
                 </div>
             </div>
             <div class="nav-drop <?= in_array($active,['market','haul'],true)?'active':'' ?>">

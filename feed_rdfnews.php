@@ -49,7 +49,8 @@ if ($nxml && isset($nxml->result) && isset($nxml->result->rows)) {
 
 foreach ($rows as $row) {
     $link = 'http://www.eveonline.com/news/' . (int)$row['id'];
-    $title = ' ' . rdf_escape($row['title']) . ' ';
+    // client-safe: no emoji / non-BMP glyphs, clamped length
+    $title = ' ' . rdf_escape(news_client_text($row['title'], 120)) . ' ';
     echo '<item rdf:about="' . htmlspecialchars($link, ENT_XML1) . "\">\n";
     echo '<title>' . $title . "</title>\n";
     echo '<dc:date>' . rdf_date($row['date']) . "</dc:date>\n";

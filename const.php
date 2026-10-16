@@ -450,3 +450,31 @@ function tfa_trust_device(int $aid, string $ip): void {
 function tfa_new_code(): string {
     return sprintf('%06d', random_int(0, 999999));
 }
+
+// ---- unified news rendering helpers ----------------------------------------
+// One news item lives in serverNews (title + body) and is rendered per channel:
+//   - Telegram  : rich (emoji, multi-line) - see the server's PostNews
+//   - Site      : HTML (news_body_html)
+//   - Launcher  : title + body snippet (fetched from the API)
+//   - Game client: plain text only - the Crucible client cannot render emoji /
+//     non-BMP glyphs and has hard length limits, so news_client_text() strips
+//     everything outside a safe set and clamps the length.
+function news_client_text(string $s, int $max = 0): string {
+    $s = (string)$s;
+    // keep only: ASCII printable, Latin-1 punctuation we allow, Cyrillic.
+    // everything else (emoji, symbols, box-drawing, non-BMP) is dropped.
+    $s = preg_replace('/[^\x09\x0A\x20-\x7E\x{00A0}\x{00AB}\x{00BB}\x{2010}-\x{2015}\x{2018}\x{2019}\x{201C}\x{201D}\x{2026}\x{0400}-\x{04FF}]/u', '', $s);
+    if ($s === null) $s = ' ';
+    $s = preg_replace('/[\r\n\t]+/', ' ', $s);
+    $s = preg_replace('/ {2,}/', ' ', $s);
+    $s = trim($s);
+    if ($max > 0 && mb_strlen($s, 'UTF-8') > $max) {
+        $s = rtrim(mb_substr($s, 0, $max - 1, 'UTF-8')) . '…';
+    }
+    return $s;
+}
+
+function news_body_html(string $s): string {
+    return nl2br(htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'), false);
+}
+

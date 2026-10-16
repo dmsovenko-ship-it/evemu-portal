@@ -13,7 +13,8 @@ $nxml = api_get('/server/NewsFeed.xml.aspx?limit=10', 8);
 if ($nxml && isset($nxml->result) && isset($nxml->result->rows)) {
     foreach ($nxml->result->rows->row as $r) {
         $rows[] = array(
-            'title' => preg_replace('/[\r\n\t]+/', ' ', strip_tags((string)$r['title'])),
+            // client-safe: single line, no emoji/non-BMP, clamped caption length
+            'title' => news_client_text((string)$r['title'], 90),
             'date'  => (string)$r['date'],
         );
     }
