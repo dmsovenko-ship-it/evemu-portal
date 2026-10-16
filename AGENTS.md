@@ -1,5 +1,16 @@
 # EVEmu Portal — Session Context
 
+## 16 окт.: лаунчер-API, новости на сайт, правила (Markdown), RDF-дата, единый источник новостей
+- **`launcher_api.php`** (новый, JSON для лаунчера): `login`(ok|code|error)/`code`/`resend`/`whoami`/`logout`/`clientinfo`. **ОБЯЗАТЕЛЬНО `require config.php` ДО `const.php`** — иначе `API_BASE` = дефолтный `127.0.0.1` → «Server unreachable» (то же чинили в `feed_rdfnews.php`/`news_headlines.php`, которые грузили только `const.php`). nginx `location = /launcher/api { rewrite ^ /launcher_api.php last; }` (точный матч — иначе перехватит `location /launcher/`). Сессия/2FA — общие с веб-входом (`tfa_*` из const.php).
+- **Новости — единый источник `serverNews`, рендер по каналу**: TG (богато) / сайт (`/news`) / лаунчер (title+body) / **клиент** (plain). Хелпер `news_client_text()` в `const.php` — вырезает эмодзи/не-BMP (оставляет ASCII+кириллицу+тире/кавычки), схлопывает переводы, клампит длину; `news_body_html()` для сайта.
+- **Страница `/news`** (`pages/news.php`) + роут `case 'news'` + пункт в World-меню (`layout.php`, active `news`). Читает публичный `NewsFeed.xml.aspx` (сервер теперь отдаёт `body`).
+- **Правила**: текст в `portal_rules.php` — Markdown, а рендерился сырым (в `e()` + `pre-wrap`). Добавлен **`rules_html()`** (h2/h3, `**bold**`, `| таблицы |`, `- списки`, `---`) + CSS; применён в `/rules` (`pages/rules.php`) и в боксе на `/register`.
+- **Админка `/admin/news`**: кнопка **«Изменить»** (префилл формы по `?edit=ID`) + действие `edit` → `NewsEdit.xml.aspx`.
+- **🔴 RDF `dc:date` (`feed_rdfnews.php`)**: клиентский парсер holoscreen принимает ТОЛЬКО `YYYY-MM-DDTHH:MM+ZZZZ:SS` (таймзона МЕЖДУ минутами и секундами — иначе `split(':')`/`split('+')` дают `ValueError`). Старый `gmdate('Y-m-d\TH:i:s').'+0000'` (таймзона в конце) рушил `GetNewsTickerData` → `OnMainScreenDesktopCreated`. Исправлено.
+- **Биллборд**: `/billboard.asp`→`/media/billboard.png` (загрузка в `/admin/news`); заголовки `/mb/news-headlines.asp`.
+- ⚠️ **Opcache** на .49 может отдать старый PHP 1-2с после `git pull` (проверять curl-ом ВТОРОЙ раз).
+
+
 ## 1 окт.: портал открывался очень долго → кеш API на стороне портала + прогрев (`4979694`)
 - **Симптом**: главная открывалась **~17.7с** (холодный кеш игрового API). Причина: `home.php` делает 4 **последовательных** `api_get` (ServerStatus+TopValuables+Activity+AllKills, до 5с каждый), а тяжёлые агрегаты по `mktOrders`/`chrKillTable` на сервере выполнялись заново.
 - **Фикс** (`const.php`, `api_get`): **файловый кеш** сырого XML в `cache/api/<sha1(path)>.xml` с TTL по эндпоинту (тяжёлые чтения 15–300с; `/char/KillMail`/`Resolve`/`CharacterInfo`/`MapData`/`CorpSheet` = 300с; live-эндпоинты auth/mail/petition **не кешируются** — префикс не в списке → TTL 0). При ошибке API — отдаёт stale (до `API_CACHE_STALE`=24ч). Новые константы `CACHE_DIR`/`API_CACHE`/`API_CACHE_STALE` (переопределяются в `config.php`).
