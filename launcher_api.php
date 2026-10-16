@@ -13,6 +13,7 @@
  *   GET  action=whoami                      -> {status: ok|guest, name, chars}
  *   GET  action=clientinfo                  -> {status: ok, urls...} (static links)
  */
+require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/const.php';
 require_once __DIR__ . '/mailer.php';
 
