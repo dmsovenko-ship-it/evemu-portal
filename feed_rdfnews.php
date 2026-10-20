@@ -51,6 +51,13 @@ if ($nxml && isset($nxml->result) && isset($nxml->result->rows)) {
     }
 }
 
+// The client requests BOTH tid=7 and tid=4. Our news store is unified, so
+// serve the items only on the primary feed; otherwise every headline is
+// rendered twice in the CQ news ticker.
+$tid = isset($_GET['tid']) ? trim((string)$_GET['tid']) : '';
+if ($tid !== '' && $tid !== '7')
+    $rows = array();
+
 foreach ($rows as $row) {
     $link = 'http://www.eveonline.com/news/' . (int)$row['id'];
     // client-safe: no emoji / non-BMP glyphs, clamped length

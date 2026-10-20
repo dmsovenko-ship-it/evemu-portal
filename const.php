@@ -461,15 +461,22 @@ function tfa_new_code(): string {
 //     everything outside a safe set and clamps the length.
 function news_client_text(string $s, int $max = 0): string {
     $s = (string)$s;
-    // keep only: ASCII printable, Latin-1 punctuation we allow, Cyrillic.
-    // everything else (emoji, symbols, box-drawing, non-BMP) is dropped.
-    $s = preg_replace('/[^\x09\x0A\x20-\x7E\x{00A0}\x{00AB}\x{00BB}\x{2010}-\x{2015}\x{2018}\x{2019}\x{201C}\x{201D}\x{2026}\x{0400}-\x{04FF}]/u', '', $s);
+    // The Crucible client hands news text to label.SetText as a raw byte string
+    // and stringmanip.GetAsUnicode decodes it with cp1252. ANY non-ASCII byte
+    // (e.g. Cyrillic UTF-8 like 0x8f) raises UnicodeDecodeError, which escapes
+    // SetNewsTickerData and kills HoloscreenSvc.PlayTemplates -> the CQ main
+    // screen piles every template into one frame ("mishmash").
+    // Cyrillic is transliterated to Latin and everything non-ASCII is dropped.
+    $ru = array("\u{0410}"=>"A","\u{0411}"=>"B","\u{0412}"=>"V","\u{0413}"=>"G","\u{0414}"=>"D","\u{0415}"=>"E","\u{0401}"=>"E","\u{0416}"=>"Zh","\u{0417}"=>"Z","\u{0418}"=>"I","\u{0419}"=>"I","\u{041A}"=>"K","\u{041B}"=>"L","\u{041C}"=>"M","\u{041D}"=>"N","\u{041E}"=>"O","\u{041F}"=>"P","\u{0420}"=>"R","\u{0421}"=>"S","\u{0422}"=>"T","\u{0423}"=>"U","\u{0424}"=>"F","\u{0425}"=>"Kh","\u{0426}"=>"Ts","\u{0427}"=>"Ch","\u{0428}"=>"Sh","\u{0429}"=>"Shch","\u{042A}"=>"","\u{042B}"=>"Y","\u{042C}"=>"","\u{042D}"=>"E","\u{042E}"=>"Yu","\u{042F}"=>"Ya","\u{0430}"=>"a","\u{0431}"=>"b","\u{0432}"=>"v","\u{0433}"=>"g","\u{0434}"=>"d","\u{0435}"=>"e","\u{0451}"=>"e","\u{0436}"=>"zh","\u{0437}"=>"z","\u{0438}"=>"i","\u{0439}"=>"i","\u{043A}"=>"k","\u{043B}"=>"l","\u{043C}"=>"m","\u{043D}"=>"n","\u{043E}"=>"o","\u{043F}"=>"p","\u{0440}"=>"r","\u{0441}"=>"s","\u{0442}"=>"t","\u{0443}"=>"u","\u{0444}"=>"f","\u{0445}"=>"kh","\u{0446}"=>"ts","\u{0447}"=>"ch","\u{0448}"=>"sh","\u{0449}"=>"shch","\u{044A}"=>"","\u{044B}"=>"y","\u{044C}"=>"","\u{044D}"=>"e","\u{044E}"=>"yu","\u{044F}"=>"ya","\u{00AB}"=>"\"","\u{00BB}"=>"\"","\u{2013}"=>"-","\u{2014}"=>"-","\u{2019}"=>"'","\u{2018}"=>"'","\u{201C}"=>"\"","\u{201D}"=>"\"","\u{2026}"=>"...");
+    $s = strtr($s, $ru);
+    $s = preg_replace('/[^\x09\x0A\x20-\x7E]/', '', $s);
     if ($s === null) $s = ' ';
     $s = preg_replace('/[\r\n\t]+/', ' ', $s);
     $s = preg_replace('/ {2,}/', ' ', $s);
     $s = trim($s);
-    if ($max > 0 && mb_strlen($s, 'UTF-8') > $max) {
-        $s = rtrim(mb_substr($s, 0, $max - 1, 'UTF-8')) . '…';
+    if ($s === '') $s = 'EVEmu news';
+    if ($max > 0 && strlen($s) > $max) {
+        $s = rtrim(substr($s, 0, $max - 3)) . '...';
     }
     return $s;
 }
