@@ -1,0 +1,132 @@
+/* In-game EVE browser (Chromium 3.0 / EVE-IGB) - readable, legacy-safe.
+   No CSS variables, no flexbox/grid; simple block layout, larger fonts. */
+
+html, body.igb {
+    background: #0a0e14;
+    color: #d3d8de;
+    font-family: "Segoe UI", Verdana, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+}
+
+.igb-main, .igb .container {
+    display: block;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 14px 16px 40px 16px;
+}
+
+.igb h1 {
+    font-size: 24px;
+    color: #66cc88;
+    margin: 0 0 12px 0;
+    font-weight: bold;
+}
+.igb h2 {
+    font-size: 20px;
+    color: #e6e9ec;
+    margin: 0 0 6px 0;
+}
+.igb h3 {
+    font-size: 17px;
+    color: #4a9eff;
+    margin: 16px 0 8px 0;
+}
+.igb p { margin: 8px 0; }
+.igb a { color: #4a9eff; text-decoration: underline; }
+.igb a:hover { color: #7cb8ff; }
+.igb img { max-width: 100%; height: auto; }
+.igb hr { border: 0; border-top: 1px solid #1a2030; margin: 16px 0; }
+.igb strong, .igb b { color: #ffffff; }
+
+/* news cards */
+.igb .news-item {
+    display: block;
+    background: #111820;
+    border: 1px solid #1a2030;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 0 0 14px 0;
+}
+.igb .news-item h2 { color: #e6e9ec; font-size: 20px; }
+.igb .news-meta { color: #667788; font-size: 13px; margin: 0 0 10px 0; }
+.igb .news-body { font-size: 15px; line-height: 1.6; color: #d3d8de; }
+
+/* tables (killboard / rules) */
+.igb table, .igb .data-table, .igb .rules-table {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0;
+    font-size: 13px;
+}
+.igb th, .igb td {
+    border: 1px solid #1a2030;
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+}
+.igb th { background: #151d28; color: #66cc88; font-weight: bold; }
+.igb tr:nth-child(even) td { background: #0d131b; }
+
+/* panels / cards */
+.igb .rules-panel, .igb .form-card, .igb .panel, .igb .card {
+    display: block;
+    background: #111820;
+    border: 1px solid #1a2030;
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin: 0 0 14px 0;
+}
+.igb .rules-panel { line-height: 1.6; font-size: 15px; }
+.igb .rules-panel h2 { font-size: 20px; color: #e6e9ec; margin: 0 0 6px 0; }
+.igb .rules-panel h3 { font-size: 17px; color: #4a9eff; margin: 16px 0 8px 0; }
+.igb .rules-panel h4 { font-size: 15px; color: #66cc88; margin: 12px 0 6px 0; }
+.igb .rules-panel ul { margin: 6px 0 10px 0; padding-left: 22px; }
+
+/* forms */
+.igb .form-group { margin: 0 0 12px 0; }
+.igb label { display: block; font-weight: bold; margin: 0 0 5px 0; color: #c5c8c6; }
+.igb input[type=text], .igb input[type=password], .igb input[type=email],
+.igb input[type=number], .igb input[type=search], .igb textarea, .igb select {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    background: #0d1117;
+    color: #e6e9ec;
+    border: 1px solid #2a3346;
+    border-radius: 5px;
+    padding: 9px 10px;
+    font-size: 14px;
+    font-family: inherit;
+}
+.igb textarea { min-height: 120px; }
+.igb button, .igb .btn, .igb input[type=submit] {
+    display: inline-block;
+    padding: 9px 18px;
+    background: #66cc88;
+    color: #06121f;
+    border: 0;
+    border-radius: 5px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: none;
+}
+.igb .btn-outline, .igb button.btn-outline {
+    background: #182130;
+    color: #c5d0dd;
+    border: 1px solid #2a3346;
+}
+
+/* misc */
+.igb .pagination { display: block; margin: 14px 0; }
+.igb .pagination a, .igb .pagination span { display: inline-block; padding: 3px 9px; margin-right: 4px; }
+.igb .form-error { color: #ff7a6b; background: #2a1512; border: 1px solid #5a2a2a; padding: 10px 12px; border-radius: 6px; margin: 0 0 12px 0; }
+.igb .form-success { color: #8fe6a8; background: #10241a; border: 1px solid #1f5233; padding: 10px 12px; border-radius: 6px; margin: 0 0 12px 0; }
+.igb .text-dim, .igb [style*="color:var(--text-dim)"], .igb small { color: #8a97a8; }
+
+/* the in-game shell has no navbar; hide any leftovers defensively */
+.igb .navbar, .igb .footer, .igb #themeBtn, .igb #themeMenu, .igb .nav-search { display: none; }

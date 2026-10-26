@@ -1,6 +1,27 @@
 <?php
 function render_layout($title, $active, $content) {
     $user = current_user();
+    $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+    $inGameBrowser = (stripos($ua, 'EVE-IGB') !== false || stripos($ua, 'CCP-minibrowser') !== false);
+    $css = $inGameBrowser ? '/style_legacy.css' : '/style.css';
+    if ($inGameBrowser) {
+        // Minimal, legacy-safe shell for the in-game EVE browser (Chromium 3.0):
+        // no navbar / search / JS / theme widget - just readable content.
+        ?><!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><?= e($title) ?> — <?= SITE_NAME ?></title>
+<link rel="stylesheet" href="/style_legacy.css">
+<link rel="stylesheet" href="/style_ingame.css">
+</head>
+<body class="igb">
+<main class="container igb-main"><?= $content ?></main>
+</body>
+</html><?php
+        return;
+    }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -8,11 +29,6 @@ function render_layout($title, $active, $content) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e($title) ?> — <?= SITE_NAME ?></title>
-<?php
-$ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
-$inGameBrowser = (stripos($ua, 'EVE-IGB') !== false || stripos($ua, 'CCP-minibrowser') !== false);
-$css = $inGameBrowser ? '/style_legacy.css' : '/style.css';
-?>
 <link rel="stylesheet" href="<?= $css ?>">
 </head>
 <body>
