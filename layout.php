@@ -8,7 +8,12 @@ function render_layout($title, $active, $content) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><?= e($title) ?> — <?= SITE_NAME ?></title>
-<link rel="stylesheet" href="/style.css">
+<?php
+$ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+$inGameBrowser = (stripos($ua, 'EVE-IGB') !== false || stripos($ua, 'CCP-minibrowser') !== false);
+$css = $inGameBrowser ? '/style_legacy.css' : '/style.css';
+?>
+<link rel="stylesheet" href="<?= $css ?>">
 </head>
 <body>
 <nav class="navbar">
