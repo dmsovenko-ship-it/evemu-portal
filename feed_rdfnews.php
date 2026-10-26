@@ -18,6 +18,10 @@ require_once __DIR__ . '/config.php';   // loads const.php + API_BASE
 
 header('Content-Type: text/xml; charset=utf-8');
 
+// Clicking a ticker item opens this URL in the browser (funcKeywords url).
+// Point it at OUR portal news page, not eveonline.com.
+$NEWS_ITEM_LINK = 'http://router.iks-online.net:26006/news';
+
 function rdf_escape($s) {
     $s = preg_replace('/[\r\n\t]+/', ' ', (string)$s);
     $s = strip_tags($s);
@@ -59,7 +63,7 @@ if ($tid !== '' && $tid !== '7')
     $rows = array();
 
 foreach ($rows as $row) {
-    $link = 'http://www.eveonline.com/news/' . (int)$row['id'];
+    $link = $NEWS_ITEM_LINK . '#' . (int)$row['id'];
     // client-safe: no emoji / non-BMP glyphs, clamped length
     $title = ' ' . rdf_escape(news_client_text($row['title'], 120)) . ' ';
     echo '<item rdf:about="' . htmlspecialchars($link, ENT_XML1) . "\">\n";
