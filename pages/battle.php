@@ -67,7 +67,7 @@ $classK = [];   // groupName => count (final-blow ship classes = kills)
 $classL = [];   // groupName => count (victim ship classes = losses)
 $killers = [];  // charID => row (winner side)
 $losers  = [];  // charID => row (loser/victim side)
-$sec = (float)$battle[0]['finalsecuritystatus'];
+$sec = kill_system_sec($battle[0]);
 
 foreach ($battle as $k) {
     $gK = (string)($k['finalgroupname'] ?? ''); if ($gK==='') $gK = (string)($k['finalshipname'] ?? 'Unknown');

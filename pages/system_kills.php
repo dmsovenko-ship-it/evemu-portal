@@ -17,7 +17,7 @@ if ($allKills && $allKills->result && $allKills->result->kills) {
             $kills[] = $r;
             if (empty($systemName)) {
                 $systemName = (string)$r['solarsystemname'];
-                $systemSec = (float)$r['finalsecuritystatus'];
+                $systemSec = kill_system_sec($r);
             }
         }
     }
@@ -64,7 +64,7 @@ ob_start();
     <tbody>
     <?php foreach ($paginated as $k):
         $ts = filetime_to_unix((string)$k['killtime']);
-        $sec = (float)$k['finalsecuritystatus'];
+        $sec = kill_system_sec($k);
         $dmg = (int)$k['victimdamagetaken'];
     ?>
     <tr class="kill-row" onclick="location.href='/kill/<?= $k['killid'] ?>'">

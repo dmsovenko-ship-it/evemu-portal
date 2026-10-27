@@ -101,7 +101,7 @@ ob_start();
     <tbody>
     <?php foreach ($paginated as $k):
         $ts = filetime_to_unix((string)$k['killtime']);
-        $ksec = (float)$k['finalsecuritystatus'];
+        $ksec = kill_system_sec($k);
         $dmg = (int)$k['victimdamagetaken'];
     ?>
     <tr class="kill-row" onclick="location.href='/kill/<?= $k['killid'] ?>'">

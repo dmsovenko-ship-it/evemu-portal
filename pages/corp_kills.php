@@ -44,7 +44,7 @@ function render_kill_rows($list) {
     $out = '';
     foreach ($list as $k):
         $ts = filetime_to_unix((string)$k['killtime']);
-        $sec = (float)$k['finalsecuritystatus'];
+        $sec = kill_system_sec($k);
         $dmg = (int)$k['victimdamagetaken'];
         $out .= '<tr class="kill-row" onclick="location.href=\'/kill/' . $k['killid'] . '\'">'
             . '<td class="k-icon"><img src="' . ship_icon($k['victimshiptypeid'],32) . '" width="32" height="32" loading="lazy" onerror="this.style.display=\'none\'"></td>'

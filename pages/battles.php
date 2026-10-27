@@ -110,7 +110,7 @@ ob_start();
     <?php foreach ($battles as $b):
         $start = filetime_to_unix((int)$b[0]['killtime']);
         $end   = filetime_to_unix((int)$b[count($b)-1]['killtime']);
-        $sec   = (float)$b[0]['finalsecuritystatus'];
+        $sec   = kill_system_sec($b[0]);
         $dmg   = 0;
         foreach ($b as $k) $dmg += (int)$k['victimdamagetaken'];
         $vc = corp_list($b, 'victimcorporationid', $corpNames);

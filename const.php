@@ -247,6 +247,21 @@ function security_color($sec) {
     return '#ff0000';
 }
 
+// Security status of the SYSTEM a kill happened in. The kill list endpoints now
+// return the real system security as the `security` attribute; fall back to the
+// old finalsecuritystatus (the killer's sec, ~0 for bots) for older cached XML.
+function kill_system_sec($row): float {
+    if (is_array($row)) {
+        if (isset($row['security'])) return (float)$row['security'];
+        return isset($row['finalsecuritystatus']) ? (float)$row['finalsecuritystatus'] : 0.0;
+    }
+    if ($row instanceof SimpleXMLElement) {
+        if (isset($row['security'])) return (float)$row['security'];
+        if (isset($row['finalsecuritystatus'])) return (float)$row['finalsecuritystatus'];
+    }
+    return 0.0;
+}
+
 function redirect($url) {
     header("Location: $url");
     exit;

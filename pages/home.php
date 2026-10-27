@@ -135,7 +135,7 @@ ob_start();
         <tbody>
         <?php foreach (array_slice($recentKills, 0, 20) as $k):
             $rts = filetime_to_unix((string)$k['killtime']);
-            $rsec = (float)$k['finalsecuritystatus']; ?>
+            $rsec = kill_system_sec($k); ?>
         <tr class="kill-row" onclick="location.href='/kill/<?= $k['killid'] ?>'">
             <td class="k-icon"><img src="<?= ship_icon($k['victimshiptypeid'],32) ?>" width="32" height="32" loading="lazy" onerror="this.style.display='none'"></td>
             <td class="k-system"><span class="sec" style="color:<?= security_color($rsec) ?>"><?= number_format($rsec,1) ?></span> <?= e($k['solarsystemname']) ?></td>
