@@ -83,6 +83,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 imagecopy($dst, $mid, (int)(($W - $nw) / 2), (int)(($H - $nh) / 2), 0, 0, $nw, $nh);
                 imagedestroy($im); imagedestroy($mid);
                 imagepng($dst, BILLBOARD_IMG_PATH, 6);
+                // Also keep it in the rotation pool: each upload becomes one of
+                // the ads served by /billboard.asp (rotating like the original).
+                $poolDir = dirname(BILLBOARD_IMG_PATH) . '/billboard';
+                if (!is_dir($poolDir)) @mkdir($poolDir, 0775, true);
+                if (is_dir($poolDir)) {
+                    @imagepng($dst, $poolDir . '/ad_' . date('Ymd_His') . '_' . substr(md5(uniqid('', true)), 0, 6) . '.png', 6);
+                    $pool = glob($poolDir . '/ad_*.png') ?: [];
+                    if (count($pool) > 20) {
+                        sort($pool);
+                        foreach (array_slice($pool, 0, count($pool) - 20) as $old) @unlink($old);
+                    }
+                }
                 imagedestroy($dst);
                 $msg = 'Billboard image updated.';
             }
