@@ -24,6 +24,10 @@ foreach ($nxml->result->rows->row as $r) {
 }
 }
 
+// The billboard text panel is centred and static (the model does not scroll it);
+// a longer line is cut off on both sides, so only the newest headline fits.
+$rows = array_slice($rows, 0, 1);
+
 $out = '';
 foreach ($rows as $row) {
     $ts = strtotime($row['date']);
