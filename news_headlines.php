@@ -11,13 +11,17 @@ header('Content-Type: text/plain; charset=utf-8');
 $rows = array();
 $nxml = api_get('/server/NewsFeed.xml.aspx?limit=10', 8);
 if ($nxml && isset($nxml->result) && isset($nxml->result->rows)) {
-    foreach ($nxml->result->rows->row as $r) {
-        $rows[] = array(
-            // client-safe: single line, no emoji/non-BMP, clamped caption length
-            'title' => news_client_text((string)$r['title'], 40),
-            'date'  => (string)$r['date'],
-        );
-    }
+foreach ($nxml->result->rows->row as $r) {
+    // The billboard uses " - " as the caption separator, so a dash inside a
+    // title reads as an extra separator - replace it with a comma / space.
+    $t = news_client_text((string)$r['title'], 40);
+    $t = str_replace(' - ', ', ', $t);
+    $t = str_replace('-', ' ', $t);
+    $rows[] = array(
+        'title' => $t,
+        'date'  => (string)$r['date'],
+    );
+}
 }
 
 $out = '';
