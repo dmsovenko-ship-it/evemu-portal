@@ -12,11 +12,10 @@ $rows = array();
 $nxml = api_get('/server/NewsFeed.xml.aspx?limit=10', 8);
 if ($nxml && isset($nxml->result) && isset($nxml->result->rows)) {
 foreach ($nxml->result->rows->row as $r) {
-    // The billboard uses " - " as the caption separator, so a dash inside a
-    // title reads as an extra separator - replace it with a comma / space.
+    // ';' is the field separator the client splits on, so it must not appear
+    // inside a caption. Dashes are fine: the client joins captions with ' - '.
     $t = news_client_text((string)$r['title'], 40);
-    $t = str_replace(' - ', ', ', $t);
-    $t = str_replace('-', ' ', $t);
+    $t = str_replace(';', ',', $t);
     $rows[] = array(
         'title' => $t,
         'date'  => (string)$r['date'],
@@ -24,9 +23,12 @@ foreach ($nxml->result->rows->row as $r) {
 }
 }
 
-// The billboard text panel is centred and static (the model does not scroll it);
-// a longer line is cut off on both sides, so only the newest headline fits.
-$rows = array_slice($rows, 0, 1);
+// The billboard text panel is a 1/5-wide window (model TextureScaling U=0.2)
+// that scrolls its texture via TextScrollingCurve. A single short headline fits
+// inside the window and looks static, so return several headlines - the client
+// joins them with ' - ' and caps the result at ~2048 px (~256 chars), which is
+// wide enough to actually scroll.
+$rows = array_slice($rows, 0, 6);
 
 $out = '';
 foreach ($rows as $row) {

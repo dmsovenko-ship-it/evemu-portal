@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$im) {
                 $error = 'Not a valid image (png/jpg/webp/gif allowed).';
             } else {
-                $W = 1024; $H = 256;
+                $W = 1024; $H = 1024;
                 $dst = imagecreatetruecolor($W, $H);
                 $bg = imagecolorallocate($dst, 4, 6, 12);
                 imagefill($dst, 0, 0, $bg);
@@ -198,12 +198,14 @@ function news_preview($s, $max = 140) {
 
 <h2 style="margin:28px 0 12px">Station Billboard (news headlines screen ad)</h2>
 <p style="color:var(--text-dim);font-size:12px;margin-bottom:10px">
-    The image is shown on the station exterior billboard screens (auto center-crop to 1024&times;256,
-    png/jpg/webp/gif up to 8&nbsp;MB). Players see the new image after their next station dock.
+    The image is shown on the station exterior billboard screens (center-crop to
+    1024&times;1024 - the client's billboard ad texture is square, like the baked
+    quafe.dds). png/jpg/webp/gif up to 8&nbsp;MB. Players see the new image after
+    their next client start.
 </p>
 <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
     <div style="border:1px solid var(--border);border-radius:6px;overflow:hidden;background:#04060c">
-        <img src="/billboard.asp?&lt;refresh&gt;" style="width:512px;height:128px;display:block"
+        <img src="/billboard.asp?&lt;refresh&gt;" style="width:256px;height:256px;display:block"
              onerror="this.onerror=null;this.src='/billboard.png'">
     </div>
     <form method="POST" enctype="multipart/form-data" style="min-width:280px">
