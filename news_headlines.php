@@ -14,7 +14,7 @@ if ($nxml && isset($nxml->result) && isset($nxml->result->rows)) {
     foreach ($nxml->result->rows->row as $r) {
         $rows[] = array(
             // client-safe: single line, no emoji/non-BMP, clamped caption length
-            'title' => news_client_text((string)$r['title'], 90),
+            'title' => news_client_text((string)$r['title'], 40),
             'date'  => (string)$r['date'],
         );
     }
