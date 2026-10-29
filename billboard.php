@@ -31,7 +31,16 @@ if (is_dir($dir) && ($dh = @opendir($dir)) !== false) {
 $path = null;
 $ext  = 'png';
 if ($files) {
-    $pick = $files[random_int(0, count($files) - 1)];
+    // Deterministic rotation instead of a random pick: consecutive fetches (the
+    // client refreshes every ~90s via the server-side billboard re-emit) must
+    // land on a DIFFERENT image, otherwise a 4-image pool repeats 25% of the time
+    // and the billboard looks like it never changes.
+    sort($files);
+    $cf = $root . '/cache/billboard_rot';
+    $n = @file_get_contents($cf);
+    $n = ($n === false) ? random_int(0, 1000000) : ((int)$n + 1);
+    @file_put_contents($cf, (string)$n, LOCK_EX);
+    $pick = $files[$n % count($files)];
     $path = $dir . '/' . $pick;
     $ext  = strtolower(pathinfo($pick, PATHINFO_EXTENSION));
 } else {
