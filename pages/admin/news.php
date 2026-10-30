@@ -51,7 +51,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $msg = $xml && $xml->result ? "Новость #$nid повторно отправлена в Telegram." : 'Не удалось отправить.';
         }
     } elseif ($act === 'billboard') {
-        // station billboard ad image: validate, cover-crop to 1024x256, save
+        // Station billboard ad: STRICT validation, NO resizing. The client's ad
+        // texture is square 1024x1024 (like the baked quafe.dds); admins upload
+        // the exact asset and anything else is rejected.
         if (!isset($_FILES['bbfile']) || $_FILES['bbfile']['error'] !== UPLOAD_ERR_OK) {
             $error = 'Upload failed (file missing or too large).';
         } elseif ($_FILES['bbfile']['size'] > 8 * 1024 * 1024) {
@@ -59,45 +61,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $tmp = $_FILES['bbfile']['tmp_name'];
             $sz = @getimagesize($tmp);
-            $im = null;
+            $ext = null;
             if ($sz) {
-                switch ($sz[2]) {
-                    case IMAGETYPE_PNG:  $im = @imagecreatefrompng($tmp);  break;
-                    case IMAGETYPE_JPEG: $im = @imagecreatefromjpeg($tmp); break;
-                    case IMAGETYPE_WEBP: $im = @imagecreatefromwebp($tmp); break;
-                    case IMAGETYPE_GIF:  $im = @imagecreatefromgif($tmp);  break;
-                }
+                if ($sz[2] === IMAGETYPE_PNG) $ext = 'png';
+                elseif ($sz[2] === IMAGETYPE_JPEG) $ext = 'jpg';
             }
-            if (!$im) {
-                $error = 'Not a valid image (png/jpg/webp/gif allowed).';
+            if (!$ext) {
+                $error = 'Only PNG or JPEG images are allowed.';
+            } elseif ($sz[0] !== 1024 || $sz[1] !== 1024) {
+                $error = 'Image must be exactly 1024x1024 (got ' . intval($sz[0]) . 'x' . intval($sz[1]) . '). No resizing is done.';
             } else {
-                $W = 1024; $H = 1024;
-                $dst = imagecreatetruecolor($W, $H);
-                $bg = imagecolorallocate($dst, 4, 6, 12);
-                imagefill($dst, 0, 0, $bg);
-                $sw = imagesx($im); $sh = imagesy($im);
-                $scale = max($W / $sw, $H / $sh);
-                $nw = (int)round($sw * $scale); $nh = (int)round($sh * $scale);
-                $mid = imagecreatetruecolor($nw, $nh);
-                imagecopyresampled($mid, $im, 0, 0, 0, 0, $nw, $nh, $sw, $sh);
-                imagecopy($dst, $mid, (int)(($W - $nw) / 2), (int)(($H - $nh) / 2), 0, 0, $nw, $nh);
-                imagedestroy($im); imagedestroy($mid);
-                imagepng($dst, BILLBOARD_IMG_PATH, 6);
-                // Also keep it in the rotation pool: each upload becomes one of
-                // the ads served by /billboard.asp (rotating like the original).
                 $poolDir = dirname(BILLBOARD_IMG_PATH) . '/billboard';
                 if (!is_dir($poolDir)) @mkdir($poolDir, 0775, true);
-                if (is_dir($poolDir)) {
-                    @imagepng($dst, $poolDir . '/ad_' . date('Ymd_His') . '_' . substr(md5(uniqid('', true)), 0, 6) . '.png', 6);
-                    $pool = glob($poolDir . '/ad_*.png') ?: [];
+                $fname = 'ad_' . date('Ymd_His') . '_' . substr(md5(uniqid('', true)), 0, 6) . '.' . $ext;
+                if (@move_uploaded_file($tmp, $poolDir . '/' . $fname)) {
+                    @copy($poolDir . '/' . $fname, BILLBOARD_IMG_PATH);
+                    $pool = glob($poolDir . '/ad_*.{png,jpg,jpeg}', GLOB_BRACE) ?: [];
                     if (count($pool) > 20) {
                         sort($pool);
                         foreach (array_slice($pool, 0, count($pool) - 20) as $old) @unlink($old);
                     }
+                    $msg = 'Billboard image added to the pool (' . $fname . ').';
+                } else {
+                    $error = 'Could not save the uploaded file (check media/billboard permissions).';
                 }
-                imagedestroy($dst);
-                $msg = 'Billboard image updated.';
             }
+        }
+
+    } elseif ($act === 'bbdelete') {
+        $f = basename((string)($_POST['bbfile_name'] ?? ''));
+        if (preg_match('/^[A-Za-z0-9_\-\.]+\.(png|jpg|jpeg)$/i', $f)) {
+            $poolDir = dirname(BILLBOARD_IMG_PATH) . '/billboard';
+            if (@unlink($poolDir . '/' . $f)) $msg = 'Removed ' . $f;
+            else $error = 'Could not remove ' . $f;
+        } else {
+            $error = 'Bad file name.';
         }
 
     } elseif ($act === 'delete') {
@@ -198,10 +196,9 @@ function news_preview($s, $max = 140) {
 
 <h2 style="margin:28px 0 12px">Station Billboard (news headlines screen ad)</h2>
 <p style="color:var(--text-dim);font-size:12px;margin-bottom:10px">
-    The image is shown on the station exterior billboard screens (center-crop to
-    1024&times;1024 - the client's billboard ad texture is square, like the baked
-    quafe.dds). png/jpg/webp/gif up to 8&nbsp;MB. Players see the new image after
-    their next client start.
+    The billboard ad texture is square <b>1024&times;1024</b>. Uploads are validated
+    and stored <b>as-is</b> (no resizing): PNG or JPEG only, exactly 1024&times;1024,
+    up to 8&nbsp;MB. Every upload joins the rotation pool below.
 </p>
 <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
     <div style="border:1px solid var(--border);border-radius:6px;overflow:hidden;background:#04060c">
@@ -210,8 +207,40 @@ function news_preview($s, $max = 140) {
     </div>
     <form method="POST" enctype="multipart/form-data" style="min-width:280px">
         <input type="hidden" name="action" value="billboard">
-        <input type="file" name="bbfile" accept="image/*"
+        <input type="file" name="bbfile" accept="image/png,image/jpeg"
                style="display:block;margin-bottom:10px;font-size:12px;color:var(--text)">
         <button class="btn" style="width:auto;padding:6px 18px">Upload billboard</button>
     </form>
 </div>
+
+<h3 style="margin:24px 0 8px">Ad pool (rotation)</h3>
+<table style="width:100%;border-collapse:collapse;font-size:12px">
+    <tr style="color:var(--text-dim);text-align:left">
+        <th style="padding:6px">preview</th>
+        <th style="padding:6px">file</th>
+        <th style="padding:6px">size</th>
+        <th style="padding:6px"></th>
+    </tr>
+<?php
+$poolDir = dirname(BILLBOARD_IMG_PATH) . '/billboard';
+$pool = is_dir($poolDir) ? (glob($poolDir . '/*.{png,jpg,jpeg}', GLOB_BRACE) ?: []) : array();
+sort($pool);
+foreach ($pool as $pf):
+    $bn = basename($pf);
+?>
+    <tr style="border-top:1px solid var(--border)">
+        <td style="padding:6px"><img src="/media/billboard/<?php echo rawurlencode($bn); ?>?v=<?php echo @filemtime($pf); ?>"
+            style="width:72px;height:72px;object-fit:cover;border-radius:4px;display:block"></td>
+        <td style="padding:6px"><?php echo htmlspecialchars($bn); ?></td>
+        <td style="padding:6px;color:var(--text-dim)"><?php echo number_format((int)@filesize($pf)); ?> b</td>
+        <td style="padding:6px">
+            <form method="POST" onsubmit="return confirm('Remove <?php echo htmlspecialchars($bn); ?>?')">
+                <input type="hidden" name="action" value="bbdelete">
+                <input type="hidden" name="bbfile_name" value="<?php echo htmlspecialchars($bn); ?>">
+                <button class="btn" style="width:auto;padding:4px 12px">Delete</button>
+            </form>
+        </td>
+    </tr>
+<?php endforeach; ?>
+</table>
+
