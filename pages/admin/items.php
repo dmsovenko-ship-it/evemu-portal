@@ -37,3 +37,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <button type="submit" class="btn btn-primary">Выдать</button>
     </form>
 </div>
+
+<div class="form-card" style="max-width:400px;margin-top:16px">
+    <h3 style="margin-bottom:12px;color:var(--text-bright);font-size:14px">Выдать PLEX (29668)</h3>
+    <form method="POST">
+        <input type="hidden" name="action" value="give">
+        <input type="hidden" name="typeid" value="29668">
+        <div class="form-group">
+            <label>Character ID</label>
+            <input name="characterid" type="number" required>
+        </div>
+        <div class="form-group">
+            <label>Количество PLEX</label>
+            <input name="quantity" type="number" min="1" value="1" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Выдать PLEX</button>
+    </form>
+    <p style="color:var(--text-dim);font-size:11px;margin-top:8px">1 PLEX = 30 дней Omega (активируется на /account).</p>
+</div>
