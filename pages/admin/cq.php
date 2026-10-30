@@ -80,31 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
     } elseif ($act === 'cqimage') {
-        if (!isset($_FILES['cqimg']) || $_FILES['cqimg']['error'] !== UPLOAD_ERR_OK) {
-            $error = 'Upload failed (file missing or too large).';
-        } elseif ($_FILES['cqimg']['size'] > 2 * 1024 * 1024) {
-            $error = 'Image too large: max 2 MB.';
-        } else {
-            $tmp = $_FILES['cqimg']['tmp_name'];
-            $sz = @getimagesize($tmp);
-            $ext = null;
-            if ($sz) {
-                if ($sz[2] === IMAGETYPE_PNG) $ext = 'png';
-                elseif ($sz[2] === IMAGETYPE_JPEG) $ext = 'jpg';
-            }
-            if (!$ext) {
-                $error = 'Only PNG or JPEG images are allowed.';
-            } elseif (abs(($sz[0] / $sz[1]) - (16 / 9)) > 0.02) {
-                $error = 'Aspect ratio must be 16:9 (got ' . intval($sz[0]) . 'x' . intval($sz[1]) . '). No resizing is done.';
-            } else {
-                $slug = 'cq_' . date('Ymd_His') . '_' . substr(md5(uniqid('', true)), 0, 6) . '.' . $ext;
-                if (@move_uploaded_file($tmp, $cqImageDir . '/' . $slug)) {
-                    $msg = 'Image added: ' . $slug . ' (' . intval($sz[0]) . 'x' . intval($sz[1]) . ').';
-                } else {
-                    $error = 'Could not save the file (check media/cq/image permissions).';
-                }
-            }
-        }
+        $error = 'Image ads are disabled - upload a .bik video.';
 
     } elseif ($act === 'cqdelete') {
         $f = basename((string)($_POST['cqname'] ?? ''));
@@ -129,7 +105,6 @@ sort($cqImages);
 $cqManifest = array(
     'generated' => date('c'),
     'videos'    => array_map('basename', $cqVideos),
-    'images'    => array_map('basename', $cqImages),
 );
 @file_put_contents(__DIR__ . '/../../media/cq/manifest.json', json_encode($cqManifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 ?>
@@ -168,34 +143,6 @@ $cqManifest = array(
             <form method="POST" onsubmit="return confirm('Remove <?php echo htmlspecialchars($bn); ?>?')">
                 <input type="hidden" name="action" value="cqdelete">
                 <input type="hidden" name="cqcat" value="video">
-                <input type="hidden" name="cqname" value="<?php echo htmlspecialchars($bn); ?>">
-                <button class="btn" style="width:auto;padding:4px 12px">Delete</button>
-            </form>
-        </td>
-    </tr>
-<?php endforeach; ?>
-</table>
-
-<h3 style="margin:24px 0 8px">Image (16:9)</h3>
-<form method="POST" enctype="multipart/form-data" style="margin-bottom:14px">
-    <input type="hidden" name="action" value="cqimage">
-    <input type="file" name="cqimg" accept="image/png,image/jpeg" style="display:block;margin-bottom:8px;font-size:12px;color:var(--text)">
-    <button class="btn" style="width:auto;padding:6px 18px">Upload image</button>
-</form>
-<table style="width:100%;border-collapse:collapse;font-size:12px">
-    <tr style="color:var(--text-dim);text-align:left">
-        <th style="padding:6px">preview</th><th style="padding:6px">file</th><th style="padding:6px">size</th><th></th>
-    </tr>
-<?php foreach ($cqImages as $pf): $bn = basename($pf); ?>
-    <tr style="border-top:1px solid var(--border)">
-        <td style="padding:6px"><img src="/media/cq/image/<?php echo rawurlencode($bn); ?>?v=<?php echo @filemtime($pf); ?>"
-            style="width:128px;height:72px;object-fit:cover;border-radius:4px;display:block"></td>
-        <td style="padding:6px"><?php echo htmlspecialchars($bn); ?></td>
-        <td style="padding:6px;color:var(--text-dim)"><?php echo number_format((int)@filesize($pf)); ?> b</td>
-        <td style="padding:6px">
-            <form method="POST" onsubmit="return confirm('Remove <?php echo htmlspecialchars($bn); ?>?')">
-                <input type="hidden" name="action" value="cqdelete">
-                <input type="hidden" name="cqcat" value="image">
                 <input type="hidden" name="cqname" value="<?php echo htmlspecialchars($bn); ?>">
                 <button class="btn" style="width:auto;padding:4px 12px">Delete</button>
             </form>
