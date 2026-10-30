@@ -2,21 +2,29 @@
 $msg = '';
 
 $allRoles = [
-    ROLE_PLAYER    => ['Player',    'badge-player'],
+    // Player = STD (LOGIN|PLAYER|IGB) - ROLE_PLAYER alone is 0 and cannot log in
+    6917529029788565504 => ['Player', 'badge-player'],
     ROLE_GML       => ['GML',       'badge-gm'],
     ROLE_GMH       => ['GMH',       'badge-gm'],
     ROLE_QA        => ['QA',        'badge-gm'],
     ROLE_ADMIN     => ['Admin',     'badge-admin'],
     ROLE_WORLDMOD  => ['WorldMod',  'badge-gm'],
     ROLE_CHTADMIN  => ['ChatAdmin', 'badge-gm'],
+    // Full rights (all GM/ADMIN bits + STD) - grantable by a full admin only
+    7203507614729375744 => ['Full', 'badge-admin'],
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $act = $_POST['action'] ?? '';
     if ($act === 'setrole') {
         $aid = intval($_POST['accountid'] ?? 0);
-        $newRole = intval($_POST['role'] ?? 0);
-        if ($aid > 0) {
+        $newRole = (int)($_POST['role'] ?? 0);
+        $callerRole = (int)(current_user()['role'] ?? 0);
+        $isFullAdmin = (bool)($callerRole & ROLE_ADMIN);
+        if ($aid > 0 && !$isFullAdmin && ($newRole & ~$callerRole) != 0) {
+            // a lower admin cannot hand out rights they do not have themselves
+            $msg = 'Недостаточно прав: вы можете выдать только те роли, которые есть у вас.';
+        } elseif ($aid > 0) {
             $xml = api_post('/admin/SetRole.xml.aspx', "accountid=$aid&role=$newRole");
             $msg = $xml && $xml->result ? "Роль обновлена для #$aid" : 'Ошибка';
         }
@@ -51,7 +59,9 @@ if ($xml && $xml->result && $xml->result->accounts)
                 <input type="hidden" name="action" value="setrole">
                 <input type="hidden" name="accountid" value="<?= $a['accountid'] ?>">
                 <select name="role" style="background:#0d1117;border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:3px;font-size:12px">
-                    <?php foreach ($allRoles as $bit => [$name]): ?>
+                    <?php foreach ($allRoles as $bit => [$name]):
+                        if ($bit === 7203507614729375744 && !(current_user()['role'] & ROLE_ADMIN)) continue;
+                    ?>
                     <option value="<?= $bit ?>" <?= $role==$bit?'selected':'' ?>><?= $name ?></option>
                     <?php endforeach; ?>
                 </select>
