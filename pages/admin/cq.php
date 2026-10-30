@@ -123,6 +123,15 @@ $cqVideos = is_dir($cqVideoDir) ? (glob($cqVideoDir . '/*.{bik,bk2}', GLOB_BRACE
 sort($cqVideos);
 $cqImages = is_dir($cqImageDir) ? (glob($cqImageDir . '/*.{png,jpg,jpeg}', GLOB_BRACE) ?: []) : [];
 sort($cqImages);
+
+// Manifest for the launcher/release tooling: which .bik files must be copied into
+// <client>/cache/CQScreenVideos/ (the client auto-plays everything it finds there).
+$cqManifest = array(
+    'generated' => date('c'),
+    'videos'    => array_map('basename', $cqVideos),
+    'images'    => array_map('basename', $cqImages),
+);
+@file_put_contents(__DIR__ . '/../../media/cq/manifest.json', json_encode($cqManifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 ?>
 <h2 style="margin:0 0 12px">CQ Screen (captain's quarters)</h2>
 <p style="color:var(--text-dim);font-size:12px;margin-bottom:14px">
