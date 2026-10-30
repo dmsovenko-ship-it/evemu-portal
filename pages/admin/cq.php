@@ -44,8 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($act === 'cqvideo') {
         if (!isset($_FILES['cqfile']) || $_FILES['cqfile']['error'] !== UPLOAD_ERR_OK) {
             $error = 'Upload failed (file missing or too large).';
-        } elseif ($_FILES['cqfile']['size'] > 5 * 1024 * 1024) {
-            $error = 'Video too large: max 5 MB (re-encode with the RAD tools at a lower bitrate).';
+        } elseif ($_FILES['cqfile']['size'] > 12 * 1024 * 1024) {
+            $error = 'Video too large: max 12 MB (re-encode with the RAD tools at a lower bitrate).';
         } else {
             $tmp = $_FILES['cqfile']['tmp_name'];
             $orig = strtolower($_FILES['cqfile']['name'] ?? '');
@@ -140,7 +140,7 @@ $cqManifest = array(
     (holoscreenSvc.GetCustomVideoPlaylist). Convert clips yourself with
     <a href="https://www.radgametools.com/bnkdown.htm" target="_blank">RAD Video Tools</a>
     (7z password: <code>RAD</code>), then upload the <code>.bik</code> here.
-    Limits: <b>max 1280x720, 16:9, 60s, 5 MB</b>. The portal validates and stores -
+    Limits: <b>max 1280x720, 16:9, 60s, 12 MB</b>. The portal validates and stores -
     it never re-encodes or resizes.
 </p>
 
