@@ -89,7 +89,10 @@ switch ($page) {
         session_destroy();
         redirect('/');
         break;
-    case 'characters':
+    case 'account':
+    require __DIR__ . '/pages/account.php';
+    break;
+case 'characters':
         require __DIR__ . '/pages/characters.php';
         break;
     case 'petitions':
