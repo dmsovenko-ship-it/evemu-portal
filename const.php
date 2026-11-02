@@ -216,6 +216,20 @@ function ship_type_icon($typeID, $size = 32) {
 
 // Portraits/logos live on OUR image server; browsers cannot reach a LAN 172.x
 // address, so these go through the /img.php cache proxy.
+// Killboard: authorities (CONCORD, empire navies, customs) must not appear in
+// the public tops/feeds. School corps (Federal Navy Academy etc.) are NOT here.
+function kb_is_authority($name) {
+    $n = strtoupper(trim((string)$name));
+    if ($n === '')
+        return false;
+    static $pat = array('CONCORD', 'DED ', 'AMARR NAVY', 'CALDARI NAVY', 
+        'GALLENTE NAVY', 'MINMATAR NAVY', 'FACTION POLICE', 'INTERBUS CUSTOMS');
+    foreach ($pat as $p)
+        if (strpos($n, $p) !== false)
+            return true;
+    return false;
+}
+
 function char_portrait($charID, $size = 64) {
     if (!$charID) return '';
     return '/img.php?url=' . urlencode(IMAGE_SERVER . '/Character/' . $charID . '_' . $size . '.jpg');
