@@ -179,39 +179,50 @@ ob_start();
     </div>
     <?php endif; ?>
 
-    <?php $rows = act_rows($act, 'characters'); if ($rows): ?>
+    <?php $rows = act_rows($act, 'characters');
+    if ($rows): $rows = array_values(array_filter($rows, function($r){ return ((int)($r['id'] ?? 0) >= 90000000) && !kb_is_authority((string)($r['name'] ?? '')); })); ?>
+<?php if ($rows): ?>
     <div class="zk-card"><h3>Top Characters</h3>
-    <?php foreach ($rows as $i => $r):
-    // hide authorities from the activity tops
-    if (kb_is_authority((string)($r['name'] ?? ''))) continue; ?>
+    <?php foreach ($rows as $i => $r): ?>
         <div class="zk-top"><span class="rk"><?= $i+1 ?></span>
+            <img src="<?= e(char_portrait((int)$r['id'])) ?>" alt="" style="width:20px;height:20px;border-radius:3px;flex:none">
             <a class="nm" href="/character/<?= $r['id'] ?>"><?= e($r['name'] ?: 'Unknown') ?></a>
             <span class="ct"><?= number_format((int)$r['count']) ?></span></div>
     <?php endforeach; ?></div>
+<?php endif; ?>
     <?php endif; ?>
 
-    <?php $rows = act_rows($act, 'corporations'); if ($rows): ?>
+    <?php $rows = act_rows($act, 'corporations');
+    if ($rows): $rows = array_values(array_filter($rows, function($r){ return !kb_is_authority((string)($r['name'] ?? '')); })); ?>
+<?php if ($rows): ?>
     <div class="zk-card"><h3>Top Corporations</h3>
     <?php foreach ($rows as $i => $r): ?>
         <div class="zk-top"><span class="rk"><?= $i+1 ?></span>
+            <img src="<?= e(corp_logo((int)$r['id'])) ?>" alt="" style="width:20px;height:20px;border-radius:3px;flex:none">
             <a class="nm" href="/corporation/<?= $r['id'] ?>"><?= e($r['name'] ?: 'Unknown') ?></a>
             <span class="ct"><?= number_format((int)$r['count']) ?></span></div>
     <?php endforeach; ?></div>
+<?php endif; ?>
     <?php endif; ?>
 
-    <?php $rows = act_rows($act, 'alliances'); if ($rows): ?>
+    <?php $rows = act_rows($act, 'alliances');
+    if ($rows): $rows = array_values(array_filter($rows, function($r){ return !kb_is_authority((string)($r['name'] ?? '')); })); ?>
+<?php if ($rows): ?>
     <div class="zk-card"><h3>Top Alliances</h3>
     <?php foreach ($rows as $i => $r): ?>
         <div class="zk-top"><span class="rk"><?= $i+1 ?></span>
+            <img src="<?= e(alliance_logo((int)$r['id'])) ?>" alt="" style="width:20px;height:20px;border-radius:3px;flex:none">
             <span class="nm"><?= e($r['name'] ?: 'Unknown') ?></span>
             <span class="ct"><?= number_format((int)$r['count']) ?></span></div>
     <?php endforeach; ?></div>
+<?php endif; ?>
     <?php endif; ?>
 
     <?php $rows = act_rows($act, 'ships'); if ($rows): ?>
     <div class="zk-card"><h3>Top Ships</h3>
     <?php foreach ($rows as $i => $r): ?>
         <div class="zk-top"><span class="rk"><?= $i+1 ?></span>
+            <img src="<?= e(type_render((int)$r['id'], 32)) ?>" alt="" style="width:20px;height:20px;border-radius:3px;flex:none;object-fit:contain">
             <span class="nm"><?= e($r['name'] ?: 'Unknown') ?></span>
             <span class="ct"><?= number_format((int)$r['count']) ?></span></div>
     <?php endforeach; ?></div>

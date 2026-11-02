@@ -249,6 +249,11 @@ function alliance_logo($allianceID, $size = 32) {
     return '/img.php?url=' . urlencode(IMAGE_SERVER . '/Alliance/' . $allianceID . '_' . $size . '.png');
 }
 
+function type_render($typeID, $size = 32) {
+    $url = sprintf('https://images.evetech.net/types/%d/render?size=%d', (int)$typeID, (int)$size);
+    return '/img.php?url=' . rawurlencode($url);
+}
+
 // ---- formatting helpers -----------------------------------------------------
 function filetime_to_unix($filetime) {
     $ft = (int)$filetime;
