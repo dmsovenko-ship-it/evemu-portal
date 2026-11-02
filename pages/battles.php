@@ -71,8 +71,11 @@ function corp_list($battle, $attr, $corpNames, $max = 3) {
         if ($id > 0) $ids[$id] = true;
     }
     $pairs = [];
-    foreach (array_keys($ids) as $id)
-        $pairs[] = [$id, $corpNames[(string)$id] ?? ('#' . $id)];
+    foreach (array_keys($ids) as $id) {
+        $nm = $corpNames[(string)$id] ?? '';
+        if (kb_is_authority($nm, $id)) continue;   // hide CONCORD/DED/navy/faction police
+        $pairs[] = [$id, $nm !== '' ? $nm : ('#' . $id)];
+    }
     return [
         'pairs' => array_slice($pairs, 0, $max),
         'extra' => count($pairs) > $max ? ' <span style="color:var(--text-dim)">+' . (count($pairs) - $max) . ' more</span>' : '',
