@@ -235,18 +235,15 @@ function kb_is_authority($name, $corpID = 0) {
 }
 
 function char_portrait($charID, $size = 64) {
-    if (!$charID) return '';
-    return '/img.php?url=' . urlencode(IMAGE_SERVER . '/Character/' . $charID . '_' . $size . '.jpg');
+    return '/img.php?url=' . rawurlencode(sprintf('https://images.evetech.net/characters/%d/portrait?size=%d', (int)$charID, (int)$size));
 }
 
 function corp_logo($corpID, $size = 32) {
-    if (!$corpID) return '';
-    return '/img.php?url=' . urlencode(IMAGE_SERVER . '/Corporation/' . $corpID . '_' . $size . '.png');
+    return '/img.php?url=' . rawurlencode(sprintf('https://images.evetech.net/corporations/%d/logo?size=%d', (int)$corpID, (int)$size));
 }
 
 function alliance_logo($allianceID, $size = 32) {
-    if (!$allianceID) return '';
-    return '/img.php?url=' . urlencode(IMAGE_SERVER . '/Alliance/' . $allianceID . '_' . $size . '.png');
+    return '/img.php?url=' . rawurlencode(sprintf('https://images.evetech.net/alliances/%d/logo?size=%d', (int)$allianceID, (int)$size));
 }
 
 function type_render($typeID, $size = 32) {
