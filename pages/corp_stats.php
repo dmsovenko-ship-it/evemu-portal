@@ -5,15 +5,15 @@ $corpID = intval($id ?? 0);
 if (!$corpID) { redirect('/'); return; }
 
 $corpInfo = null;
-$corpXml = api_get('/corp/CorporationSheet.xml.aspx?corporationID=' . $corpID);
+$corpXml = api_get('/corp/CorporationSheet.xml.aspx?corporationid=' . $corpID);
 if ($corpXml && $corpXml->result) $corpInfo = $corpXml->result;
 
 $rows = [];
-$killsXml = api_get('/corp/KillMails.xml.aspx?corporationID=' . $corpID);
+$killsXml = api_get('/corp/KillMails.xml.aspx?corporationid=' . $corpID);
 if ($killsXml && $killsXml->result && $killsXml->result->kills)
     foreach ($killsXml->result->kills->row as $r) $rows[] = $r;
 
-$corpName = $corpInfo ? (string)($corpInfo->corporationName ?? 'Unknown') : 'Unknown';
+$corpName = $corpInfo ? (string)($corpInfo->corporationname ?? 'Unknown') : 'Unknown';
 $ticker  = $corpInfo ? (string)($corpInfo->ticker ?? '') : '';
 
 // Split into kills (corp delivered final blow) and losses (corp was victim).

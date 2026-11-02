@@ -8,12 +8,12 @@ $tab = $_GET['tab'] ?? 'kills';   // kills | losses
 if (!in_array($tab, ['kills','losses'], true)) $tab = 'kills';
 
 $corpInfo = null;
-$corpXml = api_get('/corp/CorporationSheet.xml.aspx?corporationID=' . $corpID);
+$corpXml = api_get('/corp/CorporationSheet.xml.aspx?corporationid=' . $corpID);
 if ($corpXml && $corpXml->result) $corpInfo = $corpXml->result;
 
 // Fetch ALL kill rows involving this corp, then split kills/losses client-side.
 $rows = [];
-$killsXml = api_get('/corp/KillMails.xml.aspx?corporationID=' . $corpID);
+$killsXml = api_get('/corp/KillMails.xml.aspx?corporationid=' . $corpID);
 if ($killsXml && $killsXml->result && $killsXml->result->kills)
     foreach ($killsXml->result->kills->row as $r) $rows[] = $r;
 
@@ -23,11 +23,11 @@ foreach ($rows as $r) {
     if ((int)$r['victimcorporationid'] === $corpID) $losses[] = $r;
 }
 
-$corpName = $corpInfo ? (string)($corpInfo->corporationName ?? 'Unknown') : 'Unknown';
+$corpName = $corpInfo ? (string)($corpInfo->corporationname ?? 'Unknown') : 'Unknown';
 $ticker = $corpInfo ? (string)($corpInfo->ticker ?? '') : '';
-$memberCount = $corpInfo ? (int)($corpInfo->memberCount ?? 0) : 0;
-$ceoID = $corpInfo ? (int)($corpInfo->ceoID ?? 0) : 0;
-$ceoName = $corpInfo ? (string)($corpInfo->ceoName ?? '') : '';
+$membercount = $corpInfo ? (int)($corpInfo->membercount ?? 0) : 0;
+$ceoid = $corpInfo ? (int)($corpInfo->ceoid ?? 0) : 0;
+$ceoname = $corpInfo ? (string)($corpInfo->ceoname ?? '') : '';
 
 $nKills = count($kills);
 $nLosses = count($losses);
@@ -69,8 +69,8 @@ ob_start();
     <div class="corp-info">
         <h1><?= e($corpName) ?> <span class="corp-ticker">[<?= e($ticker) ?>]</span></h1>
         <div class="corp-meta">
-            <span class="corp-members"><?= number_format($memberCount) ?> members</span>
-            <?php if ($ceoID): ?><span style="color:var(--text-dim)">CEO: <a href="/character/<?= $ceoID ?>"><?= e($ceoName) ?></a></span><?php endif; ?>
+            <span class="corp-members"><?= number_format($membercount) ?> members</span>
+            <?php if ($ceoid): ?><span style="color:var(--text-dim)">CEO: <a href="/character/<?= $ceoid ?>"><?= e($ceoname) ?></a></span><?php endif; ?>
             <span style="color:var(--text-dim)"><a href="/corporation/<?= $corpID ?>/stats">Statistics &raquo;</a></span>
         </div>
         <div class="corp-stats">
