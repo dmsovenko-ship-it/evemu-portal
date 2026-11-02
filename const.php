@@ -218,7 +218,11 @@ function ship_type_icon($typeID, $size = 32) {
 // address, so these go through the /img.php cache proxy.
 // Killboard: authorities (CONCORD, empire navies, customs) must not appear in
 // the public tops/feeds. School corps (Federal Navy Academy etc.) are NOT here.
-function kb_is_authority($name) {
+function kb_is_authority($name, $corpID = 0) {
+    // authorities by corporation id (CONCORD + empire navies)
+    static $authCorps = array(1000125, 1000084, 1000035, 1000127, 1000168 + 0);
+    if ($corpID && in_array((int)$corpID, array(1000125, 1000084, 1000035), true))
+        return true;
     $n = strtoupper(trim((string)$name));
     if ($n === '')
         return false;

@@ -58,7 +58,9 @@ ob_start();
     <tbody>
     <?php foreach ($kills as $k):
     // hide kills made by the authorities (CONCORD / navies / customs)
-    if (kb_is_authority($k['finalname'] ?? '')) continue;
+    if (kb_is_authority($k['finalname'] ?? '', (int)($k['finalcorporationid'] ?? 0))) continue;
+    // CONCORD / navy hulls (killer is an anonymous NPC, so the name check above misses them)
+    if (stripos((string)($k['finalshipname'] ?? ''), 'CONCORD') !== false) continue;
         $ts = filetime_to_unix((string)$k['killtime']);
         $sec = kill_system_sec($k);
         $dmg = (int)$k['victimdamagetaken'];
