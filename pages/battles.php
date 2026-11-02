@@ -123,9 +123,9 @@ ob_start();
         </td>
         <td class="k-system"><a href="/system/<?= $b[0]['solarsystemid'] ?>"><span class="sec" style="color:<?= security_color($sec) ?>"><?= number_format($sec,1) ?></span> <?= e($b[0]['solarsystemname']) ?></a></td>
         <td class="battle-parties">
-            <?php if ($vc['pairs']): foreach ($vc['pairs'] as $p): ?><a href="/corporation/<?= $p[0] ?>"><?= e($p[1]) ?></a> <?php endforeach; ?><?= $vc['extra'] ?><?php endif; ?>
+            <?php if ($vc['pairs']): foreach ($vc['pairs'] as $p): ?><a href="/corporation/<?= $p[0] ?>"><img src="<?= e(corp_logo((int)$p[0], 20)) ?>" alt="" style="width:18px;height:18px;border-radius:3px;vertical-align:-4px;margin-right:4px"><?= e($p[1]) ?></a> <?php endforeach; ?><?= $vc['extra'] ?><?php endif; ?>
             <?php if ($kc['pairs']): ?><span class="vs">vs</span>
-            <?php foreach ($kc['pairs'] as $p): ?><a href="/corporation/<?= $p[0] ?>"><?= e($p[1]) ?></a> <?php endforeach; ?><?= $kc['extra'] ?>
+            <?php foreach ($kc['pairs'] as $p): ?><a href="/corporation/<?= $p[0] ?>"><img src="<?= e(corp_logo((int)$p[0], 20)) ?>" alt="" style="width:18px;height:18px;border-radius:3px;vertical-align:-4px;margin-right:4px"><?= e($p[1]) ?></a> <?php endforeach; ?><?= $kc['extra'] ?>
             <?php endif; ?>
         </td>
         <td class="k-value"><span class="badge badge-open"><?= count($b) ?> kills</span></td>
