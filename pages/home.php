@@ -17,6 +17,14 @@ if ($valuables && $valuables->result && $valuables->result->kills)
     foreach ($valuables->result->kills->row as $r) $killsAll[] = $r;
 $shipCards = []; $structCards = []; $sponsoredCards = [];
 $used = [];
+// Drop CONCORD billboard decoration "kills" (they are decor, not PvP) and authorities.
+$killsAll = array_values(array_filter($killsAll, function ($rk) {
+    $tid = (int)($rk['victimshiptypeid'] ?? 0);
+    if (in_array($tid, array(11136, 29208, 29209), true)) return false;
+    if (kb_is_authority((string)($rk['victimname'] ?? ''))) return false;
+    if (stripos((string)($rk['victimshipname'] ?? ''), 'CONCORD') !== false) return false;
+    return true;
+}));
 foreach ($killsAll as $i => $rk) {
     $cat = (int)$rk['categoryid'];
     if ($cat === 6 && count($shipCards) < 6)      { $shipCards[] = $rk; $used[] = $i; }
