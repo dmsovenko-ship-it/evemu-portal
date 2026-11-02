@@ -63,6 +63,7 @@ function render_layout($title, $active, $content) {
                     <a><?= e($user['accountName']) ?></a>
                     <div class="nav-drop-menu">
                         <a href="/characters" class="<?= $active==='chars'?'active':'' ?>">My Characters</a>
+                        <a href="/account" class="<?= $active==='account'?'active':'' ?>">Подписка</a>
                         <a href="/petitions" class="<?= $active==='petitions'?'active':'' ?>">Petitions</a>
                         <a href="/mail" class="<?= $active==='mail'?'active':'' ?>">Mail <span id="mailBadge" style="display:none;background:var(--accent2);color:#06121f;border-radius:9px;padding:0 6px;margin-left:4px;font-size:11px;font-weight:700">0</span></a>
                         <?php if ($user['role'] & (ROLE_ADMIN|ROLE_GMH|ROLE_GML)): ?>
