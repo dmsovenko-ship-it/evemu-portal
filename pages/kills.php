@@ -57,6 +57,8 @@ ob_start();
     </thead>
     <tbody>
     <?php foreach ($kills as $k):
+    // hide kills made by the authorities (CONCORD / navies / customs)
+    if (kb_is_authority($k['finalname'] ?? '')) continue;
         $ts = filetime_to_unix((string)$k['killtime']);
         $sec = kill_system_sec($k);
         $dmg = (int)$k['victimdamagetaken'];
