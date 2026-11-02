@@ -134,6 +134,9 @@ ob_start();
         <thead><tr><th></th><th>System</th><th>Victim</th><th>Ship</th><th>Damage</th><th></th><th>Final Blow</th><th>Ship</th><th>When</th></tr></thead>
         <tbody>
         <?php foreach (array_slice($recentKills, 0, 20) as $k):
+    // hide authority kills (CONCORD / navies / customs)
+    if (kb_is_authority($k['finalname'] ?? '', (int)($k['finalcorporationid'] ?? 0))) continue;
+    if (stripos((string)($k['finalshipname'] ?? ''), 'CONCORD') !== false) continue;
             $rts = filetime_to_unix((string)$k['killtime']);
             $rsec = kill_system_sec($k); ?>
         <tr class="kill-row" onclick="location.href='/kill/<?= $k['killid'] ?>'">
@@ -170,7 +173,9 @@ ob_start();
 
     <?php $rows = act_rows($act, 'characters'); if ($rows): ?>
     <div class="zk-card"><h3>Top Characters</h3>
-    <?php foreach ($rows as $i => $r): ?>
+    <?php foreach ($rows as $i => $r):
+    // hide authorities from the activity tops
+    if (kb_is_authority((string)($r['name'] ?? ''))) continue; ?>
         <div class="zk-top"><span class="rk"><?= $i+1 ?></span>
             <a class="nm" href="/character/<?= $r['id'] ?>"><?= e($r['name'] ?: 'Unknown') ?></a>
             <span class="ct"><?= number_format((int)$r['count']) ?></span></div>
