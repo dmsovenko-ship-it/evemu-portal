@@ -21,7 +21,12 @@ if ($kills && $kills->result) {
     $totalKills = (int)($r->totalkills ?? 0);
 
     if (!empty($r->topkillers))
-        foreach ($r->topkillers->row as $row) $topKillers[] = $row;
+        foreach ($r->topkillers->row as $row) {
+            // hide the authorities (CONCORD / navies / customs) from the tops
+            if (kb_is_authority($row['charactername'] ?? $row['name'] ?? ''))
+                continue;
+            $topKillers[] = $row;
+        }
     if (!empty($r->topvictims))
         foreach ($r->topvictims->row as $row) $topVictims[] = $row;
     if (!empty($r->killsbysystem))
@@ -58,11 +63,13 @@ ob_start();
         <h2>Top Killers</h2>
     </div>
     <table class="data-table">
-        <thead><tr><th>#</th><th>Pilot</th><th>Ship</th><th>Kills</th></tr></thead>
+        <thead><tr><th>#</th><th></th><th>Pilot</th><th>Ship</th><th>Kills</th></tr></thead>
         <tbody>
         <?php foreach (array_slice($topKillers, 0, 10) as $i => $row): ?>
         <tr>
             <td><?= $i + 1 ?></td>
+            <td><img src="<?= char_portrait((int)($row['characterid'] ?? 0), 48) ?>" alt=""
+                     style="width:32px;height:32px;border-radius:50%;display:block"></td>
             <td><a href="/character/<?= $row['characterid'] ?? '' ?>"><?= e($row['charactername'] ?? $row['name'] ?? '') ?></a></td>
             <td style="color:var(--text-dim)"><?= e($row['shipname'] ?? $row['ship'] ?? '') ?></td>
             <td style="font-weight:600;color:var(--accent2)"><?= e($row['kills'] ?? $row['count'] ?? 0) ?></td>
