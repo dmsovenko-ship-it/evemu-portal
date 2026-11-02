@@ -234,16 +234,22 @@ function kb_is_authority($name, $corpID = 0) {
     return false;
 }
 
-function char_portrait($charID, $size = 64) {
-    return '/img.php?url=' . rawurlencode(sprintf('https://images.evetech.net/characters/%d/portrait?size=%d', (int)$charID, (int)$size));
+function char_portrait($charID, $size = 64, $name = '') {
+    $u = sprintf('http://172.20.1.47:26001/Character/%d_%d.jpg', (int)$charID, (int)$size);
+    if ($name !== '') $u .= '|' . rawurlencode(sprintf('https://kb.sotzone.ru/?a=thumb&type=pilot&id=%s&size=%d', $name, (int)$size));
+    return '/img.php?url=' . rawurlencode($u);
 }
 
-function corp_logo($corpID, $size = 32) {
-    return '/img.php?url=' . rawurlencode(sprintf('https://images.evetech.net/corporations/%d/logo?size=%d', (int)$corpID, (int)$size));
+function corp_logo($corpID, $size = 32, $name = '') {
+    $u = sprintf('http://172.20.1.47:26001/Corporation/%d_%d.png', (int)$corpID, (int)$size);
+    if ($name !== '') $u .= '|' . rawurlencode(sprintf('https://kb.sotzone.ru/?a=thumb&type=corp&id=%s&size=%d', $name, (int)$size));
+    return '/img.php?url=' . rawurlencode($u);
 }
 
-function alliance_logo($allianceID, $size = 32) {
-    return '/img.php?url=' . rawurlencode(sprintf('https://images.evetech.net/alliances/%d/logo?size=%d', (int)$allianceID, (int)$size));
+function alliance_logo($allianceID, $size = 32, $name = '') {
+    $u = sprintf('http://172.20.1.47:26001/Alliance/%d_%d.png', (int)$allianceID, (int)$size);
+    if ($name !== '') $u .= '|' . rawurlencode(sprintf('https://kb.sotzone.ru/img/alliances/%s.png', rawurlencode($name)));
+    return '/img.php?url=' . rawurlencode($u);
 }
 
 function type_render($typeID, $size = 32) {

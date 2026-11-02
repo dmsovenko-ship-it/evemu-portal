@@ -14,7 +14,7 @@ $url = $_GET['url'] ?? '';
 // (http://172.20.1.47:26001 - the portal's char_portrait()/corp_logo() route
 // through this cache proxy because a browser on the internet cannot reach a
 // 172.x address directly).
-if (empty($url) || !preg_match('#^(https://(images\.eveonline\.com|images\.zkillboard\.com|images\.evetech\.net)|http://172\.20\.1\.47:26001)/#', $url)) {
+if (empty($url) || !preg_match('#^(https://(images\.eveonline\.com|images\.zkillboard\.com|images\.evetech\.net)|http://172\.20\.1\.47:26001|https://kb\.sotzone\.ru)/#', $url)) {
     http_response_code(400);
     exit;
 }
@@ -25,7 +25,10 @@ function evemu_blank_image()
     return base64_decode('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7');
 }
 
-$key = md5($url) . '.' . pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION ?: 'png');
+$urls = explode('|', $url, 2);
+$fallbackUrl = isset($urls[1]) ? $urls[1] : '';
+$url = $urls[0];
+$key = md5($url . '|' . $fallbackUrl) . '.' . pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION ?: 'png');
 $cacheFile = $cacheDir . '/' . $key;
 $failFile  = $cacheFile . '.fail';
 
@@ -75,6 +78,23 @@ if (function_exists('curl_init')) {
         // will not change over file_get_contents - retrying it just doubles the wait.
         $transportError = ($code == 0);
         $data = false;
+    }
+}
+
+// fallback URL (e.g. local image server -> kb.sotzone.ru by name)
+if (($data === false || strlen($data) < 100) && $fallbackUrl !== '') {
+    if (function_exists('curl_init')) {
+        $ch = curl_init($fallbackUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 4);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0');
+        $fb = curl_exec($ch);
+        $fcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($fcode == 200 && $fb !== false && strlen($fb) > 100) { $data = $fb; $transportError = false; }
     }
 }
 
