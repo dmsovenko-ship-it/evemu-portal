@@ -64,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input name="quantity" type="number" min="1" value="1" required>
         </div>
         <button type="submit" class="btn btn-primary">Выдать PLEX</button>
+        <div style="margin-top:6px;font-size:11px;color:var(--text-dim)">PLEX выдаётся в redeem-очередь: игрок получает через витрину NeX → «Получить PLEX».</div>
     </form>
     <p style="color:var(--text-dim);font-size:11px;margin-top:8px">1 PLEX = 30 дней Omega (активируется на /account).</p>
 </div>
